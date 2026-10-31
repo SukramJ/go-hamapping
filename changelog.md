@@ -6,6 +6,11 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- go-fabric `v0.15.5`: the camera's signals to the controller's requestor
+  (go-fabric #351); the notices name the pinned version again.
+
 ## [0.3.0] - 2026-10-31
 
 The roadmap rows R1–R5 (go-ha2fabric `docs/roadmap.md`), brief R1–R5:
