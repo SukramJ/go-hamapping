@@ -116,6 +116,16 @@ type Options struct {
 	// Name is nil, the label is composed as without the option: the
 	// device name and the entity name (device.ComposeNodeLabel).
 	Name func(model.Entity) (name string, verbatim bool)
+
+	// Ports returns the host object whose interfaces the clusters a row
+	// marks `ports: host` run on — go-fabric's port interfaces of those
+	// clusters (cluster/spec/webrtctransportprovider.ProviderPort;
+	// cluster/spec/cameraavstreammanagement.VideoStreamPort,
+	// AudioStreamPort, SnapshotStreamPort, SnapshotCapturePort). nil, or
+	// an object that lacks a port the cluster needs, skips the row for
+	// that entity with a verdict ("<row>: the consumer serves no host
+	// ports for <cluster>"). It is asked once per entity, during [Map].
+	Ports func(e model.Entity) any
 }
 
 // Map plans dev's entities: every entity gets a verdict, every mapped one
@@ -132,6 +142,9 @@ func Map(dev *model.Device, entities []model.Entity, opts ...Options) (*Plan, []
 		}
 		if o.Name != nil {
 			p.opts.Name = o.Name
+		}
+		if o.Ports != nil {
+			p.opts.Ports = o.Ports
 		}
 	}
 	verdicts := make([]Verdict, 0, len(entities))
@@ -151,17 +164,29 @@ func Map(dev *model.Device, entities []model.Entity, opts ...Options) (*Plan, []
 			continue
 		}
 		b := &binding{plan: p, row: row, entity: e, key: e.Key()}
-		p.bindings[b.key] = b
 		if row.Ride == RideOnPrimary {
+			p.bindings[b.key] = b
 			riders = append(riders, pending{b, len(verdicts) - 1})
 			continue
 		}
-		p.Endpoints = append(p.Endpoints, p.endpoint(b))
+		ep := p.endpoint(b)
+		if b.noPorts != "" {
+			verdicts[len(verdicts)-1] = unservedVerdict(b)
+			continue
+		}
+		p.bindings[b.key] = b
+		p.Endpoints = append(p.Endpoints, ep)
 	}
 	primaries := len(p.Endpoints)
 	for _, r := range riders {
 		if primaries == 0 {
-			p.Endpoints = append(p.Endpoints, p.endpoint(r.b))
+			ep := p.endpoint(r.b)
+			if r.b.noPorts != "" {
+				delete(p.bindings, r.b.key)
+				verdicts[r.v] = unservedVerdict(r.b)
+				continue
+			}
+			p.Endpoints = append(p.Endpoints, ep)
 			continue
 		}
 		primary := &p.Endpoints[0]
@@ -169,7 +194,13 @@ func Map(dev *model.Device, entities []model.Entity, opts ...Options) (*Plan, []
 			r.b.measure = &measure{class: m.Class}
 			primary.Declarations = append(primary.Declarations, device.Measurement(r.b.measure))
 		} else {
-			primary.Declarations = append(primary.Declarations, declarations(r.b)...)
+			decls := declarations(r.b)
+			if r.b.noPorts != "" {
+				delete(p.bindings, r.b.key)
+				verdicts[r.v] = unservedVerdict(r.b)
+				continue
+			}
+			primary.Declarations = append(primary.Declarations, decls...)
 		}
 		primary.Riders = append(primary.Riders, r.b.key)
 		verdicts[r.v].DeviceType = uint16(primary.Type.ID)

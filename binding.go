@@ -30,6 +30,12 @@ type binding struct {
 	target *device.Device
 	// measure is the source of a row riding as a measurement.
 	measure *measure
+	// hostObj is the consumer's host object (Options.Ports), asked once
+	// (hostAsked); noPorts names the first `ports: host` cluster it serves
+	// no ports for (ports.go).
+	hostObj   any
+	hostAsked bool
+	noPorts   string
 
 	// mu guards last: the baseline of each event's value (events.go).
 	mu   sync.Mutex
