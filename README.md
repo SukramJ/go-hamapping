@@ -18,14 +18,15 @@ Twin of [`go-ha2fabric`](https://github.com/SukramJ/go-ha2fabric); both are buil
 setup (pure Go, `CGO_ENABLED=0`, Apache-2.0 with a contributor licence
 agreement, the same guards in CI).
 
-> **Status: v0.3.0 (brief R1–R5).** The row format, its generated Go form,
+> **Status: v0.4.0 (brief R6).** The row format, its generated Go form,
 > the guards and the first rows, each with a round trip through go-fabric's
 > in-process controller (v0.1.0, brief H1); a stable identity a source
 > supplies, the method constants and the table of keys a source fills
 > (v0.2.0); a verbatim endpoint name a source supplies (v0.2.1); the
 > roadmap rows — air quality, electrical, flow, soil, button, event,
 > select, climate fan modes, vacuum, valve, water heater, media player —
-> and the format's events, options and otherwise (v0.3.0). The design is in
+> and the format's events, options and otherwise (v0.3.0); host ports in a
+> row and the camera (v0.4.0). The design is in
 > [`CONCEPT.md`](CONCEPT.md), the rows in [`docs/rows.md`](docs/rows.md).
 
 ## Why "Matter" is not in the name
@@ -108,6 +109,18 @@ plan, _ := hamapping.Map(dev, entities, hamapping.Options{
 
 A command handler compares `model.Command.Method` with the generated
 constants (`hamapping.MethodSetPosition`, …), not with literals.
+
+A cluster a row marks `ports: host` (the camera's stream and WebRTC
+clusters) runs on ports the consumer implements: `Options.Ports` returns
+the host object for an entity, which implements go-fabric's port
+interfaces of those clusters. Without it, or with a host that lacks a
+port, the entity gets no endpoint and a verdict that says so:
+
+```go
+plan, _ := hamapping.Map(dev, entities, hamapping.Options{
+	Ports: func(e model.Entity) any { return relays[e.Key()] }, // nil: no ports
+})
+```
 
 ## Configuration
 

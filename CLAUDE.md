@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Home Assistant component to Matter cluster mapping for go-fabric bridges. Twin of `go-ha2fabric`; both are built on
 [go-fabric](https://github.com/SukramJ/go-fabric) and share its project
-setup. **State: v0.3.0 (brief R1–R5).** `CONCEPT.md` is the design,
+setup. **State: v0.4.0 (brief R6).** `CONCEPT.md` is the design,
 `docs/rows.md` the row format. The table is `rows/*.yaml`; `rows_gen.go`
 is generated from it (`make generate`) and never hand-edited.
 

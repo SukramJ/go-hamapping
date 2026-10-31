@@ -79,6 +79,7 @@ rows:
           list: desc.options     # or extra.<key>: a list of strings
           current: state         # the value whose entry is the current one
           method: select_option  # a choice's method; the payload is the string
+        ports: host              # the kit's server runs on the consumer's ports (Options.Ports)
 ```
 
 **Values.** `from` reads the entity: `state` (the primary state value; for a
@@ -148,6 +149,23 @@ for another answers INVALID_COMMAND; served on the generated server
 (`Declare.HandleChangeToMode`). A select without options is Unmappable.
 The table names the
 options as `[options <list> at <current> to <method>]`.
+
+**Ports.** `ports: host` (the one value) marks a cluster whose kit server
+runs on ports the consumer supplies: `Options.Ports` returns, per entity,
+a host object, and a port materializer of the root package (`ports.go`)
+sets the cluster's `Declare` port fields from the interfaces it
+implements; the generator refuses `ports` on a cluster without one, and a
+part declares none. When the host lacks a port the cluster needs (or
+`Options.Ports` is nil), the row does not apply to the entity: `Map`
+builds no endpoint and the verdict is Unmappable with the reason
+`<row>: the consumer serves no host ports for <cluster>` — go-fabric fails
+a declaration that carries some port but lacks a needed one, and keeps the
+generated server, whose commands are unimplemented, for one without any
+(`device/device.go:396-410` at `v0.15.5`). Two materializers in this wave:
+**WebRtcTransportProvider** (`ProviderPort`) and
+**CameraAvStreamManagement** (all four of `VideoStreamPort`,
+`AudioStreamPort`, `SnapshotStreamPort`, `SnapshotCapturePort`). The
+table names the key as `[ports: host]`.
 
 ## The rows
 
