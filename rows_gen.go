@@ -11,6 +11,7 @@ import (
 
 	airqualitydef "github.com/SukramJ/go-fabric/cluster/spec/airquality"
 	booleanstatedef "github.com/SukramJ/go-fabric/cluster/spec/booleanstate"
+	cameraavstreammanagementdef "github.com/SukramJ/go-fabric/cluster/spec/cameraavstreammanagement"
 	carbondioxideconcentrationmeasurementdef "github.com/SukramJ/go-fabric/cluster/spec/carbondioxideconcentrationmeasurement"
 	carbonmonoxideconcentrationmeasurementdef "github.com/SukramJ/go-fabric/cluster/spec/carbonmonoxideconcentrationmeasurement"
 	colorcontroldef "github.com/SukramJ/go-fabric/cluster/spec/colorcontrol"
@@ -45,6 +46,7 @@ import (
 	thermostatdef "github.com/SukramJ/go-fabric/cluster/spec/thermostat"
 	totalvolatileorganiccompoundsconcentrationmeasurementdef "github.com/SukramJ/go-fabric/cluster/spec/totalvolatileorganiccompoundsconcentrationmeasurement"
 	valveconfigurationandcontroldef "github.com/SukramJ/go-fabric/cluster/spec/valveconfigurationandcontrol"
+	webrtctransportproviderdef "github.com/SukramJ/go-fabric/cluster/spec/webrtctransportprovider"
 	windowcoveringdef "github.com/SukramJ/go-fabric/cluster/spec/windowcovering"
 	"github.com/SukramJ/go-fabric/contract"
 	"github.com/SukramJ/go-fabric/device"
@@ -525,6 +527,72 @@ var rows = []Row{
 				},
 			},
 		},
+	},
+	{
+		ID: "camera/camera", Platform: "camera",
+		When:  When{Features: &Set{Any: []string{"STREAM"}}},
+		State: eligibility.StateMappable,
+		Cites: []string{"home-assistant/core homeassistant/components/camera/__init__.py:742-755 @2026.10.3 (camera_capabilities: the stream types WEB_RTC and HLS under STREAM; no codec, resolution or frame rate)", "go-fabric device/camera_gen.go:34-71 @v0.15.5 (Camera: CameraAvStreamManagement with VDO, ADO, SNP and WebRtcTransportProvider mandatory; no OnOff)", "go-fabric device/device.go:431-439 @v0.15.5 (a selection that leaves out a mandated feature is ErrConfiguration)", "go-fabric device/defaults_camera.go:110-125,147-157 @v0.15.5 (the kit's AvStream and Provider servers run on the Declare's ports)", "go-fabric cluster/camera/avstream.go:194-198 @v0.15.5 (VDO needs a VideoStreamPort, ADO an AudioStreamPort, SNP a SnapshotStreamPort and a SnapshotCapturePort)", "go-fabric cluster/camera/avstream.go:262-306 @v0.15.5 (chipDefaults: the scalars only; the capability structures and lists start unset)", "go-fabric cluster/spec/cameraavstreammanagement/definition_gen.go:396,545 @v0.15.5 (RequiresHardwareEncoder only with RequiresEncodedPixels; MaxHdrfps only with HDR, which the row does not select)", "connectedhomeip data_model/1.7/clusters/CameraAVStreamManagement.xml:173-185 @1dc3b69ed5e (H264 is the mandatory video codec)", "connectedhomeip examples/camera-app/linux/include/camera-device.h:42-44,48,52-53,58-59,66-67 @1dc3b69ed5e (the camera app's MaxContentBufferSize 4096, MaxNetworkBandwidth 128000000, MaxConcurrentEncoders 1, MaxEncodedPixelRate 248832000, min resolution 640x480, snapshot 30 fps, video 120 fps, sensor 1920x1080)", "connectedhomeip examples/camera-app/linux/src/camera-device.cpp:1515-1520,1557-1568,1596-1603,1652-1657 @1dc3b69ed5e (VideoSensorParams, MinViewport, one H264 RateDistortionTradeOff point, the first JPEG SnapshotCapabilities entry, LiveView among the supported stream usages)", "connectedhomeip examples/camera-app/linux/src/camera-device.cpp:1986-1987 @1dc3b69ed5e (the app's mono LiveView audio stream: Opus, one channel, 48000 Hz, 24 bit; its MicrophoneCapabilities at :1576-1584 offer 8 channels, Opus and AAC-LC)", "go-ha-catalog data/features.json:10-13 (camera feature flags ON_OFF 1, STREAM 2)", "home-assistant/core homeassistant/components/camera/const.py:70-74 @2026.10.3 (CameraEntityFeature ON_OFF = 1, STREAM = 2)"},
+		Type:  &device.CameraType,
+		Caveats: []Caveat{
+			{When: When{}, Reason: "the stream declaration is nominal: Home Assistant reports no codec, resolution or frame rate for a camera; the host relays the offer and answer and does not read the stream"},
+			{When: When{Features: &Set{Any: []string{"ON_OFF"}}}, Reason: "turning the camera on or off is not mapped: the Camera device type lists no OnOff"},
+		},
+		Clusters: []Cluster{
+			{
+				Name: "CameraAvStreamManagement", ID: cameraavstreammanagementdef.ClusterID,
+				Features: []Feature{{Name: "Video", When: nil}, {Name: "Audio", When: nil}, {Name: "Snapshot", When: nil}},
+				Initial: []Attr{
+					{Name: "SupportedStreamUsages", Value: Value{}},
+					{Name: "MaxConcurrentEncoders", Value: Value{Const: float64(1), HasConst: true}},
+					{Name: "MaxEncodedPixelRate", Value: Value{Const: float64(248832000), HasConst: true}},
+					{Name: "MaxNetworkBandwidth", Value: Value{Const: float64(128000000), HasConst: true}},
+					{Name: "MaxContentBufferSize", Value: Value{Const: float64(4096), HasConst: true}},
+					{Name: "VideoSensorParams", Value: Value{}},
+					{Name: "MinViewportResolution", Value: Value{}},
+					{Name: "RateDistortionTradeOffPoints", Value: Value{}},
+					{Name: "MicrophoneCapabilities", Value: Value{}},
+					{Name: "SnapshotCapabilities", Value: Value{}},
+				},
+				declare: func(b *binding, ci int) device.Declaration {
+					var d cameraavstreammanagementdef.Declare
+					d.Features |= cameraavstreammanagementdef.FeatureVideo
+					d.Features |= cameraavstreammanagementdef.FeatureAudio
+					d.Features |= cameraavstreammanagementdef.FeatureSnapshot
+					d.Initial.SupportedStreamUsages = new([]cameraavstreammanagementdef.StreamUsageEnum{cameraavstreammanagementdef.StreamUsageLiveView})
+					d.Initial.MaxConcurrentEncoders = new(uint8(1))
+					d.Initial.MaxEncodedPixelRate = new(uint32(248832000))
+					d.Initial.MaxNetworkBandwidth = new(uint32(128000000))
+					d.Initial.MaxContentBufferSize = new(uint32(4096))
+					d.Initial.VideoSensorParams = &cameraavstreammanagementdef.VideoSensorParamsStruct{SensorWidth: uint16(1920), SensorHeight: uint16(1080), MaxFps: uint16(120)}
+					d.Initial.MinViewportResolution = &cameraavstreammanagementdef.VideoResolutionStruct{Width: uint16(640), Height: uint16(480)}
+					d.Initial.RateDistortionTradeOffPoints = new([]cameraavstreammanagementdef.RateDistortionTradeOffPointsStruct{cameraavstreammanagementdef.RateDistortionTradeOffPointsStruct{Codec: cameraavstreammanagementdef.VideoCodecH264, Resolution: cameraavstreammanagementdef.VideoResolutionStruct{Width: uint16(640), Height: uint16(480)}, MinBitRate: uint32(10000)}})
+					d.Initial.MicrophoneCapabilities = &cameraavstreammanagementdef.AudioCapabilitiesStruct{MaxNumberOfChannels: uint8(1), SupportedCodecs: []cameraavstreammanagementdef.AudioCodecEnum{cameraavstreammanagementdef.AudioCodecOpus}, SupportedSampleRates: []uint32{uint32(48000)}, SupportedBitDepths: []uint8{uint8(24)}}
+					d.Initial.SnapshotCapabilities = new([]cameraavstreammanagementdef.SnapshotCapabilitiesStruct{cameraavstreammanagementdef.SnapshotCapabilitiesStruct{Resolution: cameraavstreammanagementdef.VideoResolutionStruct{Width: uint16(640), Height: uint16(480)}, MaxFrameRate: uint16(30), ImageCodec: cameraavstreammanagementdef.ImageCodecJpeg, RequiresEncodedPixels: false}})
+					if !b.portsAvStream(&d) {
+						b.unserved(ci)
+					}
+					return d
+				},
+			},
+			{
+				Name: "WebRtcTransportProvider", ID: webrtctransportproviderdef.ClusterID,
+				declare: func(b *binding, ci int) device.Declaration {
+					var d webrtctransportproviderdef.Declare
+					if !b.portsWebRTCProvider(&d) {
+						b.unserved(ci)
+					}
+					return d
+				},
+			},
+		},
+	},
+	{
+		ID: "camera/unmapped", Platform: "camera",
+		When:   When{},
+		State:  eligibility.StateUnmappable,
+		Reason: "a camera without the STREAM feature has no live stream; a SnapshotCamera row is a later wave",
+		Cites:  []string{"go-ha-catalog data/features.json:10-13 (camera feature flags ON_OFF 1, STREAM 2)", "home-assistant/core homeassistant/components/camera/const.py:70-74 @2026.10.3 (CameraEntityFeature ON_OFF = 1, STREAM = 2)"},
 	},
 	{
 		ID: "climate/air_conditioner", Platform: "climate",
