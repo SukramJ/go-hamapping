@@ -66,6 +66,9 @@ func Table(files []rowfile.File) string {
 				if o := c.Options; o != nil {
 					name += " [options " + o.List + " at " + o.Current + " to " + o.Method + "]"
 				}
+				if c.Ports != "" {
+					name += " [ports: " + c.Ports + "]"
+				}
 				cs = append(cs, name)
 			}
 			for _, p := range r.Parts {
@@ -1013,6 +1016,13 @@ func (g *gen) declare(w *bytes.Buffer, c *rowfile.Cluster, d def) error {
 		}
 		fmt.Fprintf(&body, "b.options%s(&d, ci)\n", m)
 	}
+	if c.Ports == rowfile.PortsHost {
+		m, ok := portMaterializers[d.name]
+		if !ok {
+			return fmt.Errorf("ports: %s has no port materializer", d.name)
+		}
+		fmt.Fprintf(&body, "if !b.ports%s(&d) {\nb.unserved(ci)\n}\n", m)
+	}
 	fmt.Fprintf(w, "declare: func(b *binding, ci int) device.Declaration {\nvar d %s.Declare\n%sreturn d\n},\n", alias, body.String())
 	return nil
 }
@@ -1296,6 +1306,16 @@ func (g *gen) watch(w *bytes.Buffer, c *rowfile.Cluster, d def) error {
 // of a state).
 var materializers = map[string]string{
 	"ModeSelect": "ModeSelect",
+}
+
+// portMaterializers are the clusters a row may mark `ports: host`: a Go
+// materializer of the root package (ports.go: b.ports<Name>) sets the
+// declaration's port fields from the consumer's host object
+// (Options.Ports) and reports false when the host lacks one the
+// cluster needs; the row then does not apply to the entity.
+var portMaterializers = map[string]string{
+	"WebRtcTransportProvider":  "WebRTCProvider",
+	"CameraAvStreamManagement": "AvStream",
 }
 
 // Commands lists the command kinds a row may use, for the docs.

@@ -6,6 +6,27 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-31
+
+Brief R6 (go-ha2fabric `docs/roadmap.md` §R6): host ports in a row and the
+camera.
+
+### Added
+
+- The row format's `ports: host` on a cluster: the kit's server runs on
+  ports the consumer supplies; the generator refuses it on a cluster
+  without a port materializer (WebRtcTransportProvider,
+  CameraAvStreamManagement in this release).
+- `Options.Ports func(model.Entity) any`: the host object whose
+  interfaces those clusters run on, asked once per entity. Without it, or
+  with a host that lacks a port, `Map` builds no endpoint and the verdict
+  is Unmappable: "<row>: the consumer serves no host ports for <cluster>".
+- camera: a Camera for a camera with the STREAM feature
+  (`camera/camera`), CameraAvStreamManagement (VDO, ADO, SNP) and
+  WebRtcTransportProvider on the host's ports, the capabilities nominal
+  after connectedhomeip's camera app; a camera without STREAM is
+  Unmappable (`camera/unmapped`).
+
 ### Changed
 
 - go-fabric `v0.15.5`: the camera's signals to the controller's requestor

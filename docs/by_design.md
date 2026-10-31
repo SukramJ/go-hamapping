@@ -57,3 +57,33 @@ numbers them (`packages/backend/src/matter/behaviors/mode-select-server.ts:
 10-16` at `664575a`): the options carry no number of their own, and the same
 numbering keeps a controller's scene stored against one bridge valid on the
 other. Row `select/mode_select`.
+
+## Camera: a nominal stream declaration
+
+A Home Assistant camera with the STREAM feature becomes a Camera whose
+CameraAvStreamManagement declares VDO, ADO and SNP with fixed capabilities,
+although Home Assistant names no codec, resolution or frame rate: its
+capabilities are the frontend stream types WEB_RTC and HLS only
+(`homeassistant/components/camera/__init__.py:742-755` at `2026.10.3`).
+The values are connectedhomeip's camera app's (`examples/camera-app/linux/
+include/camera-device.h:42-67`, `src/camera-device.cpp:1515-1603, 1652-1657,
+1986-1987` at `1dc3b69ed5e`): one H264 trade-off point at 640×480, the
+mandatory codec (`data_model/1.7/clusters/CameraAVStreamManagement.xml:
+173-185`), a 1920×1080 sensor at 120 fps, one JPEG snapshot capability,
+LiveView only, and a microphone of one Opus channel at 48 kHz and 24 bit —
+the app's mono stream, narrower than its 8-channel MicrophoneCapabilities.
+The Camera type mandates all three features (go-fabric
+`device/camera_gen.go:36-40` at `v0.15.5`), and the host relays the
+controller's offer and answer without reading the stream, so a declaration
+it cannot measure is nominal by necessity; the verdict says so. Row
+`camera/camera`.
+
+## Camera without STREAM is unmapped
+
+A camera without the STREAM feature has no live stream
+(`camera/__init__.py:745` at `2026.10.3` adds a stream type only under
+STREAM), and the Camera type's mandatory WebRtcTransportProvider has nothing
+to offer; a snapshot-only device type is a later wave. ON_OFF
+(`camera/const.py:74` at `2026.10.3`) stays unmapped on a streaming camera
+too: the Camera type lists no OnOff (`device/camera_gen.go:34-71` at
+`v0.15.5`). Row `camera/unmapped`.

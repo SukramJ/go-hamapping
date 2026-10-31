@@ -111,7 +111,14 @@ type Cluster struct {
 	// Options materialize a list of the entity into the cluster's
 	// attributes and its command (a cluster with a materializer).
 	Options *Options `yaml:"options"`
+	// Ports is "host" for a cluster whose kit server runs on ports the
+	// consumer supplies (hamapping.Options.Ports): the row does not apply
+	// to an entity whose host lacks one the cluster needs.
+	Ports string `yaml:"ports"`
 }
+
+// PortsHost is the one value of Cluster.Ports.
+const PortsHost = "host"
 
 // Options is a list of strings of the entity, the value that names its
 // current entry and the method a controller's choice goes to.
@@ -385,8 +392,8 @@ func (r *Row) check() error {
 		}
 		for j := range p.Clusters {
 			c := &p.Clusters[j]
-			if len(c.Attributes) > 0 || len(c.Commands) > 0 || len(c.Events) > 0 || c.Options != nil {
-				return fmt.Errorf("part %s: cluster %s: a part declares no attributes, commands, events or options", p.Type, c.Cluster)
+			if len(c.Attributes) > 0 || len(c.Commands) > 0 || len(c.Events) > 0 || c.Options != nil || c.Ports != "" {
+				return fmt.Errorf("part %s: cluster %s: a part declares no attributes, commands, events, options or ports", p.Type, c.Cluster)
 			}
 			for k := range c.Initial {
 				if a := &c.Initial[k]; a.From != "" {
@@ -480,6 +487,9 @@ func (c *Cluster) check() error {
 		if !ident(o.Method) {
 			return fmt.Errorf("options: method %q", o.Method)
 		}
+	}
+	if c.Ports != "" && c.Ports != PortsHost {
+		return fmt.Errorf("ports %q: the one value is %s", c.Ports, PortsHost)
 	}
 	return nil
 }
