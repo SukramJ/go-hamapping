@@ -84,6 +84,6 @@ A camera without the STREAM feature has no live stream
 (`camera/__init__.py:745` at `2026.10.3` adds a stream type only under
 STREAM), and the Camera type's mandatory WebRtcTransportProvider has nothing
 to offer; a snapshot-only device type is a later wave. ON_OFF
-(`camera/const.py:73` at `2026.10.3`) stays unmapped on a streaming camera
+(`camera/const.py:74` at `2026.10.3`) stays unmapped on a streaming camera
 too: the Camera type lists no OnOff (`device/camera_gen.go:34-71` at
 `v0.15.5`). Row `camera/unmapped`.
