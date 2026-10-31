@@ -30,13 +30,15 @@ var facade = map[string]bool{
 }
 
 // testOnly are the go-fabric packages a test may import besides: the
-// in-process site and the node it serves, the controller's path builders
-// and the scalar encoders of a write (docs/guides/testing-in-process.md).
+// in-process site and the node it serves, the controller's path builders,
+// the scalar encoders of a write (docs/guides/testing-in-process.md) and
+// the camera kit's server types a test asserts a device's servers are.
 var testOnly = map[string]bool{
 	"fabrictest":        true,
 	"node":              true,
 	"controller/client": true,
 	"cluster/spec":      true,
+	"cluster/camera":    true,
 }
 
 // isDef reports whether dep is a generated <cluster>def package.
@@ -106,6 +108,7 @@ func TestGuardRefuses(t *testing.T) {
 		{"fabrictest", false},
 		{"cluster/spec/onoff/internal", false},
 		{"cluster/onoff", false},
+		{"cluster/camera", false},
 		{"controller/client", false},
 		{"tlv", true},
 		{"endpoint", true},
@@ -126,6 +129,7 @@ func TestGuardRefuses(t *testing.T) {
 		{"fabrictest", true},
 		{"node", true},
 		{"cluster/spec", true},
+		{"cluster/camera", true},
 	} {
 		if !allowed(c.dep, c.test) {
 			t.Errorf("%s (test %v) is refused", c.dep, c.test)
