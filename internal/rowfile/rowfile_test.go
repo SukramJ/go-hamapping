@@ -31,6 +31,7 @@ rows:
           - on: state
             emit: [{event: InitialPress, literal: {NewPosition: 1}}, {event: ShortRelease}]
         options: {list: desc.options, current: state, method: select_option}
+        ports: host
   - id: rest
     when: {}
     verdict: "unmappable: no"
@@ -42,7 +43,8 @@ func TestParse(t *testing.T) {
 		t.Fatal(err)
 	}
 	if f.Platform != "switch" || len(f.Rows) != 2 || f.Rows[0].Clusters[0].Features[1].When == nil ||
-		f.Rows[0].Clusters[0].Events[0].On != "state" || len(f.Rows[0].Clusters[0].Events[0].Emit) != 2 {
+		f.Rows[0].Clusters[0].Events[0].On != "state" || len(f.Rows[0].Clusters[0].Events[0].Emit) != 2 ||
+		f.Rows[0].Clusters[0].Ports != PortsHost {
 		t.Fatalf("%+v", f)
 	}
 }
@@ -86,6 +88,7 @@ func TestParseRefuses(t *testing.T) {
 		"options current":      {"current: state,", "current: device_class,"},
 		"options method":       {"method: select_option", "method: \"\""},
 		"event field":          {"literal: {NewPosition: 1}", "literal: {\"New Position\": 1}"},
+		"ports on a part":      {"    clusters:\n      - cluster: OnOff", "    parts: [{type: X, clusters: [{cluster: OnOff, ports: host}]}]\n    clusters:\n      - cluster: OnOff"},
 	} {
 		t.Run(name, func(t *testing.T) {
 			src := strings.Replace(good, edit[0], edit[1], 1)
@@ -96,6 +99,11 @@ func TestParseRefuses(t *testing.T) {
 				t.Fatal("parsed")
 			}
 		})
+	}
+	// A ports value other than host names the row and the cluster.
+	if _, err := Parse([]byte(strings.Replace(good, "ports: host", "ports: other", 1))); err == nil ||
+		!strings.Contains(err.Error(), "row plug") || !strings.Contains(err.Error(), "cluster OnOff") || !strings.Contains(err.Error(), `ports "other"`) {
+		t.Errorf("ports: other: %v", err)
 	}
 	for _, src := range []string{"", "rows: []", "platform: x", "platform: x\nrows: [{}]"} {
 		if _, err := Parse([]byte(src)); err == nil {

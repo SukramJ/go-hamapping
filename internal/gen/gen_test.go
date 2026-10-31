@@ -53,24 +53,25 @@ func generate(t *testing.T, src string) error {
 
 func TestGenerateRefuses(t *testing.T) {
 	for name, edit := range map[string][2]string{
-		"device type":       {"type: DoorLock", "type: Toaster"},
-		"cluster not typed": {"cluster: DoorLock", "cluster: OnOff"},
-		"cluster unknown":   {"cluster: DoorLock", "cluster: Toaster"},
-		"attribute":         {"attribute: LockState, from", "attribute: Lockstate, from"},
-		"initial":           {"attribute: ActuatorEnabled", "attribute: Nope"},
-		"initial type":      {"ActuatorEnabled, const: true", "ActuatorEnabled, const: 3"},
-		"start_null":        {"start_null: [LockState]", "start_null: [Nope]"},
-		"handler":           {"handle: LockDoor", "handle: Explode"},
-		"if field":          {"field: ActuatorEnabled, in", "field: Nope, in"},
-		"if bool constant":  {`in: ["true"]`, `in: ["LockStateLocked"]`},
-		"number to string":  {"attribute: LockState, from: state, enum: {locked: LockStateLocked}", "attribute: Language, from: state"},
-		"command field":     {"raw: {const: LOCK}", "raw: {field: Nope}"},
-		"write veto field":  {"write: [ActuatorEnabled]", "write: [Nope]"},
-		"change attribute":  {"change: [LockState]", "change: [Nope]"},
-		"event":             {"event: DoorLockAlarm", "event: Explosion"},
-		"event field":       {"literal: {AlarmCode: AlarmCodeLockJammed}", "literal: {Nope: 1}"},
-		"no materializer":   {"        events:\n", "        options: {list: desc.options, current: state, method: m}\n        events:\n"},
-		"part type":         {"    clusters:\n      - cluster: DoorLock", "    parts: [{type: Toaster}]\n    clusters:\n      - cluster: DoorLock"},
+		"device type":          {"type: DoorLock", "type: Toaster"},
+		"cluster not typed":    {"cluster: DoorLock", "cluster: OnOff"},
+		"cluster unknown":      {"cluster: DoorLock", "cluster: Toaster"},
+		"attribute":            {"attribute: LockState, from", "attribute: Lockstate, from"},
+		"initial":              {"attribute: ActuatorEnabled", "attribute: Nope"},
+		"initial type":         {"ActuatorEnabled, const: true", "ActuatorEnabled, const: 3"},
+		"start_null":           {"start_null: [LockState]", "start_null: [Nope]"},
+		"handler":              {"handle: LockDoor", "handle: Explode"},
+		"if field":             {"field: ActuatorEnabled, in", "field: Nope, in"},
+		"if bool constant":     {`in: ["true"]`, `in: ["LockStateLocked"]`},
+		"number to string":     {"attribute: LockState, from: state, enum: {locked: LockStateLocked}", "attribute: Language, from: state"},
+		"command field":        {"raw: {const: LOCK}", "raw: {field: Nope}"},
+		"write veto field":     {"write: [ActuatorEnabled]", "write: [Nope]"},
+		"change attribute":     {"change: [LockState]", "change: [Nope]"},
+		"event":                {"event: DoorLockAlarm", "event: Explosion"},
+		"event field":          {"literal: {AlarmCode: AlarmCodeLockJammed}", "literal: {Nope: 1}"},
+		"no materializer":      {"        events:\n", "        options: {list: desc.options, current: state, method: m}\n        events:\n"},
+		"no port materializer": {"        events:\n", "        ports: host\n        events:\n"},
+		"part type":            {"    clusters:\n      - cluster: DoorLock", "    parts: [{type: Toaster}]\n    clusters:\n      - cluster: DoorLock"},
 	} {
 		t.Run(name, func(t *testing.T) {
 			src := strings.Replace(base, edit[0], edit[1], 1)
@@ -114,6 +115,44 @@ rows:
 	}
 	if !strings.Contains(Table([]rowfile.File{f}), "[options desc.options at state to select_option]") {
 		t.Error("the table names no options")
+	}
+}
+
+func TestGeneratePorts(t *testing.T) {
+	src := `platform: camera
+rows:
+  - id: c
+    when: {}
+    type: Camera
+    verdict: mappable
+    cites: [x]
+    clusters:
+      - cluster: CameraAvStreamManagement
+        features: [Video, Audio, Snapshot]
+        ports: host
+      - cluster: WebRtcTransportProvider
+        ports: host
+`
+	f, err := rowfile.Parse([]byte(src))
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, err := GenerateFiles([]rowfile.File{f})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"if !b.portsAvStream(&d) {", "if !b.portsWebRTCProvider(&d) {", "b.unserved(ci)"} {
+		if !strings.Contains(string(out), want) {
+			t.Errorf("no %q", want)
+		}
+	}
+	if !strings.Contains(Table([]rowfile.File{f}), "WebRtcTransportProvider [ports: host]") {
+		t.Error("the table names no ports")
+	}
+	// A cluster without a port materializer is refused by name.
+	err = generate(t, strings.Replace(base, "        events:\n", "        ports: host\n        events:\n", 1))
+	if err == nil || !strings.Contains(err.Error(), "DoorLock has no port materializer") {
+		t.Errorf("ports on DoorLock: %v", err)
 	}
 }
 

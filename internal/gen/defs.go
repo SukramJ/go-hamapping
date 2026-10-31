@@ -8,6 +8,7 @@ import (
 
 	airqualitydef "github.com/SukramJ/go-fabric/cluster/spec/airquality"
 	booleanstatedef "github.com/SukramJ/go-fabric/cluster/spec/booleanstate"
+	cameraavstreammanagementdef "github.com/SukramJ/go-fabric/cluster/spec/cameraavstreammanagement"
 	carbondioxideconcentrationmeasurementdef "github.com/SukramJ/go-fabric/cluster/spec/carbondioxideconcentrationmeasurement"
 	carbonmonoxideconcentrationmeasurementdef "github.com/SukramJ/go-fabric/cluster/spec/carbonmonoxideconcentrationmeasurement"
 	colorcontroldef "github.com/SukramJ/go-fabric/cluster/spec/colorcontrol"
@@ -42,6 +43,7 @@ import (
 	thermostatdef "github.com/SukramJ/go-fabric/cluster/spec/thermostat"
 	totalvolatileorganiccompoundsconcentrationmeasurementdef "github.com/SukramJ/go-fabric/cluster/spec/totalvolatileorganiccompoundsconcentrationmeasurement"
 	valveconfigurationandcontroldef "github.com/SukramJ/go-fabric/cluster/spec/valveconfigurationandcontrol"
+	webrtctransportproviderdef "github.com/SukramJ/go-fabric/cluster/spec/webrtctransportprovider"
 	windowcoveringdef "github.com/SukramJ/go-fabric/cluster/spec/windowcovering"
 )
 
@@ -111,6 +113,8 @@ var defs = func() map[string]def {
 		newDef[smokecoalarmdef.Declare, smokecoalarmdef.Patch, smokecoalarmdef.State, smokecoalarmdef.Server](smokecoalarmdef.Name, smokecoalarmdef.ClusterID, "smokecoalarm"),
 		newDef[temperaturemeasurementdef.Declare, temperaturemeasurementdef.Patch, temperaturemeasurementdef.State, temperaturemeasurementdef.Server](temperaturemeasurementdef.Name, temperaturemeasurementdef.ClusterID, "temperaturemeasurement"),
 		newDef[thermostatdef.Declare, thermostatdef.Patch, thermostatdef.State, thermostatdef.Server](thermostatdef.Name, thermostatdef.ClusterID, "thermostat"),
+		newDef[cameraavstreammanagementdef.Declare, cameraavstreammanagementdef.Patch, cameraavstreammanagementdef.State, cameraavstreammanagementdef.Server](cameraavstreammanagementdef.Name, cameraavstreammanagementdef.ClusterID, "cameraavstreammanagement"),
+		newDef[webrtctransportproviderdef.Declare, webrtctransportproviderdef.Patch, webrtctransportproviderdef.State, webrtctransportproviderdef.Server](webrtctransportproviderdef.Name, webrtctransportproviderdef.ClusterID, "webrtctransportprovider"),
 		newDef[windowcoveringdef.Declare, windowcoveringdef.Patch, windowcoveringdef.State, windowcoveringdef.Server](windowcoveringdef.Name, windowcoveringdef.ClusterID, "windowcovering"),
 	}
 	m := make(map[string]def, len(all))
