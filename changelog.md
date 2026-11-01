@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-11-01
+
 ### Changed
 
 - go-fabric `v0.15.6` (was `v0.15.5`): `camera.ErrPayloadTooLarge` in
