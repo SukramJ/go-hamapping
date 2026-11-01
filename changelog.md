@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- go-fabric `v0.15.6` (was `v0.15.5`): `camera.ErrPayloadTooLarge` in
+  `cluster/camera` and a port's `contract.StatusError` answering its own
+  status instead of FAILURE (go-fabric #356, go-ha2fabric's two
+  questions); test fixes.
+
 ## [0.4.0] - 2026-10-31
 
 Brief R6 (go-ha2fabric `docs/roadmap.md` §R6): host ports in a row and the
