@@ -27,7 +27,7 @@ func player(key, class string, features ...string) model.Entity {
 
 func TestMediaPlayerSpeaker(t *testing.T) {
 	r := serve(t, player("spk", "speaker", "TURN_ON", "TURN_OFF", "VOLUME_SET"))
-	wantType(t, r, "spk", &device.SpeakerType, eligibility.StateMappable)
+	wantType(t, r, "spk", device.SpeakerType(), eligibility.StateMappable)
 	r.apply("spk", on(map[string]any{"state": "playing", "volume_level": 0.5}))
 	if st, _ := onoffdef.StateFrom(r.values("spk", onoffdef.ClusterID)); !st.OnOff {
 		t.Fatal("OnOff false while playing")
@@ -48,7 +48,7 @@ func TestMediaPlayerSpeaker(t *testing.T) {
 
 func TestMediaPlayerMute(t *testing.T) {
 	r := serve(t, player("spk", "", "VOLUME_MUTE", "VOLUME_SET"))
-	wantType(t, r, "spk", &device.SpeakerType, eligibility.StateMappable)
+	wantType(t, r, "spk", device.SpeakerType(), eligibility.StateMappable)
 	r.apply("spk", on(map[string]any{"state": "playing", "is_volume_muted": true, "volume_level": 0.2}))
 	if st, _ := onoffdef.StateFrom(r.values("spk", onoffdef.ClusterID)); st.OnOff {
 		t.Fatal("OnOff true while muted")
@@ -78,7 +78,7 @@ func TestMediaPlayerPredicates(t *testing.T) {
 
 func TestMediaPlayerTV(t *testing.T) {
 	r := serve(t, player("tv", "tv", "TURN_ON", "TURN_OFF", "PLAY", "PAUSE", "STOP", "VOLUME_STEP", "VOLUME_MUTE"))
-	wantType(t, r, "tv", &device.BasicVideoPlayerType, eligibility.StatePartial)
+	wantType(t, r, "tv", device.BasicVideoPlayerType(), eligibility.StatePartial)
 	r.apply("tv", on(map[string]any{"state": "paused"}))
 	if st, _ := playbackdef.StateFrom(r.values("tv", playbackdef.ClusterID)); st.CurrentState != playbackdef.PlaybackStatePaused {
 		t.Fatalf("CurrentState %v", st.CurrentState)

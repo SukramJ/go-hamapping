@@ -89,7 +89,7 @@ func wantType(t *testing.T, r *rig, key string, typ *device.Type, state eligibil
 
 func TestLightOnOff(t *testing.T) {
 	r := serve(t, light("onoff"))
-	wantType(t, r, "light", &device.OnOffLightType, eligibility.StateMappable)
+	wantType(t, r, "light", device.OnOffLightType(), eligibility.StateMappable)
 	r.apply("light", on(map[string]any{"state": "ON"}))
 	if st, _ := onoffdef.StateFrom(r.values("light", onoffdef.ClusterID)); !st.OnOff {
 		t.Fatalf("OnOff %+v", st)
@@ -102,7 +102,7 @@ func TestLightOnOff(t *testing.T) {
 
 func TestLightDimmable(t *testing.T) {
 	r := serve(t, light("brightness"))
-	wantType(t, r, "light", &device.DimmableLightType, eligibility.StateMappable)
+	wantType(t, r, "light", device.DimmableLightType(), eligibility.StateMappable)
 	r.apply("light", on(map[string]any{"state": "ON", "brightness": 128}))
 	lc, _ := levelcontroldef.StateFrom(r.values("light", levelcontroldef.ClusterID))
 	if lc.CurrentLevel == nil || *lc.CurrentLevel != 127 {
@@ -134,7 +134,7 @@ func TestLightColorTemperature(t *testing.T) {
 				"min_kelvin": 2000, "max_kelvin": 6500,
 			}})
 			r := serve(t, e)
-			wantType(t, r, "light", &device.ColorTemperatureLightType, eligibility.StateMappable)
+			wantType(t, r, "light", device.ColorTemperatureLightType(), eligibility.StateMappable)
 			temp, back := 250, `{"state":"ON","color_temp":370}`
 			if kelvin {
 				temp, back = 4000, `{"state":"ON","color_temp":2703}`
@@ -156,7 +156,7 @@ func TestLightColorTemperature(t *testing.T) {
 
 func TestLightExtendedColor(t *testing.T) {
 	r := serve(t, light("color_temp", "hs", "xy"))
-	wantType(t, r, "light", &device.ExtendedColorLightType, eligibility.StateMappable)
+	wantType(t, r, "light", device.ExtendedColorLightType(), eligibility.StateMappable)
 	r.apply("light", on(map[string]any{
 		"state": "ON", "color_mode": "hs",
 		"color": map[string]any{"h": 180.0, "s": 50.0, "x": 0.3, "y": 0.3},
@@ -188,7 +188,7 @@ func TestLightHSWithoutXY(t *testing.T) {
 
 func TestLightRGB(t *testing.T) {
 	r := serve(t, light("rgb"))
-	wantType(t, r, "light", &device.ExtendedColorLightType, eligibility.StatePartial)
+	wantType(t, r, "light", device.ExtendedColorLightType(), eligibility.StatePartial)
 	if v := r.verdict("light"); v.Reason == "" {
 		t.Fatal("partial without a reason")
 	}
@@ -211,7 +211,7 @@ func value(v any) model.State { return model.State{Value: v, Available: true} }
 
 func TestSensorTemperature(t *testing.T) {
 	r := serve(t, sensor("t", "temperature", "°F"))
-	wantType(t, r, "t", &device.TemperatureSensorType, eligibility.StateMappable)
+	wantType(t, r, "t", device.TemperatureSensorType(), eligibility.StateMappable)
 	r.apply("t", value(68.0))
 	st, _ := temperaturedef.StateFrom(r.values("t", temperaturedef.ClusterID))
 	if st.MeasuredValue == nil || *st.MeasuredValue != 2000 {
@@ -225,7 +225,7 @@ func TestSensorTemperature(t *testing.T) {
 
 func TestSensorHumidity(t *testing.T) {
 	r := serve(t, sensor("h", "humidity", "%"))
-	wantType(t, r, "h", &device.HumiditySensorType, eligibility.StateMappable)
+	wantType(t, r, "h", device.HumiditySensorType(), eligibility.StateMappable)
 	r.apply("h", value("45.5"))
 	st, _ := humiditydef.StateFrom(r.values("h", humiditydef.ClusterID))
 	if st.MeasuredValue == nil || *st.MeasuredValue != 4550 {
@@ -235,7 +235,7 @@ func TestSensorHumidity(t *testing.T) {
 
 func TestSensorPressure(t *testing.T) {
 	r := serve(t, sensor("p", "atmospheric_pressure", "kPa"))
-	wantType(t, r, "p", &device.PressureSensorType, eligibility.StateMappable)
+	wantType(t, r, "p", device.PressureSensorType(), eligibility.StateMappable)
 	r.apply("p", value(101.3))
 	st, _ := pressuredef.StateFrom(r.values("p", pressuredef.ClusterID))
 	if st.MeasuredValue == nil || *st.MeasuredValue != 1013 {
@@ -245,7 +245,7 @@ func TestSensorPressure(t *testing.T) {
 
 func TestSensorIlluminance(t *testing.T) {
 	r := serve(t, sensor("l", "illuminance", "lx"))
-	wantType(t, r, "l", &device.LightSensorType, eligibility.StateMappable)
+	wantType(t, r, "l", device.LightSensorType(), eligibility.StateMappable)
 	for lux, want := range map[float64]uint16{1000: 30001, 1: 1, 0: 0} {
 		r.apply("l", value(lux))
 		st, _ := illuminancedef.StateFrom(r.values("l", illuminancedef.ClusterID))
@@ -259,7 +259,7 @@ func TestSensorElectrical(t *testing.T) {
 	r := serve(t, sensor("w", "power", "kW"), sensor("v", "voltage", "V"), sensor("a", "current", "mA"),
 		sensor("e", "energy", "kWh"))
 	for _, k := range []string{"w", "v", "a", "e"} {
-		wantType(t, r, k, &device.ElectricalSensorType, eligibility.StateMappable)
+		wantType(t, r, k, device.ElectricalSensorType(), eligibility.StateMappable)
 	}
 	r.apply("w", value(-0.6))
 	r.apply("v", value(230.1))
@@ -306,7 +306,7 @@ func TestSensorBatteryRidesOnPrimary(t *testing.T) {
 
 func TestSensorBatteryAlone(t *testing.T) {
 	r := serve(t, sensor("bat", "battery", "%"))
-	wantType(t, r, "bat", &device.PowerSourceType, eligibility.StatePartial)
+	wantType(t, r, "bat", device.PowerSourceType(), eligibility.StatePartial)
 	r.apply("bat", value(50))
 	ps, _ := powersourcedef.StateFrom(r.values("bat", powersourcedef.ClusterID))
 	if ps.BatPercentRemaining == nil || *ps.BatPercentRemaining != 100 {
@@ -321,12 +321,12 @@ func binary(key, class string) model.Entity {
 func TestBinarySensors(t *testing.T) {
 	r := serve(t, binary("door", "door"), binary("motion", "motion"), binary("leak", "moisture"),
 		binary("smoke", "smoke"), binary("co", "carbon_monoxide"), binary("plain", ""))
-	wantType(t, r, "door", &device.ContactSensorType, eligibility.StateMappable)
-	wantType(t, r, "motion", &device.OccupancySensorType, eligibility.StateMappable)
-	wantType(t, r, "leak", &device.WaterLeakDetectorType, eligibility.StateMappable)
-	wantType(t, r, "smoke", &device.SmokeCoAlarmType, eligibility.StateMappable)
-	wantType(t, r, "co", &device.SmokeCoAlarmType, eligibility.StateMappable)
-	wantType(t, r, "plain", &device.ContactSensorType, eligibility.StateMappable)
+	wantType(t, r, "door", device.ContactSensorType(), eligibility.StateMappable)
+	wantType(t, r, "motion", device.OccupancySensorType(), eligibility.StateMappable)
+	wantType(t, r, "leak", device.WaterLeakDetectorType(), eligibility.StateMappable)
+	wantType(t, r, "smoke", device.SmokeCoAlarmType(), eligibility.StateMappable)
+	wantType(t, r, "co", device.SmokeCoAlarmType(), eligibility.StateMappable)
+	wantType(t, r, "plain", device.ContactSensorType(), eligibility.StateMappable)
 	for _, k := range []string{"door", "motion", "leak", "smoke", "co", "plain"} {
 		r.apply(k, value(true))
 	}
@@ -362,7 +362,7 @@ func TestCover(t *testing.T) {
 		Extra:       map[string]any{"supported_features": 15}, // OPEN|CLOSE|SET_POSITION|STOP
 	})
 	r := serve(t, e)
-	wantType(t, r, "cover", &device.WindowCoveringType, eligibility.StateMappable)
+	wantType(t, r, "cover", device.WindowCoveringType(), eligibility.StateMappable)
 	r.apply("cover", on(map[string]any{"state": "open", "current_position": 30}))
 	st, _ := windowcoveringdef.StateFrom(r.values("cover", windowcoveringdef.ClusterID))
 	if st.CurrentPositionLiftPercent100ths == nil || *st.CurrentPositionLiftPercent100ths != 7000 {
@@ -386,7 +386,7 @@ func TestClimate(t *testing.T) {
 		"modes": []string{"off", "heat", "cool", "heat_cool"}, "min_temp": 7, "max_temp": 30,
 	}})
 	r := serve(t, e)
-	wantType(t, r, "hvac", &device.ThermostatType, eligibility.StateMappable)
+	wantType(t, r, "hvac", device.ThermostatType(), eligibility.StateMappable)
 	r.apply("hvac", on(map[string]any{"state": "heat", "current_temperature": 21.5, "temperature": 22}))
 	st, _ := thermostatdef.StateFrom(r.values("hvac", thermostatdef.ClusterID))
 	if st.LocalTemperature == nil || *st.LocalTemperature != 2150 || st.OccupiedHeatingSetpoint != 2200 ||
@@ -413,7 +413,7 @@ func TestClimateWithoutHeatingOrCooling(t *testing.T) {
 
 func TestLock(t *testing.T) {
 	r := serve(t, entity("lock", hacatalog.PlatformLock, model.Description{}))
-	wantType(t, r, "lock", &device.DoorLockType, eligibility.StateMappable)
+	wantType(t, r, "lock", device.DoorLockType(), eligibility.StateMappable)
 	r.apply("lock", value("LOCKED"))
 	st, _ := doorlockdef.StateFrom(r.values("lock", doorlockdef.ClusterID))
 	if st.LockState == nil || *st.LockState != doorlockdef.LockStateLocked {
@@ -439,7 +439,7 @@ func TestFan(t *testing.T) {
 		"preset_modes":       []string{"low", "medium", "high", "auto"},
 	}})
 	r := serve(t, e)
-	wantType(t, r, "fan", &device.FanType, eligibility.StatePartial)
+	wantType(t, r, "fan", device.FanType(), eligibility.StatePartial)
 	r.apply("fan", on(map[string]any{"state": "on", "percentage": 50, "oscillating": true, "direction": "reverse"}))
 	st, _ := fancontroldef.StateFrom(r.values("fan", fancontroldef.ClusterID))
 	if st.PercentCurrent != 50 || st.RockSetting != fancontroldef.RockRockLeftRight ||

@@ -6,6 +6,18 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-11-05
+
+### Changed
+
+- go-fabric `v0.17.0` (was `v0.15.6`). The removed symbols took the
+  routes of go-fabric's `docs/guides/migrating-to-the-facade.md`: the
+  generated device-type variables `device.<Name>Type` are the accessors
+  `device.<Name>Type()` (the generator emits `device.<Name>Type()` in
+  `rows_gen.go`); `device.TypeByID(id)` is `device.Lookup(uint32(id))`;
+  `fabrictest.Device.Bridge()` is `pair.Device.Node().Bridge()` in the
+  round-trip rig.
+
 ## [0.4.1] - 2026-11-01
 
 ### Changed

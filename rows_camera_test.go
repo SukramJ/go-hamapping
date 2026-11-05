@@ -93,13 +93,13 @@ func TestCamera(t *testing.T) {
 	asked := 0
 	ports := hamapping.Options{Ports: func(model.Entity) any { asked++; return cameraHost{} }}
 	p, v := hamapping.Map(testDevice, []model.Entity{cameraEntity(2)}, ports)
-	if len(v) != 1 || v[0].Row != "camera/camera" || v[0].State != eligibility.StatePartial || v[0].DeviceType != uint16(device.CameraType.ID) {
+	if len(v) != 1 || v[0].Row != "camera/camera" || v[0].State != eligibility.StatePartial || v[0].DeviceType != uint16(device.CameraType().ID) {
 		t.Fatalf("verdicts %+v", v)
 	}
 	if asked != 1 {
 		t.Errorf("the host was asked %d times, want 1", asked)
 	}
-	if len(p.Endpoints) != 1 || p.Endpoints[0].Type != &device.CameraType || len(p.Endpoints[0].Declarations) != 2 {
+	if len(p.Endpoints) != 1 || p.Endpoints[0].Type != device.CameraType() || len(p.Endpoints[0].Declarations) != 2 {
 		t.Fatalf("endpoints %+v", p.Endpoints)
 	}
 	devs, err := p.Build(context.Background())
