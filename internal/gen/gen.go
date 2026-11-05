@@ -253,7 +253,7 @@ func allowed(t *device.Type, id uint32) bool {
 	if _, ok := t.Server(id); ok {
 		return true
 	}
-	r, ok := device.BridgedNodeType.Server(id)
+	r, ok := device.BridgedNodeType().Server(id)
 	return ok && r.Conformance == device.ConditionBridgedPowerSourceInfo
 }
 
@@ -287,7 +287,7 @@ func (g *gen) row(w *bytes.Buffer, f *rowfile.File, r *rowfile.Row) error {
 	if !ok {
 		return fmt.Errorf("device type %q: go-fabric's device package has none", r.Type)
 	}
-	fmt.Fprintf(w, "Type: &device.%sType,\n", t.Name)
+	fmt.Fprintf(w, "Type: device.%sType(),\n", t.Name)
 	if r.Ride != "" {
 		fmt.Fprintf(w, "Ride: %q,\n", r.Ride)
 	}
@@ -312,7 +312,7 @@ func (g *gen) row(w *bytes.Buffer, f *rowfile.File, r *rowfile.Row) error {
 			if !ok {
 				return fmt.Errorf("part %q: go-fabric's device package has none", p.Type)
 			}
-			fmt.Fprintf(w, "{Type: &device.%sType,\n", pt.Name)
+			fmt.Fprintf(w, "{Type: device.%sType(),\n", pt.Name)
 			if err := g.clusters(w, pt, p.Clusters); err != nil {
 				return fmt.Errorf("part %s: %w", p.Type, err)
 			}

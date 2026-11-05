@@ -97,7 +97,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"door", "window", "opening", "garage_door"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/contact-sensor.element.ts:19 @862ad75f (BooleanState mandatory)", "matter.js packages/model/src/standard/resources/boolean-state.resource.ts:26-30 @862ad75f (Contact Sensor - FALSE=open or no contact, TRUE=closed or contact)", "go-ha-catalog data/mqtt.json:780-934 (binary_sensor schema; payload_on/payload_off at 898-907)", "go-ha-catalog data/device_classes.json:2-32 (binary_sensor device classes)"},
-		Type:  &device.ContactSensorType,
+		Type:  device.ContactSensorType(),
 		Clusters: []Cluster{
 			{
 				Name: "BooleanState", ID: booleanstatedef.ClusterID,
@@ -132,7 +132,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"motion"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/occupancy-sensor.element.ts:20 @862ad75f (OccupancySensing mandatory)", "matter.js packages/model/src/standard/resources/occupancy-sensing.resource.ts:45 @862ad75f (Occupancy, bit Occupied)", "matter.js packages/node/src/behaviors/occupancy-sensing/OccupancySensingServer.ts:27-66 @862ad75f (OccupancySensorType and its bitmap follow the PIR, ultrasonic and physical-contact features)", "go-ha-catalog data/mqtt.json:780-934 (binary_sensor schema; payload_on/payload_off at 898-907)", "go-ha-catalog data/device_classes.json:2-32 (binary_sensor device classes)"},
-		Type:  &device.OccupancySensorType,
+		Type:  device.OccupancySensorType(),
 		Clusters: []Cluster{
 			{
 				Name: "OccupancySensing", ID: occupancysensingdef.ClusterID,
@@ -175,7 +175,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"occupancy", "presence"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/occupancy-sensor.element.ts:20 @862ad75f (OccupancySensing mandatory)", "matter.js packages/model/src/standard/resources/occupancy-sensing.resource.ts:45 @862ad75f (Occupancy, bit Occupied)", "matter.js packages/node/src/behaviors/occupancy-sensing/OccupancySensingServer.ts:27-66 @862ad75f (OccupancySensorType and its bitmap follow the PIR, ultrasonic and physical-contact features)", "go-ha-catalog data/mqtt.json:780-934 (binary_sensor schema; payload_on/payload_off at 898-907)", "go-ha-catalog data/device_classes.json:2-32 (binary_sensor device classes)"},
-		Type:  &device.OccupancySensorType,
+		Type:  device.OccupancySensorType(),
 		Clusters: []Cluster{
 			{
 				Name: "OccupancySensing", ID: occupancysensingdef.ClusterID,
@@ -218,7 +218,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"moisture"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/water-leak-detector.element.ts:20-22 @862ad75f (BooleanState mandatory, CHGEVENT)", "go-ha-catalog data/mqtt.json:780-934 (binary_sensor schema; payload_on/payload_off at 898-907)", "go-ha-catalog data/device_classes.json:2-32 (binary_sensor device classes)"},
-		Type:  &device.WaterLeakDetectorType,
+		Type:  device.WaterLeakDetectorType(),
 		Clusters: []Cluster{
 			{
 				Name: "BooleanState", ID: booleanstatedef.ClusterID,
@@ -253,7 +253,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"cold"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/water-freeze-detector.element.ts:19-23 @862ad75f (BooleanState mandatory, CHGEVENT)", "home-assistant/core homeassistant/components/binary_sensor/const.py:23-24 @2026.10.3 (cold, on means cold)", "go-ha-catalog data/mqtt.json:780-934 (binary_sensor schema; payload_on/payload_off at 898-907)", "go-ha-catalog data/device_classes.json:2-32 (binary_sensor device classes)"},
-		Type:  &device.WaterFreezeDetectorType,
+		Type:  device.WaterFreezeDetectorType(),
 		Clusters: []Cluster{
 			{
 				Name: "BooleanState", ID: booleanstatedef.ClusterID,
@@ -288,7 +288,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"smoke"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/smoke-co-alarm-device.element.ts:24,28 @862ad75f (SmokeCoAlarm mandatory, PowerSource device min 1)", "matter.js packages/model/src/standard/resources/smoke-co-alarm-cluster.resource.ts:42 @862ad75f (SmokeState)", "go-ha-catalog data/mqtt.json:780-934 (binary_sensor schema; payload_on/payload_off at 898-907)", "go-ha-catalog data/device_classes.json:2-32 (binary_sensor device classes)"},
-		Type:  &device.SmokeCoAlarmType,
+		Type:  device.SmokeCoAlarmType(),
 		Clusters: []Cluster{
 			{
 				Name: "SmokeCoAlarm", ID: smokecoalarmdef.ClusterID,
@@ -343,7 +343,7 @@ var rows = []Row{
 			},
 		},
 		Parts: []Part{
-			{Type: &device.PowerSourceType,
+			{Type: device.PowerSourceType(),
 				Clusters: []Cluster{
 					{
 						Name: "PowerSource", ID: powersourcedef.ClusterID,
@@ -370,7 +370,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"carbon_monoxide"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/smoke-co-alarm-device.element.ts:24,28 @862ad75f (SmokeCoAlarm mandatory, PowerSource device min 1)", "go-ha-catalog data/mqtt.json:780-934 (binary_sensor schema; payload_on/payload_off at 898-907)", "go-ha-catalog data/device_classes.json:2-32 (binary_sensor device classes)"},
-		Type:  &device.SmokeCoAlarmType,
+		Type:  device.SmokeCoAlarmType(),
 		Clusters: []Cluster{
 			{
 				Name: "SmokeCoAlarm", ID: smokecoalarmdef.ClusterID,
@@ -425,7 +425,7 @@ var rows = []Row{
 			},
 		},
 		Parts: []Part{
-			{Type: &device.PowerSourceType,
+			{Type: device.PowerSourceType(),
 				Clusters: []Cluster{
 					{
 						Name: "PowerSource", ID: powersourcedef.ClusterID,
@@ -452,7 +452,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{""}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/contact-sensor.element.ts:19 @862ad75f (BooleanState mandatory)", "matter.js packages/model/src/standard/resources/boolean-state.resource.ts:26-30 @862ad75f (Contact Sensor - FALSE=open or no contact, TRUE=closed or contact)", "matter.js packages/model/src/standard/elements/on-off-sensor.element.ts:25 @862ad75f (OnOffSensor's OnOff is a client cluster)", "go-ha-catalog data/mqtt.json:780-934 (binary_sensor schema; payload_on/payload_off at 898-907)", "go-ha-catalog data/device_classes.json:2-32 (binary_sensor device classes)"},
-		Type:  &device.ContactSensorType,
+		Type:  device.ContactSensorType(),
 		Clusters: []Cluster{
 			{
 				Name: "BooleanState", ID: booleanstatedef.ClusterID,
@@ -494,7 +494,7 @@ var rows = []Row{
 		When:  When{},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/on-off-plug-in-unit.element.ts:27-31 @862ad75f (OnOff mandatory, feature LT)", "home-assistant/core homeassistant/components/button/__init__.py:101-106 @2026.10.3 (the state is the last press's timestamp)", "home-assistant/core homeassistant/components/button/services.py:11-15 @2026.10.3 (press, no fields)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/button/index.ts:22-49 @664575a (OnOffPlugInUnit; On presses, OnOff returns to off)"},
-		Type:  &device.OnOffPlugInUnitType,
+		Type:  device.OnOffPlugInUnitType(),
 		Clusters: []Cluster{
 			{
 				Name: "OnOff", ID: onoffdef.ClusterID,
@@ -533,7 +533,7 @@ var rows = []Row{
 		When:  When{Features: &Set{Any: []string{"STREAM"}}},
 		State: eligibility.StateMappable,
 		Cites: []string{"home-assistant/core homeassistant/components/camera/__init__.py:742-755 @2026.10.3 (camera_capabilities: the stream types WEB_RTC and HLS under STREAM; no codec, resolution or frame rate)", "go-fabric device/camera_gen.go:34-71 @v0.15.5 (Camera: CameraAvStreamManagement with VDO, ADO, SNP and WebRtcTransportProvider mandatory; no OnOff)", "go-fabric device/device.go:431-439 @v0.15.5 (a selection that leaves out a mandated feature is ErrConfiguration)", "go-fabric device/defaults_camera.go:110-125,147-157 @v0.15.5 (the kit's AvStream and Provider servers run on the Declare's ports)", "go-fabric cluster/camera/avstream.go:194-198 @v0.15.5 (VDO needs a VideoStreamPort, ADO an AudioStreamPort, SNP a SnapshotStreamPort and a SnapshotCapturePort)", "go-fabric cluster/camera/avstream.go:262-306 @v0.15.5 (chipDefaults: the scalars only; the capability structures and lists start unset)", "go-fabric cluster/spec/cameraavstreammanagement/definition_gen.go:396,545 @v0.15.5 (RequiresHardwareEncoder only with RequiresEncodedPixels; MaxHdrfps only with HDR, which the row does not select)", "connectedhomeip data_model/1.7/clusters/CameraAVStreamManagement.xml:173-185 @1dc3b69ed5e (H264 is the mandatory video codec)", "connectedhomeip examples/camera-app/linux/include/camera-device.h:42-44,48,52-53,58-59,66-67 @1dc3b69ed5e (the camera app's MaxContentBufferSize 4096, MaxNetworkBandwidth 128000000, MaxConcurrentEncoders 1, MaxEncodedPixelRate 248832000, min resolution 640x480, snapshot 30 fps, video 120 fps, sensor 1920x1080)", "connectedhomeip examples/camera-app/linux/src/camera-device.cpp:1515-1520,1557-1568,1596-1603,1652-1657 @1dc3b69ed5e (VideoSensorParams, MinViewport, one H264 RateDistortionTradeOff point, the first JPEG SnapshotCapabilities entry, LiveView among the supported stream usages)", "connectedhomeip examples/camera-app/linux/src/camera-device.cpp:1986-1987 @1dc3b69ed5e (the app's mono LiveView audio stream: Opus, one channel, 48000 Hz, 24 bit; its MicrophoneCapabilities at :1576-1584 offer 8 channels, Opus and AAC-LC)", "go-ha-catalog data/features.json:10-13 (camera feature flags ON_OFF 1, STREAM 2)", "home-assistant/core homeassistant/components/camera/const.py:71-75 @2026.10.3 (CameraEntityFeature ON_OFF = 1, STREAM = 2)"},
-		Type:  &device.CameraType,
+		Type:  device.CameraType(),
 		Caveats: []Caveat{
 			{When: When{}, Reason: "the stream declaration is nominal: Home Assistant reports no codec, resolution or frame rate for a camera; the host relays the offer and answer and does not read the stream"},
 			{When: When{Features: &Set{Any: []string{"ON_OFF"}}}, Reason: "turning the camera on or off is not mapped: the Camera device type lists no OnOff"},
@@ -599,7 +599,7 @@ var rows = []Row{
 		When:  When{Features: &Set{All: []string{"FAN_MODE", "TURN_ON", "TURN_OFF"}}, Extra: map[string]Set{"modes": Set{Any: []string{"heat", "cool", "heat_cool"}}}},
 		State: eligibility.StateMappable,
 		Cites: []string{"go-fabric cluster/thermo/presets.go:246-257 @v0.15.4 (every preset needs the setpoints of the selected Heating and Cooling features)", "go-fabric device/room_air_conditioner_gen.go:39-86 @v0.15.4 (OnOff mandatory with DF, Thermostat mandatory, FanControl and RelativeHumidityMeasurement optional)", "matter.js packages/model/src/standard/resources/fan-control.resource.ts:44,80,95 @862ad75f (FanMode, PercentSetting, PercentCurrent)", "matter.js packages/model/src/standard/resources/relative-humidity-measurement.resource.ts:20-26 @862ad75f (MeasuredValue = 100 x water content)", "home-assistant/core homeassistant/components/climate/const.py:71-81,194-205 @2026.10.3 (fan modes; FAN_MODE, TURN_OFF, TURN_ON)", "home-assistant/core homeassistant/components/climate/__init__.py:318-325 @2026.10.3 (current_humidity and fan_mode state attributes)", "home-assistant/core homeassistant/components/climate/services.py:170-180,214-218 @2026.10.3 (turn_on, turn_off, set_fan_mode)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/climate/index.ts:83-102,172-186 @664575a (FAN_MODE makes a RoomAirConditioner; OnOff with TURN_ON and TURN_OFF; humidity from current_humidity)", "go-ha-catalog data/features.json:14-24 (climate feature flags)", "go-ha-catalog data/mqtt.json:1200-1647 (climate schema; modes at 1385 with its default, mode_command_topic at 1370, temperature_command_topic at 1572, temperature_low/high_command_topic at 1582/1602)", "go-ha-catalog gen_vocab.go:837-847 (HVACMode vocabulary)"},
-		Type:  &device.RoomAirConditionerType,
+		Type:  device.RoomAirConditionerType(),
 		Caveats: []Caveat{
 			{When: When{Extra: map[string]Set{"modes": Set{Any: []string{"auto"}}}}, Reason: "the hvac mode auto (the device's own schedule) has no SystemMode: it is not mapped"},
 			{When: When{Extra: map[string]Set{"preset_modes": Set{Present: new(true)}}}, Reason: "preset modes are not mapped: go-fabric's Thermostat server requires a heating or cooling setpoint on every preset, and Home Assistant's preset modes carry none"},
@@ -1001,7 +1001,7 @@ var rows = []Row{
 		When:  When{Extra: map[string]Set{"modes": Set{Any: []string{"heat", "cool", "heat_cool"}}}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/thermostat-device.element.ts:25 @862ad75f (Thermostat mandatory)", "matter.js packages/model/src/standard/resources/thermostat-cluster.resource.ts:50,163,322 @862ad75f (LocalTemperature, OccupiedHeatingSetpoint, SystemMode)", "matter.js packages/model/src/standard/elements/temperature.element.ts:12 @862ad75f (the temperature datatype, int16 in 0.01 degC)", "go-fabric cluster/thermo/presets.go:246-257 @v0.15.4 (every preset needs the setpoints of the selected Heating and Cooling features)", "go-ha-catalog data/mqtt.json:1200-1647 (climate schema; modes at 1385 with its default, mode_command_topic at 1370, temperature_command_topic at 1572, temperature_low/high_command_topic at 1582/1602)", "go-ha-catalog gen_vocab.go:837-847 (HVACMode vocabulary)"},
-		Type:  &device.ThermostatType,
+		Type:  device.ThermostatType(),
 		Caveats: []Caveat{
 			{When: When{Extra: map[string]Set{"modes": Set{Any: []string{"auto"}}}}, Reason: "the hvac mode auto (the device's own schedule) has no SystemMode: it is not mapped"},
 			{When: When{Extra: map[string]Set{"fan_modes": Set{Present: new(true)}}}, Reason: "fan modes are not mapped without the climate's turn_on and turn_off (a RoomAirConditioner needs its OnOff)"},
@@ -1239,7 +1239,7 @@ var rows = []Row{
 		When:  When{},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/window-covering-device.element.ts:24 @862ad75f (WindowCovering mandatory)", "matter.js packages/model/src/standard/resources/window-covering-cluster.resource.ts:39,98,116-118,180-199 @862ad75f (Type, EndProductType, CurrentPositionLiftPercent100ths; DownOrClose ends at 100.00%)", "go-ha-catalog data/mqtt.json:1648-1912 (cover schema; payload_open/close/stop at 1756-1775, set_position_topic at 1816, tilt_command_topic at 1861)", "go-ha-catalog data/features.json:25-35 (cover feature flags)", "go-ha-catalog data/device_classes.json:38-49 (cover device classes)"},
-		Type:  &device.WindowCoveringType,
+		Type:  device.WindowCoveringType(),
 		Caveats: []Caveat{
 			{When: When{DeviceClass: []string{"garage", "gate", "door", "damper", "window"}}, Reason: "WindowCovering has no type for a {device_class}: Type and EndProductType are Unknown"},
 		},
@@ -1427,7 +1427,7 @@ var rows = []Row{
 		When:  When{},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/generic-switch.element.ts:19 @862ad75f (Switch mandatory)", "go-fabric cluster/spec/switchcluster/definition_gen.go:30-31,38,40,54-55 @v0.15.4 (NumberOfPositions, CurrentPosition; InitialPress (MS), ShortRelease (MSR))", "go-fabric cluster/spec/switchcluster/server_gen.go:156-171 @v0.15.4 (EmitInitialPress, EmitShortRelease)", "home-assistant/core homeassistant/components/event/__init__.py:187-194 @2026.10.3 (the state is the last event's timestamp)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/event/index.ts:12-24,191-195 @664575a (GenericSwitch; a short press is InitialPress then ShortRelease at position 1)"},
-		Type:  &device.GenericSwitchType,
+		Type:  device.GenericSwitchType(),
 		Caveats: []Caveat{
 			{When: When{}, Reason: "every event is a short press (InitialPress, ShortRelease); long and multi presses from the event type are not mapped yet"},
 		},
@@ -1471,7 +1471,7 @@ var rows = []Row{
 		When:  When{},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/fan.element.ts:25 @862ad75f (FanControl mandatory)", "matter.js packages/model/src/standard/resources/fan-control.resource.ts:44,80,95 @862ad75f (FanMode, PercentSetting, PercentCurrent)", "go-ha-catalog data/mqtt.json:2516-2786 (fan schema; payload_on/off at 2670-2679, payload_oscillation_on/off at 2680-2689, percentage_command_topic at 2705, preset_modes at 2740)", "go-ha-catalog data/features.json:36-43 (fan feature flags)"},
-		Type:  &device.FanType,
+		Type:  device.FanType(),
 		Caveats: []Caveat{
 			{When: When{Extra: map[string]Set{"preset_modes": Set{Present: new(true)}}}, Reason: "preset modes map to FanMode only where the names are low, medium, high or auto"},
 		},
@@ -1661,7 +1661,7 @@ var rows = []Row{
 		When:  When{Extra: map[string]Set{"supported_color_modes": Set{Any: []string{"hs", "xy"}}}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/extended-color-light.element.ts:28-53 @862ad75f (OnOff LT, LevelControl OO+LT, ColorControl XY+CT mandatory, HS optional)", "matter.js packages/model/src/standard/resources/color-control.resource.ts:41-47,58-64,97-104,139-154 @862ad75f (CurrentHue, CurrentSaturation, CurrentX, ColorTemperatureMireds)", "go-fabric cluster/spec/levelcontrol/values.go:28-44 @v0.11.0 (LevelFromUnit, UnitFromLevel)", "go-ha-catalog data/mqtt.json:4008-4227 (light, JSON schema variant; brightness_scale default 255 at 4040, color_temp_kelvin default false at 4045, supported_color_modes at 4201)", "go-ha-catalog gen_vocab.go:909-922 (ColorMode vocabulary)"},
-		Type:  &device.ExtendedColorLightType,
+		Type:  device.ExtendedColorLightType(),
 		Clusters: []Cluster{
 			{
 				Name: "OnOff", ID: onoffdef.ClusterID,
@@ -1917,7 +1917,7 @@ var rows = []Row{
 		State:  eligibility.StatePartial,
 		Reason: "an RGB light without hs or xy: a controller's CIE x/y or hue and saturation reach it as color r, g, b at full brightness (go-fabric's XYToRGB, HSVToRGB), so colours outside the sRGB gamut are clipped and the w and ww channels are not driven",
 		Cites:  []string{"matter.js packages/model/src/standard/elements/extended-color-light.element.ts:28-53 @862ad75f (ColorControl XY+CT mandatory, HS optional)", "go-fabric cluster/spec/colorcontrol/colorconversion.go:108-150 @v0.11.0 (RGBToXY, XYToRGB, matter.js ColorConversionUtils.ts)", "go-ha-catalog data/mqtt.json:4008-4227 (light, JSON schema variant; brightness_scale default 255 at 4040, color_temp_kelvin default false at 4045, supported_color_modes at 4201)", "go-ha-catalog gen_vocab.go:909-922 (ColorMode vocabulary)"},
-		Type:   &device.ExtendedColorLightType,
+		Type:   device.ExtendedColorLightType(),
 		Clusters: []Cluster{
 			{
 				Name: "OnOff", ID: onoffdef.ClusterID,
@@ -2112,7 +2112,7 @@ var rows = []Row{
 		When:  When{Extra: map[string]Set{"supported_color_modes": Set{Any: []string{"color_temp"}}}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/color-temperature-light.element.ts:28-48 @862ad75f (OnOff LT, LevelControl OO+LT, ColorControl CT)", "matter.js packages/model/src/standard/resources/color-control.resource.ts:139-154 @862ad75f (ColorTemperatureMireds, mireds = 1,000,000 / K)", "go-ha-catalog data/mqtt.json:4008-4227 (light, JSON schema variant; brightness_scale default 255 at 4040, color_temp_kelvin default false at 4045, supported_color_modes at 4201)", "go-ha-catalog gen_vocab.go:909-922 (ColorMode vocabulary)"},
-		Type:  &device.ColorTemperatureLightType,
+		Type:  device.ColorTemperatureLightType(),
 		Clusters: []Cluster{
 			{
 				Name: "OnOff", ID: onoffdef.ClusterID,
@@ -2281,7 +2281,7 @@ var rows = []Row{
 		When:  When{Extra: map[string]Set{"supported_color_modes": Set{Any: []string{"brightness", "white"}}}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/dimmable-light.element.ts:28-39 @862ad75f (OnOff LT, LevelControl LT+OO, CurrentLevel 1 to 254)", "go-fabric cluster/spec/levelcontrol/values.go:28-44 @v0.11.0 (LevelFromUnit, UnitFromLevel)", "go-ha-catalog data/mqtt.json:4008-4227 (light, JSON schema variant; brightness_scale default 255 at 4040, color_temp_kelvin default false at 4045, supported_color_modes at 4201)", "go-ha-catalog gen_vocab.go:909-922 (ColorMode vocabulary)"},
-		Type:  &device.DimmableLightType,
+		Type:  device.DimmableLightType(),
 		Clusters: []Cluster{
 			{
 				Name: "OnOff", ID: onoffdef.ClusterID,
@@ -2377,7 +2377,7 @@ var rows = []Row{
 		When:  When{},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/on-off-light.element.ts:28-30 @862ad75f (OnOff mandatory, feature LT)", "go-ha-catalog data/mqtt.json:4008-4227 (light, JSON schema variant; brightness_scale default 255 at 4040, color_temp_kelvin default false at 4045, supported_color_modes at 4201)", "go-ha-catalog gen_vocab.go:909-922 (ColorMode vocabulary)"},
-		Type:  &device.OnOffLightType,
+		Type:  device.OnOffLightType(),
 		Clusters: []Cluster{
 			{
 				Name: "OnOff", ID: onoffdef.ClusterID,
@@ -2430,7 +2430,7 @@ var rows = []Row{
 		When:  When{},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/door-lock-device.element.ts:30 @862ad75f (DoorLock mandatory)", "matter.js packages/model/src/standard/resources/door-lock-cluster.resource.ts:151 @862ad75f (LockState)", "go-ha-catalog data/mqtt.json:4445-4649 (lock schema; payload_lock at 4558, payload_unlock at 4578, state_locked/unlocked/jammed at 4593-4627)", "go-ha-catalog data/features.json:58-60 (lock feature OPEN)", "go-ha-catalog gen_vocab.go:1005-1015 (LockState vocabulary)"},
-		Type:  &device.DoorLockType,
+		Type:  device.DoorLockType(),
 		Caveats: []Caveat{
 			{When: When{Features: &Set{Any: []string{"OPEN"}}}, Reason: "the lock's open (unlatch) is not mapped in H1: DoorLock's Unbolting feature is H2"},
 			{When: When{Extra: map[string]Set{"payload_open": Set{Present: new(true)}}}, Reason: "the lock's open (unlatch) is not mapped in H1: DoorLock's Unbolting feature is H2"},
@@ -2493,7 +2493,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"tv"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/basic-video-player.element.ts:22,27,30 @862ad75f (OnOff, MediaPlayback and KeypadInput mandatory)", "go-fabric cluster/spec/mediaplayback/definition_gen.go:45-48,169-172,192-197,425-428 @v0.15.4 (Play, Pause, Stop; PlaybackStateEnum; StatusEnum; PlaybackResponse)", "go-fabric cluster/spec/keypadinput/definition_gen.go:95-98,238-240,253-255,272-274 @v0.15.4 (Power, VolumeUp, VolumeDown, Mute; StatusEnum; SendKey)", "go-fabric device/defaults_media.go:63-72 @v0.15.4 (the kit's media servers need their ports; without them the generated servers)", "home-assistant/core homeassistant/components/media_player/services.py:125-163 @2026.10.3 (turn_on, turn_off, toggle, volume_up, volume_down, media_play, media_pause, media_stop)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/index.ts:24-39 @664575a (device_class tv is a video player)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/behaviors/media-player-media-playback-server.ts:17-63 @664575a (the playback states and commands)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/behaviors/media-player-keypad-input-server.ts:42-130 @664575a (keys onto services)", "go-ha-catalog data/features.json:61-83 (media_player feature flags)", "home-assistant/core homeassistant/components/media_player/const.py:69-84,196-230 @2026.10.3 (the states, the feature flags, the device classes)"},
-		Type:  &device.BasicVideoPlayerType,
+		Type:  device.BasicVideoPlayerType(),
 		Caveats: []Caveat{
 			{When: When{}, Reason: "the volume is reached through KeypadInput's VolumeUp, VolumeDown and Mute keys only; sources and tracks are not mapped"},
 		},
@@ -2667,7 +2667,7 @@ var rows = []Row{
 		When:  When{Features: &Set{All: []string{"TURN_ON", "TURN_OFF"}}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/speaker.element.ts:18-19 @862ad75f (OnOff and LevelControl mandatory)", "go-fabric cluster/spec/levelcontrol/values.go:19-44 @v0.15.4 (levels 0 to 254, a unit value times 254)", "home-assistant/core homeassistant/components/media_player/__init__.py:334,362-364,379-381 @2026.10.3 (volume_level 0 to 1, is_volume_muted)", "home-assistant/core homeassistant/components/media_player/services.py:125-130,182-203 @2026.10.3 (turn_on, turn_off, volume_set, volume_mute)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/index.ts:41-91 @664575a (a Speaker; power with TURN_ON and TURN_OFF, else mute as OnOff; VolumeSet as LevelControl)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/behaviors/media-player-power-on-off-server.ts:8-16 @664575a (off and standby are off)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/behaviors/media-player-on-off-server.ts:8-17 @664575a (OnOff is not muted)", "go-ha-catalog data/features.json:61-83 (media_player feature flags)", "home-assistant/core homeassistant/components/media_player/const.py:69-84,196-230 @2026.10.3 (the states, the feature flags, the device classes)"},
-		Type:  &device.SpeakerType,
+		Type:  device.SpeakerType(),
 		Clusters: []Cluster{
 			{
 				Name: "OnOff", ID: onoffdef.ClusterID,
@@ -2779,7 +2779,7 @@ var rows = []Row{
 		When:  When{Features: &Set{Any: []string{"VOLUME_MUTE"}}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/speaker.element.ts:18-19 @862ad75f (OnOff and LevelControl mandatory)", "go-fabric cluster/spec/levelcontrol/values.go:19-44 @v0.15.4 (levels 0 to 254, a unit value times 254)", "home-assistant/core homeassistant/components/media_player/__init__.py:334,362-364,379-381 @2026.10.3 (volume_level 0 to 1, is_volume_muted)", "home-assistant/core homeassistant/components/media_player/services.py:125-130,182-203 @2026.10.3 (turn_on, turn_off, volume_set, volume_mute)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/index.ts:41-91 @664575a (a Speaker; power with TURN_ON and TURN_OFF, else mute as OnOff; VolumeSet as LevelControl)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/behaviors/media-player-power-on-off-server.ts:8-16 @664575a (off and standby are off)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/behaviors/media-player-on-off-server.ts:8-17 @664575a (OnOff is not muted)", "go-ha-catalog data/features.json:61-83 (media_player feature flags)", "home-assistant/core homeassistant/components/media_player/const.py:69-84,196-230 @2026.10.3 (the states, the feature flags, the device classes)"},
-		Type:  &device.SpeakerType,
+		Type:  device.SpeakerType(),
 		Clusters: []Cluster{
 			{
 				Name: "OnOff", ID: onoffdef.ClusterID,
@@ -2876,7 +2876,7 @@ var rows = []Row{
 		When:  When{Features: &Set{Any: []string{"VOLUME_SET"}}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/speaker.element.ts:18-19 @862ad75f (OnOff and LevelControl mandatory)", "go-fabric cluster/spec/levelcontrol/values.go:19-44 @v0.15.4 (levels 0 to 254, a unit value times 254)", "home-assistant/core homeassistant/components/media_player/__init__.py:334,362-364,379-381 @2026.10.3 (volume_level 0 to 1, is_volume_muted)", "home-assistant/core homeassistant/components/media_player/services.py:125-130,182-203 @2026.10.3 (turn_on, turn_off, volume_set, volume_mute)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/index.ts:41-91 @664575a (a Speaker; power with TURN_ON and TURN_OFF, else mute as OnOff; VolumeSet as LevelControl)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/behaviors/media-player-power-on-off-server.ts:8-16 @664575a (off and standby are off)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/behaviors/media-player-on-off-server.ts:8-17 @664575a (OnOff is not muted)", "go-ha-catalog data/features.json:61-83 (media_player feature flags)", "home-assistant/core homeassistant/components/media_player/const.py:69-84,196-230 @2026.10.3 (the states, the feature flags, the device classes)"},
-		Type:  &device.SpeakerType,
+		Type:  device.SpeakerType(),
 		Caveats: []Caveat{
 			{When: When{}, Reason: "without turn_on and turn_off or volume_mute the Speaker's OnOff only shows the state"},
 		},
@@ -2986,7 +2986,7 @@ var rows = []Row{
 		When:  When{},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/mode-select-device.element.ts:18 @862ad75f (ModeSelect mandatory)", "go-fabric cluster/spec/modeselect/definition_gen.go:30-40,54-58 @v0.15.4 (SupportedModes, CurrentMode, ChangeToMode; ModeOptionStruct)", "home-assistant/core homeassistant/components/select/__init__.py:108-122 @2026.10.3 (options capability; state is the current option)", "home-assistant/core homeassistant/components/select/services.py:42-46 @2026.10.3 (select_option with option)", "home-assistant-matter-hub packages/backend/src/matter/behaviors/mode-select-server.ts:10-16 @664575a (the option's 0-based index is the mode)"},
-		Type:  &device.ModeSelectType,
+		Type:  device.ModeSelectType(),
 		Clusters: []Cluster{
 			{
 				Name: "ModeSelect", ID: modeselectdef.ClusterID,
@@ -3013,7 +3013,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"temperature"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/temperature-sensor.element.ts:18 @862ad75f (TemperatureMeasurement mandatory)", "matter.js packages/model/src/standard/elements/temperature.element.ts:12 @862ad75f (MeasuredValue is the temperature datatype, int16 in 0.01 degC)", "go-ha-catalog data/sensor.json:633-637 (temperature units K, degC, degF)", "go-ha-catalog data/mqtt.json:5242-5405 (sensor schema)", "go-ha-catalog data/device_classes.json:129-192 (sensor device classes)"},
-		Type:  &device.TemperatureSensorType,
+		Type:  device.TemperatureSensorType(),
 		Clusters: []Cluster{
 			{
 				Name: "TemperatureMeasurement", ID: temperaturemeasurementdef.ClusterID,
@@ -3050,7 +3050,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"humidity"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/humidity-sensor.element.ts:19 @862ad75f (RelativeHumidityMeasurement mandatory)", "matter.js packages/model/src/standard/resources/relative-humidity-measurement.resource.ts:20-26 @862ad75f (MeasuredValue = 100 x water content)", "go-ha-catalog data/sensor.json:511-513 (humidity unit %)", "go-ha-catalog data/mqtt.json:5242-5405 (sensor schema)", "go-ha-catalog data/device_classes.json:129-192 (sensor device classes)"},
-		Type:  &device.HumiditySensorType,
+		Type:  device.HumiditySensorType(),
 		Clusters: []Cluster{
 			{
 				Name: "RelativeHumidityMeasurement", ID: relativehumiditymeasurementdef.ClusterID,
@@ -3087,7 +3087,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"pressure", "atmospheric_pressure"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/pressure-sensor.element.ts:19 @862ad75f (PressureMeasurement mandatory)", "matter.js packages/model/src/standard/resources/pressure-measurement.resource.ts:24-27 @862ad75f (MeasuredValue = 10 x Pressure [kPa])", "go-ha-catalog data/sensor.json:362-375,579-592 (atmospheric_pressure and pressure units)", "go-ha-catalog data/mqtt.json:5242-5405 (sensor schema)", "go-ha-catalog data/device_classes.json:129-192 (sensor device classes)"},
-		Type:  &device.PressureSensorType,
+		Type:  device.PressureSensorType(),
 		Clusters: []Cluster{
 			{
 				Name: "PressureMeasurement", ID: pressuremeasurementdef.ClusterID,
@@ -3124,7 +3124,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"illuminance"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/light-sensor.element.ts:19 @862ad75f (IlluminanceMeasurement mandatory)", "matter.js packages/model/src/standard/resources/illuminance-measurement.resource.ts:19-30 @862ad75f (MeasuredValue = 10,000 x log10(illuminance) + 1, 1 to 0xFFFE; 0 too low to measure)", "go-ha-catalog data/sensor.json:514-516 (illuminance unit lx)", "go-ha-catalog data/mqtt.json:5242-5405 (sensor schema)", "go-ha-catalog data/device_classes.json:129-192 (sensor device classes)"},
-		Type:  &device.LightSensorType,
+		Type:  device.LightSensorType(),
 		Clusters: []Cluster{
 			{
 				Name: "IlluminanceMeasurement", ID: illuminancemeasurementdef.ClusterID,
@@ -3161,7 +3161,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"carbon_dioxide"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/air-quality-sensor.element.ts:19,22-34 @862ad75f (AirQuality mandatory, the concentration clusters optional)", "go-fabric cluster/spec/carbondioxideconcentrationmeasurement/definition_gen.go:47,87-89,108-115 @v0.15.4 (NumericMeasurement; MeasurementMedium; MeasurementUnit, the same names in every concentration package)", "go-fabric cluster/measurement/concentration.go:136-139 @v0.15.4 (AirQuality reads Unknown beside a concentration)", "go-ha-catalog data/sensor.json:383-385 (carbon_dioxide unit ppm)", "go-ha-catalog data/mqtt.json:5242-5405 (sensor schema)", "go-ha-catalog data/device_classes.json:129-192 (sensor device classes)"},
-		Type:  &device.AirQualitySensorType,
+		Type:  device.AirQualitySensorType(),
 		Clusters: []Cluster{
 			{
 				Name: "AirQuality", ID: airqualitydef.ClusterID,
@@ -3215,7 +3215,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"carbon_monoxide"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/air-quality-sensor.element.ts:19,22-34 @862ad75f (AirQuality mandatory, the concentration clusters optional)", "go-fabric cluster/spec/carbondioxideconcentrationmeasurement/definition_gen.go:47,87-89,108-115 @v0.15.4 (NumericMeasurement; MeasurementMedium; MeasurementUnit, the same names in every concentration package)", "go-fabric cluster/measurement/concentration.go:136-139 @v0.15.4 (AirQuality reads Unknown beside a concentration)", "home-assistant/core homeassistant/util/unit_conversion.py:243-262 @2026.10.3 (CarbonMonoxideConcentrationConverter: ppm 1e6, ppb 1e9, mg/m³ and μg/m³ through the molar mass, 1e3 apart)", "go-ha-catalog data/sensor.json:386-391 (carbon_monoxide units)", "go-ha-catalog data/mqtt.json:5242-5405 (sensor schema)", "go-ha-catalog data/device_classes.json:129-192 (sensor device classes)"},
-		Type:  &device.AirQualitySensorType,
+		Type:  device.AirQualitySensorType(),
 		Clusters: []Cluster{
 			{
 				Name: "AirQuality", ID: airqualitydef.ClusterID,
@@ -3275,7 +3275,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"pm1"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/air-quality-sensor.element.ts:19,22-34 @862ad75f (AirQuality mandatory, the concentration clusters optional)", "go-fabric cluster/spec/carbondioxideconcentrationmeasurement/definition_gen.go:47,87-89,108-115 @v0.15.4 (NumericMeasurement; MeasurementMedium; MeasurementUnit, the same names in every concentration package)", "go-fabric cluster/measurement/concentration.go:136-139 @v0.15.4 (AirQuality reads Unknown beside a concentration)", "go-ha-catalog data/sensor.json:544-546 (pm1 unit μg/m³)", "go-ha-catalog data/mqtt.json:5242-5405 (sensor schema)", "go-ha-catalog data/device_classes.json:129-192 (sensor device classes)"},
-		Type:  &device.AirQualitySensorType,
+		Type:  device.AirQualitySensorType(),
 		Clusters: []Cluster{
 			{
 				Name: "AirQuality", ID: airqualitydef.ClusterID,
@@ -3329,7 +3329,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"pm25"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/air-quality-sensor.element.ts:19,22-34 @862ad75f (AirQuality mandatory, the concentration clusters optional)", "go-fabric cluster/spec/carbondioxideconcentrationmeasurement/definition_gen.go:47,87-89,108-115 @v0.15.4 (NumericMeasurement; MeasurementMedium; MeasurementUnit, the same names in every concentration package)", "go-fabric cluster/measurement/concentration.go:136-139 @v0.15.4 (AirQuality reads Unknown beside a concentration)", "go-ha-catalog data/sensor.json:550-552 (pm25 unit μg/m³)", "go-ha-catalog data/mqtt.json:5242-5405 (sensor schema)", "go-ha-catalog data/device_classes.json:129-192 (sensor device classes)"},
-		Type:  &device.AirQualitySensorType,
+		Type:  device.AirQualitySensorType(),
 		Clusters: []Cluster{
 			{
 				Name: "AirQuality", ID: airqualitydef.ClusterID,
@@ -3383,7 +3383,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"pm10"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/air-quality-sensor.element.ts:19,22-34 @862ad75f (AirQuality mandatory, the concentration clusters optional)", "go-fabric cluster/spec/carbondioxideconcentrationmeasurement/definition_gen.go:47,87-89,108-115 @v0.15.4 (NumericMeasurement; MeasurementMedium; MeasurementUnit, the same names in every concentration package)", "go-fabric cluster/measurement/concentration.go:136-139 @v0.15.4 (AirQuality reads Unknown beside a concentration)", "go-ha-catalog data/sensor.json:547-549 (pm10 unit μg/m³)", "go-ha-catalog data/mqtt.json:5242-5405 (sensor schema)", "go-ha-catalog data/device_classes.json:129-192 (sensor device classes)"},
-		Type:  &device.AirQualitySensorType,
+		Type:  device.AirQualitySensorType(),
 		Clusters: []Cluster{
 			{
 				Name: "AirQuality", ID: airqualitydef.ClusterID,
@@ -3437,7 +3437,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"volatile_organic_compounds"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/air-quality-sensor.element.ts:19,22-34 @862ad75f (AirQuality mandatory, the concentration clusters optional)", "go-fabric cluster/spec/carbondioxideconcentrationmeasurement/definition_gen.go:47,87-89,108-115 @v0.15.4 (NumericMeasurement; MeasurementMedium; MeasurementUnit, the same names in every concentration package)", "go-fabric cluster/measurement/concentration.go:136-139 @v0.15.4 (AirQuality reads Unknown beside a concentration)", "home-assistant/core homeassistant/util/unit_conversion.py:495-503 @2026.10.3 (MassVolumeConcentrationConverter: 1000 μg/m³ = 1 mg/m³)", "go-ha-catalog data/sensor.json:643-646 (volatile_organic_compounds units)", "go-ha-catalog data/mqtt.json:5242-5405 (sensor schema)", "go-ha-catalog data/device_classes.json:129-192 (sensor device classes)"},
-		Type:  &device.AirQualitySensorType,
+		Type:  device.AirQualitySensorType(),
 		Clusters: []Cluster{
 			{
 				Name: "AirQuality", ID: airqualitydef.ClusterID,
@@ -3491,7 +3491,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"volatile_organic_compounds_parts"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/air-quality-sensor.element.ts:19,22-34 @862ad75f (AirQuality mandatory, the concentration clusters optional)", "go-fabric cluster/spec/carbondioxideconcentrationmeasurement/definition_gen.go:47,87-89,108-115 @v0.15.4 (NumericMeasurement; MeasurementMedium; MeasurementUnit, the same names in every concentration package)", "go-fabric cluster/measurement/concentration.go:136-139 @v0.15.4 (AirQuality reads Unknown beside a concentration)", "home-assistant/core homeassistant/util/unit_conversion.py:941-956 @2026.10.3 (UnitlessRatioConverter: ppm 1e6, ppb 1e9)", "go-ha-catalog data/sensor.json:647-650 (volatile_organic_compounds_parts units)", "go-ha-catalog data/mqtt.json:5242-5405 (sensor schema)", "go-ha-catalog data/device_classes.json:129-192 (sensor device classes)"},
-		Type:  &device.AirQualitySensorType,
+		Type:  device.AirQualitySensorType(),
 		Clusters: []Cluster{
 			{
 				Name: "AirQuality", ID: airqualitydef.ClusterID,
@@ -3545,7 +3545,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"nitrogen_dioxide"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/air-quality-sensor.element.ts:19,22-34 @862ad75f (AirQuality mandatory, the concentration clusters optional)", "go-fabric cluster/spec/carbondioxideconcentrationmeasurement/definition_gen.go:47,87-89,108-115 @v0.15.4 (NumericMeasurement; MeasurementMedium; MeasurementUnit, the same names in every concentration package)", "go-fabric cluster/measurement/concentration.go:136-139 @v0.15.4 (AirQuality reads Unknown beside a concentration)", "home-assistant/core homeassistant/util/unit_conversion.py:511-526 @2026.10.3 (NitrogenDioxideConcentrationConverter: ppm 1e6, ppb 1e9, μg/m³ through the molar mass)", "go-ha-catalog data/sensor.json:524-528 (nitrogen_dioxide units)", "go-ha-catalog data/mqtt.json:5242-5405 (sensor schema)", "go-ha-catalog data/device_classes.json:129-192 (sensor device classes)"},
-		Type:  &device.AirQualitySensorType,
+		Type:  device.AirQualitySensorType(),
 		Clusters: []Cluster{
 			{
 				Name: "AirQuality", ID: airqualitydef.ClusterID,
@@ -3605,7 +3605,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"ozone"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/air-quality-sensor.element.ts:19,22-34 @862ad75f (AirQuality mandatory, the concentration clusters optional)", "go-fabric cluster/spec/carbondioxideconcentrationmeasurement/definition_gen.go:47,87-89,108-115 @v0.15.4 (NumericMeasurement; MeasurementMedium; MeasurementUnit, the same names in every concentration package)", "go-fabric cluster/measurement/concentration.go:136-139 @v0.15.4 (AirQuality reads Unknown beside a concentration)", "home-assistant/core homeassistant/util/unit_conversion.py:545-560 @2026.10.3 (OzoneConcentrationConverter: ppm 1e6, ppb 1e9, μg/m³ through the molar mass)", "go-ha-catalog data/sensor.json:536-540 (ozone units)", "go-ha-catalog data/mqtt.json:5242-5405 (sensor schema)", "go-ha-catalog data/device_classes.json:129-192 (sensor device classes)"},
-		Type:  &device.AirQualitySensorType,
+		Type:  device.AirQualitySensorType(),
 		Clusters: []Cluster{
 			{
 				Name: "AirQuality", ID: airqualitydef.ClusterID,
@@ -3665,7 +3665,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"radon"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/air-quality-sensor.element.ts:19,22-34 @862ad75f (AirQuality mandatory, the concentration clusters optional)", "go-fabric cluster/spec/carbondioxideconcentrationmeasurement/definition_gen.go:47,87-89,108-115 @v0.15.4 (NumericMeasurement; MeasurementMedium; MeasurementUnit, the same names in every concentration package)", "go-fabric cluster/measurement/concentration.go:136-139 @v0.15.4 (AirQuality reads Unknown beside a concentration)", "home-assistant/core homeassistant/util/unit_conversion.py:111,623-633 @2026.10.3 (RadiationConcentrationConverter: 1 pCi/L = 37 Bq/m³)", "go-ha-catalog data/sensor.json:593-596 (radon units)", "go-ha-catalog data/mqtt.json:5242-5405 (sensor schema)", "go-ha-catalog data/device_classes.json:129-192 (sensor device classes)"},
-		Type:  &device.AirQualitySensorType,
+		Type:  device.AirQualitySensorType(),
 		Clusters: []Cluster{
 			{
 				Name: "AirQuality", ID: airqualitydef.ClusterID,
@@ -3719,7 +3719,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"power"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/electrical-sensor.element.ts:18-20 @862ad75f (PowerTopology mandatory, ElectricalPowerMeasurement and ElectricalEnergyMeasurement O.a+)", "matter.js packages/model/src/standard/resources/electrical-power-measurement.resource.ts:80,97,158,385-389 @862ad75f (Voltage mV, ActiveCurrent mA, ActivePower mW)", "go-fabric docs/guides/embed-in-a-daemon.md section 3 @v0.11.0 (the ElectricalSensor declaration of the cookbook)", "go-ha-catalog data/sensor.json:397-401,457-473,556-563,651-657 (current, energy, power, voltage units)", "go-ha-catalog data/mqtt.json:5242-5405 (sensor schema)", "go-ha-catalog data/device_classes.json:129-192 (sensor device classes)"},
-		Type:  &device.ElectricalSensorType,
+		Type:  device.ElectricalSensorType(),
 		Clusters: []Cluster{
 			{
 				Name: "PowerTopology", ID: powertopologydef.ClusterID,
@@ -3773,7 +3773,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"voltage"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/electrical-sensor.element.ts:18-20 @862ad75f (PowerTopology mandatory, ElectricalPowerMeasurement and ElectricalEnergyMeasurement O.a+)", "matter.js packages/model/src/standard/resources/electrical-power-measurement.resource.ts:80,97,158,385-389 @862ad75f (Voltage mV, ActiveCurrent mA, ActivePower mW)", "go-fabric docs/guides/embed-in-a-daemon.md section 3 @v0.11.0 (the ElectricalSensor declaration of the cookbook)", "go-ha-catalog data/sensor.json:397-401,457-473,556-563,651-657 (current, energy, power, voltage units)", "go-ha-catalog data/mqtt.json:5242-5405 (sensor schema)", "go-ha-catalog data/device_classes.json:129-192 (sensor device classes)"},
-		Type:  &device.ElectricalSensorType,
+		Type:  device.ElectricalSensorType(),
 		Clusters: []Cluster{
 			{
 				Name: "PowerTopology", ID: powertopologydef.ClusterID,
@@ -3828,7 +3828,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"current"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/electrical-sensor.element.ts:18-20 @862ad75f (PowerTopology mandatory, ElectricalPowerMeasurement and ElectricalEnergyMeasurement O.a+)", "matter.js packages/model/src/standard/resources/electrical-power-measurement.resource.ts:80,97,158,385-389 @862ad75f (Voltage mV, ActiveCurrent mA, ActivePower mW)", "go-fabric docs/guides/embed-in-a-daemon.md section 3 @v0.11.0 (the ElectricalSensor declaration of the cookbook)", "go-ha-catalog data/sensor.json:397-401,457-473,556-563,651-657 (current, energy, power, voltage units)", "go-ha-catalog data/mqtt.json:5242-5405 (sensor schema)", "go-ha-catalog data/device_classes.json:129-192 (sensor device classes)"},
-		Type:  &device.ElectricalSensorType,
+		Type:  device.ElectricalSensorType(),
 		Clusters: []Cluster{
 			{
 				Name: "PowerTopology", ID: powertopologydef.ClusterID,
@@ -3883,7 +3883,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"apparent_power"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/electrical-sensor.element.ts:18-20 @862ad75f (PowerTopology mandatory, ElectricalPowerMeasurement O.a+)", "matter.js packages/model/src/standard/resources/electrical-power-measurement.resource.ts:201-203 @862ad75f (ApparentPower in millivolt-amps, mVA)", "home-assistant/core homeassistant/util/unit_conversion.py:195-209 @2026.10.3 (ApparentPowerConverter: mVA 1000, VA 1, kVA 1/1000)", "go-ha-catalog data/sensor.json:342-346 (apparent_power units)", "go-ha-catalog data/mqtt.json:5242-5405 (sensor schema)", "go-ha-catalog data/device_classes.json:129-192 (sensor device classes)"},
-		Type:  &device.ElectricalSensorType,
+		Type:  device.ElectricalSensorType(),
 		Clusters: []Cluster{
 			{
 				Name: "PowerTopology", ID: powertopologydef.ClusterID,
@@ -3938,7 +3938,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"reactive_power"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/electrical-sensor.element.ts:18-20 @862ad75f (PowerTopology mandatory, ElectricalPowerMeasurement O.a+)", "matter.js packages/model/src/standard/resources/electrical-power-measurement.resource.ts:179-181 @862ad75f (ReactivePower in millivolt-amps reactive, mVAR)", "home-assistant/core homeassistant/util/unit_conversion.py:647-661 @2026.10.3 (ReactivePowerConverter: mvar 1000, var 1, kvar 1/1000)", "go-ha-catalog data/sensor.json:601-605 (reactive_power units)", "go-ha-catalog data/mqtt.json:5242-5405 (sensor schema)", "go-ha-catalog data/device_classes.json:129-192 (sensor device classes)"},
-		Type:  &device.ElectricalSensorType,
+		Type:  device.ElectricalSensorType(),
 		Clusters: []Cluster{
 			{
 				Name: "PowerTopology", ID: powertopologydef.ClusterID,
@@ -3993,7 +3993,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"frequency"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/electrical-sensor.element.ts:18-20 @862ad75f (PowerTopology mandatory, ElectricalPowerMeasurement O.a+)", "matter.js packages/model/src/standard/resources/electrical-power-measurement.resource.ts:278 @862ad75f (Frequency in millihertz, mHz)", "go-fabric cluster/spec/electricalpowermeasurement/definition_gen.go:515-521 @v0.15.4 (Frequency 0 to 1000000)", "home-assistant/core homeassistant/util/unit_conversion.py:365-375 @2026.10.3 (FrequencyConverter: mHz 1e3, Hz 1, kHz 1e-3, MHz 1e-6, GHz 1e-9)", "go-ha-catalog data/sensor.json:497-503 (frequency units)", "go-ha-catalog data/mqtt.json:5242-5405 (sensor schema)", "go-ha-catalog data/device_classes.json:129-192 (sensor device classes)"},
-		Type:  &device.ElectricalSensorType,
+		Type:  device.ElectricalSensorType(),
 		Clusters: []Cluster{
 			{
 				Name: "PowerTopology", ID: powertopologydef.ClusterID,
@@ -4048,7 +4048,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"power_factor"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/electrical-sensor.element.ts:18-20 @862ad75f (PowerTopology mandatory, ElectricalPowerMeasurement O.a+)", "matter.js packages/model/src/standard/resources/electrical-power-measurement.resource.ts:328 @862ad75f (PowerFactor in +/- 1/100ths of a percent)", "go-fabric cluster/spec/electricalpowermeasurement/definition_gen.go:542-548 @v0.15.4 (PowerFactor -10000 to 10000)", "home-assistant/core homeassistant/util/unit_conversion.py:941-956 @2026.10.3 (UnitlessRatioConverter: no unit 1, % 100)", "go-ha-catalog data/sensor.json:564-567 (power_factor units %, none: the key \"\")", "go-ha-catalog data/mqtt.json:5242-5405 (sensor schema)", "go-ha-catalog data/device_classes.json:129-192 (sensor device classes)"},
-		Type:  &device.ElectricalSensorType,
+		Type:  device.ElectricalSensorType(),
 		Clusters: []Cluster{
 			{
 				Name: "PowerTopology", ID: powertopologydef.ClusterID,
@@ -4103,7 +4103,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"energy"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/electrical-sensor.element.ts:18-20 @862ad75f (PowerTopology mandatory, ElectricalPowerMeasurement and ElectricalEnergyMeasurement O.a+)", "matter.js packages/model/src/standard/resources/electrical-power-measurement.resource.ts:80,97,158,385-389 @862ad75f (Voltage mV, ActiveCurrent mA, ActivePower mW)", "go-fabric docs/guides/embed-in-a-daemon.md section 3 @v0.11.0 (the ElectricalSensor declaration of the cookbook)", "go-ha-catalog data/sensor.json:397-401,457-473,556-563,651-657 (current, energy, power, voltage units)", "go-ha-catalog data/mqtt.json:5242-5405 (sensor schema)", "go-ha-catalog data/device_classes.json:129-192 (sensor device classes)"},
-		Type:  &device.ElectricalSensorType,
+		Type:  device.ElectricalSensorType(),
 		Clusters: []Cluster{
 			{
 				Name: "PowerTopology", ID: powertopologydef.ClusterID,
@@ -4154,7 +4154,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"volume_flow_rate"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/flow-sensor.element.ts:19 @862ad75f (FlowMeasurement mandatory)", "matter.js packages/model/src/standard/resources/flow-measurement.resource.ts:19-24 @862ad75f (MeasuredValue = 10 x Flow in m³/h)", "go-fabric cluster/measurement/flow.go:34-38 @v0.15.4 (uint16, 0.1 m³/h, clamped to 0..65534)", "home-assistant/core homeassistant/util/unit_conversion.py:44-45,66-70,88-92,986-1004 @2026.10.3 (VolumeFlowRateConverter: ratios to m³/h)", "go-ha-catalog data/sensor.json:668-680 (volume_flow_rate units)", "go-ha-catalog data/mqtt.json:5242-5405 (sensor schema)", "go-ha-catalog data/device_classes.json:129-192 (sensor device classes)"},
-		Type:  &device.FlowSensorType,
+		Type:  device.FlowSensorType(),
 		Clusters: []Cluster{
 			{
 				Name: "FlowMeasurement", ID: flowmeasurementdef.ClusterID,
@@ -4189,7 +4189,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"moisture"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/soil-sensor.element.ts:20 @862ad75f (SoilMeasurement mandatory)", "matter.js packages/model/src/standard/resources/soil-measurement.resource.ts:20-32,36-37 @862ad75f (the limits in percent, one accuracy range with PercentMax at most 10.00 %; the measured value in percent)", "go-fabric cluster/spec/soilmeasurement/definition_gen.go:40-46,105,133-142 @v0.15.4 (MeasurementAccuracyStruct, MeasurementTypeSoilMoisture, the range's PercentMax in 1/100 %)", "go-ha-catalog data/sensor.json:521-523 (moisture unit %)", "go-ha-catalog data/mqtt.json:5242-5405 (sensor schema)", "go-ha-catalog data/device_classes.json:129-192 (sensor device classes)"},
-		Type:  &device.SoilSensorType,
+		Type:  device.SoilSensorType(),
 		Clusters: []Cluster{
 			{
 				Name: "SoilMeasurement", ID: soilmeasurementdef.ClusterID,
@@ -4229,7 +4229,7 @@ var rows = []Row{
 		State:           eligibility.StatePartial,
 		Reason:          "the battery rides on the device's primary endpoint as go-fabric's battery measurement (PowerSource, BatPercentRemaining), not as a declared PowerSource, until the kit carries PowerSourceConfiguration for a bridged PowerSource",
 		Cites:           []string{"matter.js packages/model/src/standard/elements/power-source-device.element.ts:18 @862ad75f (PowerSource mandatory)", "matter.js packages/model/src/standard/elements/bridged-node.element.ts:23 @862ad75f (PowerSource under BridgedPowerSourceInfo on a bridged node)", "matter.js packages/model/src/standard/resources/power-source-cluster.resource.ts:120-125 @862ad75f (BatPercentRemaining in half percent, 0 to 200)", "go-fabric docs/guides/embed-in-a-daemon.md section 3 @v0.11.0 (powersourcedef.Declare on the primary endpoint)", "go-ha-catalog data/sensor.json:376-378 (battery unit %)", "go-ha-catalog data/mqtt.json:5242-5405 (sensor schema)", "go-ha-catalog data/device_classes.json:129-192 (sensor device classes)"},
-		Type:            &device.PowerSourceType,
+		Type:            device.PowerSourceType(),
 		Ride:            "primary",
 		RideMeasurement: &Measurement{Class: contract.MeasurementBattery, Value: Value{From: "state", Units: map[string]Linear{"%": {Offset: 0, Scale: 1, Add: 0}}, DefaultUnit: "%", Min: new(float64(0)), Max: new(float64(100))}},
 		Clusters: []Cluster{
@@ -4288,7 +4288,7 @@ var rows = []Row{
 		When:  When{DeviceClass: []string{"", "outlet", "switch"}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/on-off-plug-in-unit.element.ts:27-31 @862ad75f (OnOff mandatory, feature LT)", "go-ha-catalog data/mqtt.json:5592-5761 (switch schema; payload_on/payload_off defaults ON/OFF at 5710-5719)", "go-ha-catalog data/device_classes.json:193-196 (switch device classes outlet, switch)"},
-		Type:  &device.OnOffPlugInUnitType,
+		Type:  device.OnOffPlugInUnitType(),
 		Clusters: []Cluster{
 			{
 				Name: "OnOff", ID: onoffdef.ClusterID,
@@ -4345,7 +4345,7 @@ var rows = []Row{
 		When:  When{Features: &Set{Any: []string{"START"}}},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/robotic-vacuum-cleaner.element.ts:19-25 @862ad75f (RvcRunMode and RvcOperationalState mandatory)", "go-fabric cluster/spec/rvcrunmode/definition_gen.go:56-71,95-99,129-132,165-177,202,221-224 @v0.15.4 (ModeChangeStatus, ModeOptionStruct, ModeTagStruct, ModeTag Idle and Cleaning, ChangeToMode)", "go-fabric cluster/spec/rvcoperationalstate/definition_gen.go:40-45,66-84,155-165,188-191 @v0.15.4 (Pause, Resume, GoHome; ErrorStateEnum; OperationalStateEnum; OperationalStateStruct)", "go-fabric device/defaults_ports.go:30-33 @v0.15.4 (without its port a cluster keeps the generated server)", "home-assistant/core homeassistant/components/vacuum/const.py:30-38,53-69 @2026.10.3 (activities; PAUSE, RETURN_HOME, START)", "home-assistant/core homeassistant/components/vacuum/services.py:104-119 @2026.10.3 (start, pause, return_to_base)", "home-assistant-matter-hub packages/backend/src/matter/behaviors/rvc-run-mode-server.ts:20-23 @664575a (Idle 0, Cleaning 1)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/vacuum/behaviors/vacuum-rvc-operational-state-server.ts:78-161 @664575a (activities onto operational states; pause, resume as start, go home as return_to_base)", "go-ha-catalog data/mqtt.json:6284-6479 (vacuum schema)", "go-ha-catalog data/features.json:102-116 (vacuum feature flags)"},
-		Type:  &device.RoboticVacuumCleanerType,
+		Type:  device.RoboticVacuumCleanerType(),
 		Caveats: []Caveat{
 			{When: When{}, Reason: "the clean modes (fan speed) and the service areas are not mapped"},
 		},
@@ -4505,7 +4505,7 @@ var rows = []Row{
 		When:  When{},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/water-valve.element.ts:19 @862ad75f (ValveConfigurationAndControl mandatory)", "go-fabric cluster/spec/valveconfigurationandcontrol/definition_gen.go:30-46,117-119 @v0.15.4 (OpenDuration, RemainingDuration, CurrentState, TargetState; Open, Close; ValveStateEnum)", "go-fabric device/defaults_declared.go:137-149 @v0.15.4 (the kit's valve server needs a StateSource and serves no feature; without it the generated server)", "home-assistant/core homeassistant/components/valve/const.py:36-51 @2026.10.3 (OPEN, CLOSE, SET_POSITION; the states)", "home-assistant/core homeassistant/components/valve/services.py:22-31 @2026.10.3 (open_valve, close_valve)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/valve/index.ts:11-31 @664575a (WaterValve; opening and closing are Transitioning)", "go-ha-catalog data/mqtt.json:6480-6679 (valve schema)", "go-ha-catalog data/features.json:118-123 (valve feature flags)"},
-		Type:  &device.WaterValveType,
+		Type:  device.WaterValveType(),
 		Caveats: []Caveat{
 			{When: When{Features: &Set{Any: []string{"SET_POSITION"}}}, Reason: "the valve's position is not mapped: go-fabric's valve server serves no Level feature"},
 		},
@@ -4586,7 +4586,7 @@ var rows = []Row{
 		When:  When{},
 		State: eligibility.StateMappable,
 		Cites: []string{"matter.js packages/model/src/standard/elements/thermostat-device.element.ts:25 @862ad75f (Thermostat mandatory)", "matter.js packages/model/src/standard/elements/temperature.element.ts:12 @862ad75f (the temperature datatype, int16 in 0.01 degC)", "home-assistant/core homeassistant/components/water_heater/__init__.py:146-151,164-182,187-219 @2026.10.3 (the state is the operation mode; min_temp, max_temp; current_temperature, temperature)", "home-assistant/core homeassistant/components/water_heater/const.py:53-58 @2026.10.3 (the operation states eco, electric, performance, high_demand, heat_pump, gas)", "home-assistant/core homeassistant/const.py:299-300 @2026.10.3 (on, off)", "home-assistant/core homeassistant/components/water_heater/services.py:78-100 @2026.10.3 (turn_on, turn_off, set_temperature, set_operation_mode)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/water-heater/index.ts:14-20,34-45 @664575a (a heating-only Thermostat with the entity's limits)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/water-heater/behaviors/water-heater-thermostat-server.ts:46-81 @664575a (off is Off, else Heat; off to set_operation_mode, else turn_on; the setpoint to set_temperature)", "go-ha-catalog data/mqtt.json:6680-6900 (water_heater schema; min_temp, max_temp at 6770-6789)", "go-ha-catalog data/features.json:124-129 (water_heater feature flags)"},
-		Type:  &device.ThermostatType,
+		Type:  device.ThermostatType(),
 		Caveats: []Caveat{
 			{When: When{}, Reason: "operation modes other than off are all SystemMode Heat; the WaterHeater device type (modes, boost) is not mapped yet"},
 		},

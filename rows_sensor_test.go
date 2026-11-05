@@ -25,7 +25,7 @@ import (
 
 func TestSensorCarbonDioxide(t *testing.T) {
 	r := serve(t, sensor("co2", "carbon_dioxide", "ppm"))
-	wantType(t, r, "co2", &device.AirQualitySensorType, eligibility.StateMappable)
+	wantType(t, r, "co2", device.AirQualitySensorType(), eligibility.StateMappable)
 	if st, _ := co2def.StateFrom(r.values("co2", co2def.ClusterID)); st.MeasuredValue != nil ||
 		st.MeasurementUnit != co2def.MeasurementUnitPpm || st.MeasurementMedium != co2def.MeasurementMediumAir {
 		t.Fatalf("before a state %+v", st)
@@ -80,7 +80,7 @@ func TestSensorAirQualityPredicates(t *testing.T) {
 	} {
 		_, v := hamapping.Map(testDevice, []model.Entity{sensor("s", class, unit)})
 		if v[0].Row != "sensor/"+class || v[0].State != eligibility.StateMappable ||
-			v[0].DeviceType != uint16(device.AirQualitySensorType.ID) {
+			v[0].DeviceType != uint16(device.AirQualitySensorType().ID) {
 			t.Errorf("%s: %+v", class, v[0])
 		}
 	}
@@ -90,7 +90,7 @@ func TestSensorElectricalQuantities(t *testing.T) {
 	r := serve(t, sensor("va", "apparent_power", "kVA"), sensor("var", "reactive_power", "var"),
 		sensor("hz", "frequency", "Hz"), sensor("pf", "power_factor", "%"), sensor("ratio", "power_factor", ""))
 	for _, k := range []string{"va", "var", "hz", "pf", "ratio"} {
-		wantType(t, r, k, &device.ElectricalSensorType, eligibility.StateMappable)
+		wantType(t, r, k, device.ElectricalSensorType(), eligibility.StateMappable)
 	}
 	r.apply("va", value(1.5))
 	r.apply("var", value(230.0))
@@ -123,8 +123,8 @@ func TestSensorElectricalQuantities(t *testing.T) {
 
 func TestSensorFlowAndSoil(t *testing.T) {
 	r := serve(t, sensor("flow", "volume_flow_rate", "L/min"), sensor("soil", "moisture", "%"))
-	wantType(t, r, "flow", &device.FlowSensorType, eligibility.StateMappable)
-	wantType(t, r, "soil", &device.SoilSensorType, eligibility.StateMappable)
+	wantType(t, r, "flow", device.FlowSensorType(), eligibility.StateMappable)
+	wantType(t, r, "soil", device.SoilSensorType(), eligibility.StateMappable)
 	r.apply("flow", value(12.5)) // 0.75 m³/h
 	r.apply("soil", value(41.6))
 	if st, _ := flowdef.StateFrom(r.values("flow", flowdef.ClusterID)); st.MeasuredValue == nil || *st.MeasuredValue != 8 {
@@ -140,7 +140,7 @@ func TestSensorFlowAndSoil(t *testing.T) {
 
 func TestBinarySensorCold(t *testing.T) {
 	r := serve(t, binary("cold", "cold"))
-	wantType(t, r, "cold", &device.WaterFreezeDetectorType, eligibility.StateMappable)
+	wantType(t, r, "cold", device.WaterFreezeDetectorType(), eligibility.StateMappable)
 	r.apply("cold", value("on"))
 	if st, _ := booleanstatedef.StateFrom(r.values("cold", booleanstatedef.ClusterID)); !st.StateValue {
 		t.Fatal("cold on: StateValue false, want true")

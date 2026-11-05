@@ -21,7 +21,7 @@ import (
 
 func TestButton(t *testing.T) {
 	r := serve(t, entity("btn", hacatalog.PlatformButton, model.Description{Name: model.L("Restart")}))
-	wantType(t, r, "btn", &device.OnOffPlugInUnitType, eligibility.StateMappable)
+	wantType(t, r, "btn", device.OnOffPlugInUnitType(), eligibility.StateMappable)
 	r.apply("btn", value("2026-10-31T10:00:00+00:00"))
 	r.invoke("btn", onoffdef.ClusterID, onoffdef.CmdOn, nil)
 	expect(t, r.command(), hamapping.MethodPress, "PRESS")
@@ -53,7 +53,7 @@ func (r *rig) switchEvents(key string) []uint32 {
 
 func TestEvent(t *testing.T) {
 	r := serve(t, entity("ev", hacatalog.PlatformEvent, model.Description{Name: model.L("Doorbell")}))
-	wantType(t, r, "ev", &device.GenericSwitchType, eligibility.StatePartial)
+	wantType(t, r, "ev", device.GenericSwitchType(), eligibility.StatePartial)
 	st, _ := switchdef.StateFrom(r.values("ev", switchdef.ClusterID))
 	if st.NumberOfPositions != 2 || st.CurrentPosition != 0 {
 		t.Fatalf("switch %+v", st)

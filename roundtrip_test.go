@@ -70,7 +70,7 @@ func serve(t *testing.T, entities ...model.Entity) *rig {
 	}
 	r.site = fabrictest.NewSite(t, fabrictest.Options{})
 	r.pair = r.site.CommissionedPair(fabrictest.PairOptions{Device: fabrictest.Topology{Bridged: eps}})
-	if v := r.pair.Device.Bridge().DeviceTypeViolations(); len(v) != 0 {
+	if v := r.pair.Device.Node().Bridge().DeviceTypeViolations(); len(v) != 0 {
 		t.Fatalf("device-type violations: %+v", v)
 	}
 	t.Cleanup(plan.Close)

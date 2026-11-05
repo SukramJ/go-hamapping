@@ -39,7 +39,7 @@ func TestClimateAirConditioner(t *testing.T) {
 		"fan_modes": []string{"auto", "low", "medium", "high"},
 	}})
 	r := serve(t, e)
-	wantType(t, r, "ac", &device.RoomAirConditionerType, eligibility.StatePartial)
+	wantType(t, r, "ac", device.RoomAirConditionerType(), eligibility.StatePartial)
 	r.apply("ac", on(map[string]any{"state": "cool", "current_temperature": 26, "temperature": 24, "fan_mode": "medium", "current_humidity": 55}))
 	if st, _ := onoffdef.StateFrom(r.values("ac", onoffdef.ClusterID)); !st.OnOff {
 		t.Fatal("OnOff false while cooling")

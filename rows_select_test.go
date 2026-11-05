@@ -32,7 +32,7 @@ func TestSelect(t *testing.T) {
 		Name: model.L("Program"), Options: &model.Enum{Codes: []string{"eco", "normal", "intensive"}},
 	})
 	r := serve(t, e)
-	wantType(t, r, "sel", &device.ModeSelectType, eligibility.StateMappable)
+	wantType(t, r, "sel", device.ModeSelectType(), eligibility.StateMappable)
 	r.apply("sel", value("normal"))
 	st, _ := modeselectdef.StateFrom(r.values("sel", modeselectdef.ClusterID))
 	if st.CurrentMode != 1 || len(st.SupportedModes) != 3 || st.SupportedModes[2].Label != "intensive" ||

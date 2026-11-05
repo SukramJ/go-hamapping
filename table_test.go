@@ -28,7 +28,7 @@ func TestRowsNameGoFabricTypes(t *testing.T) {
 			}
 			continue
 		}
-		if got, ok := device.TypeByID(r.Type.ID); !ok || got != r.Type {
+		if got, ok := device.Lookup(uint32(r.Type.ID)); !ok || got != r.Type {
 			t.Errorf("%s: type %s is not go-fabric's", r.ID, r.Type.Name)
 		}
 		parts := make([]struct {
@@ -45,7 +45,7 @@ func TestRowsNameGoFabricTypes(t *testing.T) {
 		for _, p := range parts {
 			for _, c := range p.cs {
 				_, own := p.typ.Server(c.ID)
-				br, bridged := device.BridgedNodeType.Server(c.ID)
+				br, bridged := device.BridgedNodeType().Server(c.ID)
 				if !own && (!bridged || br.Conformance != device.ConditionBridgedPowerSourceInfo) {
 					t.Errorf("%s: %s does not list %s", r.ID, p.typ.Name, c.Name)
 				}

@@ -26,7 +26,7 @@ func TestVacuum(t *testing.T) {
 		"supported_features": []string{"START", "PAUSE", "RETURN_HOME", "STATE"},
 	}})
 	r := serve(t, e)
-	wantType(t, r, "vac", &device.RoboticVacuumCleanerType, eligibility.StatePartial)
+	wantType(t, r, "vac", device.RoboticVacuumCleanerType(), eligibility.StatePartial)
 	r.apply("vac", value("cleaning"))
 	run, _ := rvcrunmodedef.StateFrom(r.values("vac", rvcrunmodedef.ClusterID))
 	if run.CurrentMode != 1 || len(run.SupportedModes) != 2 || run.SupportedModes[0].ModeTags[0].Value != rvcrunmodedef.ModeTagIdle {
@@ -85,7 +85,7 @@ func changeToModeStatus(t *testing.T, res fabrictest.Result) rvcrunmodedef.ModeC
 
 func TestValve(t *testing.T) {
 	r := serve(t, entity("valve", "valve", model.Description{DeviceClass: "water", Extra: map[string]any{"supported_features": 3}}))
-	wantType(t, r, "valve", &device.WaterValveType, eligibility.StateMappable)
+	wantType(t, r, "valve", device.WaterValveType(), eligibility.StateMappable)
 	r.apply("valve", value("opening"))
 	st, _ := valvedef.StateFrom(r.values("valve", valvedef.ClusterID))
 	if st.CurrentState == nil || *st.CurrentState != valvedef.ValveStateTransitioning ||
@@ -110,7 +110,7 @@ func TestValve(t *testing.T) {
 func TestWaterHeater(t *testing.T) {
 	e := entity("boiler", "water_heater", model.Description{Extra: map[string]any{"min_temp": 40, "max_temp": 65}})
 	r := serve(t, e)
-	wantType(t, r, "boiler", &device.ThermostatType, eligibility.StatePartial)
+	wantType(t, r, "boiler", device.ThermostatType(), eligibility.StatePartial)
 	r.apply("boiler", on(map[string]any{"state": "eco", "current_temperature": 48.5, "temperature": 55}))
 	st, _ := thermostatdef.StateFrom(r.values("boiler", thermostatdef.ClusterID))
 	if st.SystemMode != thermostatdef.SystemModeHeat || st.LocalTemperature == nil || *st.LocalTemperature != 4850 ||
