@@ -1238,7 +1238,7 @@ var rows = []Row{
 		ID: "cover/window_covering", Platform: "cover",
 		When:  When{},
 		State: eligibility.StateMappable,
-		Cites: []string{"matter.js packages/model/src/standard/elements/window-covering-device.element.ts:24 @862ad75f (WindowCovering mandatory)", "matter.js packages/model/src/standard/resources/window-covering-cluster.resource.ts:39,98,116-118,180-199 @862ad75f (Type, EndProductType, CurrentPositionLiftPercent100ths; DownOrClose ends at 100.00%)", "go-ha-catalog data/mqtt.json:1648-1912 (cover schema; payload_open/close/stop at 1756-1775, set_position_topic at 1816, tilt_command_topic at 1861)", "go-ha-catalog data/features.json:25-35 (cover feature flags)", "go-ha-catalog data/device_classes.json:38-49 (cover device classes)"},
+		Cites: []string{"matter.js packages/model/src/standard/elements/window-covering-device.element.ts:24 @862ad75f (WindowCovering mandatory)", "matter.js packages/model/src/standard/resources/window-covering-cluster.resource.ts:39,98,116-118,180-199 @862ad75f (Type, EndProductType, CurrentPositionLiftPercent100ths; DownOrClose ends at 100.00%)", "home-assistant/core homeassistant/components/cover/services.py:49-62 @2026.10.3 (set_cover_position requires SET_POSITION, stop_cover requires STOP)", "home-assistant/core homeassistant/components/cover/const.py:44-54 @2026.10.3 (CoverEntityFeature OPEN 1, CLOSE 2, SET_POSITION 4, STOP 8)", "home-assistant/core homeassistant/helpers/service.py:750-760 @2026.10.3 (a call on a referenced entity without the feature raises ServiceNotSupported)", "go-fabric cluster/cover/windowcovering_server.go:144-158,624-634 @v0.18.0 (GoToLiftPercentage served on Lift without PositionAwareLift; openOrClose maps the percentage to open or close)", "matter.js packages/node/src/behaviors/window-covering/WindowCoveringServer.ts:576-590 @db021da0 (without positionAwareLift: LiftPercent100thsValue 0 opens, else closes)", "go-ha-catalog data/mqtt.json:1648-1912 (cover schema; payload_open/close/stop at 1756-1775, set_position_topic at 1816, tilt_command_topic at 1861)", "go-ha-catalog data/features.json:25-35 (cover feature flags)", "go-ha-catalog data/device_classes.json:38-49 (cover device classes)"},
 		Type:  device.WindowCoveringType(),
 		Caveats: []Caveat{
 			{When: When{DeviceClass: []string{"garage", "gate", "door", "damper", "window"}}, Reason: "WindowCovering has no type for a {device_class}: Type and EndProductType are Unknown"},
@@ -1260,8 +1260,10 @@ var rows = []Row{
 				Commands: []Command{
 					{Kind: "handle", On: []string{"UpOrOpen"}, Raw: &Value{From: "extra.payload_open", Catalog: true}},
 					{Kind: "handle", On: []string{"DownOrClose"}, Raw: &Value{From: "extra.payload_close", Catalog: true}},
-					{Kind: "handle", On: []string{"StopMotion"}, Raw: &Value{From: "extra.payload_stop", Catalog: true}},
-					{Kind: "handle", On: []string{"GoToLiftPercentage"}, Method: "set_position", Raw: &Value{Field: "LiftPercent100thsValue", Linear: Linear{Offset: 0, Scale: -0.01, Add: 100}}},
+					{Kind: "handle", On: []string{"StopMotion"}, Raw: &Value{From: "extra.payload_stop", Catalog: true}, When: &When{Features: &Set{Any: []string{"STOP"}}}},
+					{Kind: "handle", On: []string{"GoToLiftPercentage"}, Method: "set_position", Raw: &Value{Field: "LiftPercent100thsValue", Linear: Linear{Offset: 0, Scale: -0.01, Add: 100}}, When: &When{Features: &Set{Any: []string{"SET_POSITION"}}}},
+					{Kind: "handle", On: []string{"GoToLiftPercentage"}, Raw: &Value{From: "extra.payload_open", Catalog: true}, When: &When{Features: &Set{None: []string{"SET_POSITION"}}}},
+					{Kind: "handle", On: []string{"GoToLiftPercentage"}, Raw: &Value{From: "extra.payload_close", Catalog: true}, When: &When{Features: &Set{None: []string{"SET_POSITION"}}}},
 					{Kind: "handle", On: []string{"GoToTiltPercentage"}, Method: "tilt", Raw: &Value{Field: "TiltPercent100thsValue", Linear: Linear{Offset: 0, Scale: -0.01, Add: 100}}, When: &When{Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT", "SET_TILT_POSITION"}}}},
 				},
 				declare: func(b *binding, ci int) device.Declaration {
@@ -1338,25 +1340,35 @@ var rows = []Row{
 						}
 						return resp, err
 					}
-					d.HandleStopMotion = func(_ context.Context, req windowcoveringdef.StopMotionRequest) (resp struct{}, err error) {
-						f := func(string) (any, bool) { return nil, false }
-						if true {
-							b.emit(ci, 2, f)
-						}
-						return resp, err
-					}
-					d.HandleGoToLiftPercentage = func(_ context.Context, req windowcoveringdef.GoToLiftPercentageRequest) (resp struct{}, err error) {
-						f := func(name string) (any, bool) {
-							switch name {
-							case "LiftPercent100thsValue":
-								return req.LiftPercent100thsValue, true
+					if b.match(&When{Features: &Set{Any: []string{"STOP"}}}) {
+						d.HandleStopMotion = func(_ context.Context, req windowcoveringdef.StopMotionRequest) (resp struct{}, err error) {
+							f := func(string) (any, bool) { return nil, false }
+							if true {
+								b.emit(ci, 2, f)
 							}
-							return nil, false
+							return resp, err
 						}
-						if true {
-							b.emit(ci, 3, f)
+					}
+					if b.match(&When{Features: &Set{Any: []string{"SET_POSITION"}}}) || b.match(&When{Features: &Set{None: []string{"SET_POSITION"}}}) || b.match(&When{Features: &Set{None: []string{"SET_POSITION"}}}) {
+						d.HandleGoToLiftPercentage = func(_ context.Context, req windowcoveringdef.GoToLiftPercentageRequest) (resp struct{}, err error) {
+							f := func(name string) (any, bool) {
+								switch name {
+								case "LiftPercent100thsValue":
+									return req.LiftPercent100thsValue, true
+								}
+								return nil, false
+							}
+							if true {
+								b.emit(ci, 3, f)
+							}
+							if slices.Contains([]uint16{uint16(0)}, req.LiftPercent100thsValue) {
+								b.emit(ci, 4, f)
+							}
+							if !slices.Contains([]uint16{uint16(0)}, req.LiftPercent100thsValue) {
+								b.emit(ci, 5, f)
+							}
+							return resp, err
 						}
-						return resp, err
 					}
 					if b.match(&When{Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT", "SET_TILT_POSITION"}}}) {
 						d.HandleGoToTiltPercentage = func(_ context.Context, req windowcoveringdef.GoToTiltPercentageRequest) (resp struct{}, err error) {
@@ -1368,7 +1380,7 @@ var rows = []Row{
 								return nil, false
 							}
 							if true {
-								b.emit(ci, 4, f)
+								b.emit(ci, 6, f)
 							}
 							return resp, err
 						}

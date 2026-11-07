@@ -381,6 +381,47 @@ func TestCover(t *testing.T) {
 	r.noMore()
 }
 
+// TestCoverOpenCloseOnly: a cover without SET_POSITION and STOP is served
+// GoToLiftPercentage as matter.js serves Lift without PositionAwareLift (0
+// opens, else closes) and hands out no StopMotion: Home Assistant refuses
+// set_cover_position and stop_cover for it (rows/cover.yaml cites).
+func TestCoverOpenCloseOnly(t *testing.T) {
+	e := entity("cover", hacatalog.PlatformCover, model.Description{
+		DeviceClass: "shutter",
+		Extra:       map[string]any{"supported_features": 3}, // OPEN|CLOSE
+	})
+	r := serve(t, e)
+	wantType(t, r, "cover", device.WindowCoveringType(), eligibility.StateMappable)
+	r.invoke("cover", windowcoveringdef.ClusterID, windowcoveringdef.CmdGoToLiftPercentage,
+		windowcoveringdef.GoToLiftPercentageRequest{LiftPercent100thsValue: 0})
+	expect(t, r.command(), "", "OPEN")
+	r.invoke("cover", windowcoveringdef.ClusterID, windowcoveringdef.CmdGoToLiftPercentage,
+		windowcoveringdef.GoToLiftPercentageRequest{LiftPercent100thsValue: 10000})
+	expect(t, r.command(), "", "CLOSE")
+	r.invoke("cover", windowcoveringdef.ClusterID, windowcoveringdef.CmdStopMotion, nil)
+	r.noMore()
+	r.invoke("cover", windowcoveringdef.ClusterID, windowcoveringdef.CmdUpOrOpen, nil)
+	expect(t, r.command(), "", "OPEN")
+	r.invoke("cover", windowcoveringdef.ClusterID, windowcoveringdef.CmdDownOrClose, nil)
+	expect(t, r.command(), "", "CLOSE")
+	r.noMore()
+}
+
+// TestCoverPositionNoStop: SET_POSITION without STOP keeps set_position and
+// hands out no StopMotion.
+func TestCoverPositionNoStop(t *testing.T) {
+	e := entity("cover", hacatalog.PlatformCover, model.Description{
+		DeviceClass: "shutter",
+		Extra:       map[string]any{"supported_features": 7}, // OPEN|CLOSE|SET_POSITION
+	})
+	r := serve(t, e)
+	r.invoke("cover", windowcoveringdef.ClusterID, windowcoveringdef.CmdGoToLiftPercentage,
+		windowcoveringdef.GoToLiftPercentageRequest{LiftPercent100thsValue: 2500})
+	expect(t, r.command(), "set_position", "75")
+	r.invoke("cover", windowcoveringdef.ClusterID, windowcoveringdef.CmdStopMotion, nil)
+	r.noMore()
+}
+
 func TestClimate(t *testing.T) {
 	e := entity("hvac", hacatalog.PlatformClimate, model.Description{Extra: map[string]any{
 		"modes": []string{"off", "heat", "cool", "heat_cool"}, "min_temp": 7, "max_temp": 30,
