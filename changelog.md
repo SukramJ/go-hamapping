@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.4] - 2026-11-07
+
 ### Fixed
 
 - A cover without `SET_POSITION` or `STOP` no longer gets
