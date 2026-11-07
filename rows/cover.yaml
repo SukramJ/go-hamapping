@@ -16,6 +16,11 @@ rows:
     cites:
       - matter.js packages/model/src/standard/elements/window-covering-device.element.ts:24 @862ad75f (WindowCovering mandatory)
       - matter.js packages/model/src/standard/resources/window-covering-cluster.resource.ts:39,98,116-118,180-199 @862ad75f (Type, EndProductType, CurrentPositionLiftPercent100ths; DownOrClose ends at 100.00%)
+      - "home-assistant/core homeassistant/components/cover/services.py:49-62 @2026.10.3 (set_cover_position requires SET_POSITION, stop_cover requires STOP)"
+      - home-assistant/core homeassistant/components/cover/const.py:44-54 @2026.10.3 (CoverEntityFeature OPEN 1, CLOSE 2, SET_POSITION 4, STOP 8)
+      - home-assistant/core homeassistant/helpers/service.py:750-760 @2026.10.3 (a call on a referenced entity without the feature raises ServiceNotSupported)
+      - go-fabric cluster/cover/windowcovering_server.go:144-158,624-634 @v0.18.0 (GoToLiftPercentage served on Lift without PositionAwareLift; openOrClose maps the percentage to open or close)
+      - "matter.js packages/node/src/behaviors/window-covering/WindowCoveringServer.ts:576-590 @db021da0 (without positionAwareLift: LiftPercent100thsValue 0 opens, else closes)"
     clusters:
       - cluster: WindowCovering
         features:
@@ -41,10 +46,20 @@ rows:
           - handle: DownOrClose
             raw: {from: extra.payload_close, catalog: true}
           - handle: StopMotion
+            when: {features: {any: [STOP]}}
             raw: {from: extra.payload_stop, catalog: true}
           - handle: GoToLiftPercentage
+            when: {features: {any: [SET_POSITION]}}
             method: set_position
             raw: {field: LiftPercent100thsValue, scale: -0.01, add: 100}
+          - handle: GoToLiftPercentage   # Lift without PositionAwareLift, as matter.js: 0 opens, else closes
+            when: {features: {none: [SET_POSITION]}}
+            if: {field: LiftPercent100thsValue, in: [0]}
+            raw: {from: extra.payload_open, catalog: true}
+          - handle: GoToLiftPercentage
+            when: {features: {none: [SET_POSITION]}}
+            if: {field: LiftPercent100thsValue, not_in: [0]}
+            raw: {from: extra.payload_close, catalog: true}
           - handle: GoToTiltPercentage
             when: {features: {any: [OPEN_TILT, CLOSE_TILT, SET_TILT_POSITION]}}
             method: tilt

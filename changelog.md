@@ -6,6 +6,17 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.4] - 2026-11-07
+
+### Fixed
+
+- A cover without `SET_POSITION` or `STOP` no longer gets
+  `set_cover_position` or `stop_cover` calls, which Home Assistant refuses
+  with `ServiceNotSupported` (go-ha2fabric #40). `StopMotion` is handed
+  out only with `STOP`; without `SET_POSITION`, `GoToLiftPercentage` follows
+  matter.js's fallback for Lift without PositionAwareLift: 0 opens the
+  cover, any other value closes it (`rows/cover.yaml`).
+
 ## [0.4.3] - 2026-11-07
 
 ### Changed
