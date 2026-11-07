@@ -6,6 +6,17 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- go-fabric `v0.18.0` (was `v0.17.0`). What a row sees: the device kit
+  mounts `cluster/sensing.Occupancy` for OccupancySensing, which emits
+  OccupancyChanged only with the OccupancyEvent feature; the motion and
+  occupancy rows declare PassiveInfrared and Other without it, so their
+  FeatureMap stays `0x2` and `0x1` (the new `0x202` default belongs to
+  `cluster/measurement`'s projected server, which no row uses).
+  `cluster/light.ColorControlServerConfig` is no longer comparable; no row
+  or test compares one.
+
 ## [0.4.2] - 2026-11-05
 
 ### Changed
