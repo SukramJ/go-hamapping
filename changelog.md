@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.3] - 2026-11-07
+
 ### Changed
 
 - go-fabric `v0.18.0` (was `v0.17.0`). What a row sees: the device kit
