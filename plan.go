@@ -87,10 +87,22 @@ type Plan struct {
 	bindings map[string]*binding
 	devices  map[string]*device.Device
 
-	mu    sync.Mutex
-	fn    func(model.Command)
-	unsub []func()
-	built bool
+	mu        sync.Mutex
+	fn        func(model.Command)
+	discardFn func(Discard)
+	unsub     []func()
+	built     bool
+}
+
+// Discard is a controller's command a row answers with the cluster's
+// success and hands to no one: the entity has no action for it (an Off on
+// a plug that only activates; a Toggle of a mute no service toggles). It
+// is what the cluster's own server would otherwise run without the daemon
+// hearing of it, made visible so the daemon can log it.
+type Discard struct {
+	Entity  model.Entity
+	Cluster string
+	Command string
 }
 
 // Options adjust [Map]. The zero value is the default.
@@ -504,6 +516,24 @@ func (p *Plan) deliver(c model.Command) {
 	p.mu.Unlock()
 	if fn != nil {
 		fn(c)
+	}
+}
+
+// OnDiscard sets the function a discarded command ([Discard]) reaches the
+// daemon through. fn runs inline, in the controller's request, so it must
+// not block. nil drops the discards.
+func (p *Plan) OnDiscard(fn func(Discard)) {
+	p.mu.Lock()
+	p.discardFn = fn
+	p.mu.Unlock()
+}
+
+func (p *Plan) deliverDiscard(d Discard) {
+	p.mu.Lock()
+	fn := p.discardFn
+	p.mu.Unlock()
+	if fn != nil {
+		fn(d)
 	}
 }
 

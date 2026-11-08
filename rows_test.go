@@ -464,6 +464,11 @@ func TestLock(t *testing.T) {
 	expect(t, r.command(), "", "UNLOCK")
 	r.invokeTimed("lock", doorlockdef.ClusterID, doorlockdef.CmdLockDoor, doorlockdef.LockDoorRequest{})
 	expect(t, r.command(), "", "LOCK")
+	// UnlockWithTimeout unlocks through the entity; the relock after the
+	// timeout is open (brief C3 §3a).
+	r.invokeTimed("lock", doorlockdef.ClusterID, doorlockdef.CmdUnlockWithTimeout, doorlockdef.UnlockWithTimeoutRequest{Timeout: 5})
+	expect(t, r.command(), "", "UNLOCK")
+	r.noMore()
 }
 
 func TestLockOpenIsPartial(t *testing.T) {

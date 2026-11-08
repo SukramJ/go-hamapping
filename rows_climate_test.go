@@ -59,6 +59,8 @@ func TestClimateAirConditioner(t *testing.T) {
 	expect(t, r.command(), hamapping.MethodTurnOff, "OFF")
 	r.invoke("ac", onoffdef.ClusterID, onoffdef.CmdOn, nil)
 	expect(t, r.command(), hamapping.MethodTurnOn, "ON")
+	r.invoke("ac", onoffdef.ClusterID, onoffdef.CmdToggle, nil)
+	expect(t, r.command(), hamapping.MethodToggle, "TOGGLE")
 	r.write("ac", fancontroldef.ClusterID, fancontroldef.AttrFanMode, spec.Uint8(uint8(fancontroldef.FanModeHigh)))
 	expect(t, r.command(), hamapping.MethodFanMode, "high")
 	r.write("ac", fancontroldef.ClusterID, fancontroldef.AttrPercentSetting, spec.Uint8(20))

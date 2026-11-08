@@ -84,6 +84,8 @@ func TestParseRefuses(t *testing.T) {
 		"event name":           {"{event: ShortRelease}", "{event: \"Short Release\"}"},
 		"otherwise not handle": {"            raw: {from: extra.payload_on, catalog: true}", "            raw: {from: extra.payload_on, catalog: true}\n            otherwise: {Status: X}"},
 		"otherwise without if": {"json: {state: {const: \"OFF\"}}", "json: {state: {const: \"OFF\"}}\n            otherwise: {Status: X}"},
+		"discard with payload": {"handle: Off", "handle: Off\n            discard: true"},
+		"discard not handle":   {"            raw: {from: extra.payload_on, catalog: true}", "            discard: true"},
 		"options list":         {"list: desc.options", "list: desc.min"},
 		"options current":      {"current: state,", "current: device_class,"},
 		"options method":       {"method: select_option", "method: \"\""},

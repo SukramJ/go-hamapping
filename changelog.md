@@ -6,6 +6,40 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.6] - 2026-11-08
+
+Every command of an entity-run cluster is bound; a discard is visible
+(go-ha2fabric #51).
+
+### Added
+
+- `discard: true` on a `handle` command: the command is answered with the
+  cluster's success and handed to the new `Plan.OnDiscard` (`Discard`:
+  entity, cluster, command) instead of `Plan.OnChange`, so a daemon can
+  log what a controller asked for and the entity has no action for
+  (`docs/rows.md`, Commands).
+- `MethodToggle` (`toggle`).
+- The rule, held by every row test through the rig: a cluster whose
+  commands the entity runs (`handle`, no `change`) binds every command the
+  device accepts — the served AcceptedCommandList names only handled or
+  discarded commands (`bindsEveryCommand`, `table_test.go`).
+
+### Fixed
+
+- Off, Toggle, OffWithEffect, OnWithRecallGlobalScene and OnWithTimedOff on
+  a `button`, `script`, `scene` or `automation` plug fell to go-fabric's
+  OnOff server: answered with success, no service call, no trace — and
+  Toggle stored OnOff true (go-ha2fabric #51). The on family now activates
+  (press, `turn_on`, `trigger`), the off family is discarded through
+  `Plan.OnDiscard` (`rows/button.yaml`, `rows/script.yaml`,
+  `rows/scene.yaml`, `rows/automation.yaml`, `docs/by_design.md`).
+- Toggle on `climate/air_conditioner`, `media_player/speaker` and
+  `media_player/video_player` is `toggle` (`climate.toggle`,
+  `media_player.toggle`, 2026.10.3); on `media_player/speaker_mute` it is
+  discarded (no service toggles mute). UnlockWithTimeout on
+  `lock/door_lock` unlocks, as UnlockDoor; the relock after the timeout is
+  left open.
+
 ## [0.4.5] - 2026-11-08
 
 ### Added

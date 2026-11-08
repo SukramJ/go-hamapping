@@ -65,6 +65,30 @@ timestamp (`scene/__init__.py:104-110`), an automation is on while it is
 enabled (`automation/__init__.py:122-127`) — so the plug stays off and never
 flips. Rows `script/plug`, `scene/plug`, `automation/plug`.
 
+Every command of the plug's OnOff is bound (go-ha2fabric #51). The on
+family — On, Toggle, OnWithTimedOff, OnWithRecallGlobalScene — activates:
+the plug is always off, so each of them means "turn on", as matter-hub's
+PlugOnOffServer turns on from off for OnWithTimedOff and
+OnWithRecallGlobalScene and matter.js's Toggle from off is `on()`
+(`packages/backend/src/matter/behaviors/on-off-server.ts:275-299` at
+`664575a`). The off family — Off, OffWithEffect — has nothing to do and is
+discarded; matter-hub discards it too, silently (`turnOff: null`: `off()`
+only schedules the auto-reset, `on-off-server.ts:168-172`), while here the
+discard reaches the daemon through `Plan.OnDiscard`, so a controller's "turn
+off <scene>" is answered with success and logged, not answered with success
+and lost. The alternative, trimming AcceptedCommandList, is not open: Off,
+On and Toggle are mandatory and the plug's Lighting feature makes the other
+three so (go-fabric `cluster/spec/onoff/definition_gen.go:312-350` at
+v0.18.0). Unbound, the commands ran in go-fabric's own OnOff server
+(`cluster/onoff/server.go:748-752`), which stored Toggle's flipped OnOff
+without a service call. Rows `button/plug`, `script/plug`, `scene/plug`,
+`automation/plug`; the same rule closed Toggle on `climate/air_conditioner`
+and the media players' OnOff (`climate.toggle`, `media_player.toggle`:
+`climate/services.yaml:145-151`, `media_player/services.yaml:17-24` at
+2026.10.3), discarded Toggle on `media_player/speaker_mute` (no service
+toggles mute) and bound UnlockWithTimeout on `lock/door_lock` to the unlock
+(the relock after the timeout stays open).
+
 ## A select's mode is its option's index
 
 A Home Assistant `select` becomes a ModeSelect whose modes are its options

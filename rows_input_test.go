@@ -7,6 +7,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/SukramJ/go-fabric/cluster/spec"
 	onoffdef "github.com/SukramJ/go-fabric/cluster/spec/onoff"
 	switchdef "github.com/SukramJ/go-fabric/cluster/spec/switchcluster"
 	"github.com/SukramJ/go-fabric/controller/client"
@@ -20,16 +21,7 @@ import (
 )
 
 func TestButton(t *testing.T) {
-	r := serve(t, entity("btn", hacatalog.PlatformButton, model.Description{Name: model.L("Restart")}))
-	wantType(t, r, "btn", device.OnOffPlugInUnitType(), eligibility.StateMappable)
-	r.apply("btn", value("2026-10-31T10:00:00+00:00"))
-	r.invoke("btn", onoffdef.ClusterID, onoffdef.CmdOn, nil)
-	expect(t, r.command(), hamapping.MethodPress, "PRESS")
-	r.apply("btn", value("2026-10-31T10:00:05+00:00"))
-	if st, _ := onoffdef.StateFrom(r.values("btn", onoffdef.ClusterID)); st.OnOff {
-		t.Fatal("OnOff true after a press, want false")
-	}
-	r.noMore()
+	actionPlug(t, hacatalog.PlatformButton, "2026-10-31T10:00:00+00:00", hamapping.MethodPress, "PRESS")
 }
 
 func TestScript(t *testing.T) {
@@ -45,8 +37,10 @@ func TestAutomation(t *testing.T) {
 }
 
 // actionPlug checks an action target served as an OnOffPlugInUnit: OnOff
-// stays false whatever the entity's state, and On delivers method with
-// payload.
+// stays false whatever the entity's state; On, Toggle, OnWithTimedOff and
+// OnWithRecallGlobalScene each deliver method with payload (the plug is
+// always off, so every command of the on family activates it); Off and
+// OffWithEffect are discarded, visibly, and nothing flips.
 func actionPlug(t *testing.T, p hacatalog.Platform, state any, method, payload string) {
 	t.Helper()
 	r := serve(t, entity("act", p, model.Description{Name: model.L("Good night")}))
@@ -55,10 +49,29 @@ func actionPlug(t *testing.T, p hacatalog.Platform, state any, method, payload s
 	if st, _ := onoffdef.StateFrom(r.values("act", onoffdef.ClusterID)); st.OnOff {
 		t.Fatalf("OnOff true after state %v, want false", state)
 	}
-	r.invoke("act", onoffdef.ClusterID, onoffdef.CmdOn, nil)
-	expect(t, r.command(), method, payload)
+	for _, c := range []struct {
+		name   string
+		id     uint32
+		fields spec.Encodable
+	}{
+		{"On", onoffdef.CmdOn, nil},
+		{"Toggle", onoffdef.CmdToggle, nil},
+		{"OnWithTimedOff", onoffdef.CmdOnWithTimedOff, onoffdef.OnWithTimedOffRequest{OnTime: 10, OffWaitTime: 0}},
+		{"OnWithRecallGlobalScene", onoffdef.CmdOnWithRecallGlobalScene, onoffdef.OnWithRecallGlobalSceneRequest{}},
+	} {
+		r.invoke("act", onoffdef.ClusterID, c.id, c.fields)
+		expect(t, r.command(), method, payload)
+		if st, _ := onoffdef.StateFrom(r.values("act", onoffdef.ClusterID)); st.OnOff {
+			t.Fatalf("OnOff true after %s, want false", c.name)
+		}
+	}
+	r.invoke("act", onoffdef.ClusterID, onoffdef.CmdOff, nil)
+	expectDiscard(t, r.discard(), "act", "OnOff", "Off")
+	r.invoke("act", onoffdef.ClusterID, onoffdef.CmdOffWithEffect, onoffdef.OffWithEffectRequest{})
+	expectDiscard(t, r.discard(), "act", "OnOff", "OffWithEffect")
+	r.apply("act", value(state))
 	if st, _ := onoffdef.StateFrom(r.values("act", onoffdef.ClusterID)); st.OnOff {
-		t.Fatal("OnOff true after On, want false")
+		t.Fatal("OnOff true after the discards, want false")
 	}
 	r.noMore()
 }

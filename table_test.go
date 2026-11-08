@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/SukramJ/go-fabric/cluster/spec"
 	"github.com/SukramJ/go-fabric/device"
 	"github.com/SukramJ/go-fabric/eligibility"
 	hacatalog "github.com/SukramJ/go-ha-catalog"
@@ -53,6 +54,58 @@ func TestRowsNameGoFabricTypes(t *testing.T) {
 		}
 		if len(r.Cites) == 0 {
 			t.Errorf("%s: no cites", r.ID)
+		}
+	}
+}
+
+// bindsEveryCommand holds every served endpoint of the rig against the
+// rule of docs/rows.md "Commands": a cluster whose commands the entity
+// runs (handle, no change) binds every command the device accepts — the
+// served AcceptedCommandList names only handled or discarded commands,
+// so none falls to the kit's server unheard (go-ha2fabric #51: an Off on
+// a scene's plug answered success and reached no one). A cluster with a
+// change command is the server's and is not held.
+func bindsEveryCommand(t *testing.T, r *rig) {
+	t.Helper()
+	all := hamapping.Rows()
+	rows := map[string]*hamapping.Row{}
+	for i := range all {
+		rows[all[i].ID] = &all[i]
+	}
+	for i := range r.plan.Endpoints {
+		ep := &r.plan.Endpoints[i]
+		cs := rows[ep.Row].Clusters
+		for ci := range cs {
+			c := &cs[ci]
+			bound, change := map[string]bool{}, false
+			for k := range c.Commands {
+				switch cmd := &c.Commands[k]; cmd.Kind {
+				case "handle":
+					for _, n := range cmd.On {
+						bound[n] = true
+					}
+				case "change":
+					change = true
+				}
+			}
+			if len(bound) == 0 || change {
+				continue
+			}
+			def := spec.Lookup(c.ID)
+			if def == nil {
+				t.Fatalf("%s: %s has no registered definition", ep.Row, c.Name)
+			}
+			accepted, _ := r.values(ep.Key, c.ID).Value(spec.AttrAcceptedCommandList)
+			for _, el := range accepted.Children {
+				i := slices.IndexFunc(def.Commands, func(cm spec.Command) bool { return uint64(cm.ID) == el.El.Uint })
+				name := ""
+				if i >= 0 {
+					name = def.Commands[i].Name
+				}
+				if !bound[name] {
+					t.Errorf("%s: %s accepts %s (0x%02X), which no handle binds or discards — the kit's server would run it unheard", ep.Row, c.Name, name, el.El.Uint)
+				}
+			}
 		}
 	}
 }

@@ -196,6 +196,21 @@ func TestGenerateOtherwise(t *testing.T) {
 	}
 }
 
+func TestGenerateDiscard(t *testing.T) {
+	lock := "          - handle: LockDoor\n            raw: {const: LOCK}"
+	out, err := GenerateFiles([]rowfile.File{parse(t, strings.Replace(base, lock, "          - handle: LockDoor\n            discard: true", 1))})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s := string(out); !strings.Contains(s, "b.discard(ci, ") || !strings.Contains(s, "Discard: true") {
+		t.Fatalf("no discard handler:\n%s", s)
+	}
+	twice := strings.Replace(base, lock, lock+"\n          - handle: LockDoor\n            discard: true", 1)
+	if err := generate(t, twice); err == nil {
+		t.Error("a discard beside another command of the handler generated")
+	}
+}
+
 func parse(t *testing.T, src string) rowfile.File {
 	t.Helper()
 	f, err := rowfile.Parse([]byte(src))

@@ -166,6 +166,10 @@ type Command struct {
 	// computes: "rgb_from_xy", "rgb_from_hs" (color.r, color.g, color.b),
 	// "hs_from_xy" (color.h, color.s).
 	Derive string
+	// Discard marks a handled command the entity has no action for: it is
+	// answered with the cluster's success and reaches [Plan.OnDiscard]
+	// instead of [Plan.OnChange].
+	Discard bool
 }
 
 // Field is one key of a JSON payload.

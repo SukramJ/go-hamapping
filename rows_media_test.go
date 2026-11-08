@@ -37,6 +37,8 @@ func TestMediaPlayerSpeaker(t *testing.T) {
 	}
 	r.invoke("spk", onoffdef.ClusterID, onoffdef.CmdOff, nil)
 	expect(t, r.command(), hamapping.MethodTurnOff, "OFF")
+	r.invoke("spk", onoffdef.ClusterID, onoffdef.CmdToggle, nil)
+	expect(t, r.command(), hamapping.MethodToggle, "TOGGLE")
 	r.invoke("spk", levelcontroldef.ClusterID, levelcontroldef.CmdMoveToLevel, levelcontroldef.MoveToLevelRequest{Level: 200})
 	expect(t, r.command(), hamapping.MethodVolumeLevel, "200")
 	r.apply("spk", on(map[string]any{"state": "standby", "volume_level": 0.5}))
@@ -57,6 +59,12 @@ func TestMediaPlayerMute(t *testing.T) {
 	expect(t, r.command(), hamapping.MethodVolumeMute, "false")
 	r.invoke("spk", onoffdef.ClusterID, onoffdef.CmdOff, nil)
 	expect(t, r.command(), hamapping.MethodVolumeMute, "true")
+	// No service toggles mute and a handler reads no state: discarded, visibly.
+	r.invoke("spk", onoffdef.ClusterID, onoffdef.CmdToggle, nil)
+	expectDiscard(t, r.discard(), "spk", "OnOff", "Toggle")
+	if st, _ := onoffdef.StateFrom(r.values("spk", onoffdef.ClusterID)); st.OnOff {
+		t.Fatal("OnOff true after the discarded Toggle")
+	}
 	r.noMore()
 }
 
@@ -89,6 +97,8 @@ func TestMediaPlayerTV(t *testing.T) {
 	expect(t, r.command(), hamapping.MethodMediaStop, "STOP")
 	r.invoke("tv", onoffdef.ClusterID, onoffdef.CmdOn, nil)
 	expect(t, r.command(), hamapping.MethodTurnOn, "ON")
+	r.invoke("tv", onoffdef.ClusterID, onoffdef.CmdToggle, nil)
+	expect(t, r.command(), hamapping.MethodToggle, "TOGGLE")
 	res, err := fabrictest.Invoke(r.ctx, r.pair, client.CommandAt(r.ep("tv"), keypaddef.ClusterID, keypaddef.CmdSendKey),
 		keypaddef.SendKeyRequest{KeyCode: keypaddef.CecKeyCodeVolumeUp})
 	if err != nil {

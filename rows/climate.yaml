@@ -6,6 +6,7 @@
 # goes to turn_on and turn_off, its fan to fan_mode with the mode's name.
 platform: climate
 cites:
+  - home-assistant/core homeassistant/components/climate/services.yaml:131-151 @2026.10.3 (turn_on, turn_off, toggle; toggle needs TURN_ON and TURN_OFF)
   - go-ha-catalog data/mqtt.json:1200-1647 (climate schema; modes at 1385 with its default, mode_command_topic at 1370, temperature_command_topic at 1572, temperature_low/high_command_topic at 1582/1602)
   - go-ha-catalog gen_vocab.go:837-847 (HVACMode vocabulary)
 rows:
@@ -47,6 +48,9 @@ rows:
           - handle: "Off"
             method: turn_off
             raw: {const: "OFF"}
+          - handle: Toggle
+            method: toggle
+            raw: {const: TOGGLE}
       - &thermostat
         cluster: Thermostat
         features:
