@@ -32,6 +32,37 @@ func TestButton(t *testing.T) {
 	r.noMore()
 }
 
+func TestScript(t *testing.T) {
+	actionPlug(t, "script", "on", hamapping.MethodTurnOn, "RUN")
+}
+
+func TestScene(t *testing.T) {
+	actionPlug(t, hacatalog.PlatformScene, "2026-11-08T10:00:00+00:00", hamapping.MethodTurnOn, "ACTIVATE")
+}
+
+func TestAutomation(t *testing.T) {
+	actionPlug(t, "automation", "on", hamapping.MethodTrigger, "TRIGGER")
+}
+
+// actionPlug checks an action target served as an OnOffPlugInUnit: OnOff
+// stays false whatever the entity's state, and On delivers method with
+// payload.
+func actionPlug(t *testing.T, p hacatalog.Platform, state any, method, payload string) {
+	t.Helper()
+	r := serve(t, entity("act", p, model.Description{Name: model.L("Good night")}))
+	wantType(t, r, "act", device.OnOffPlugInUnitType(), eligibility.StateMappable)
+	r.apply("act", value(state))
+	if st, _ := onoffdef.StateFrom(r.values("act", onoffdef.ClusterID)); st.OnOff {
+		t.Fatalf("OnOff true after state %v, want false", state)
+	}
+	r.invoke("act", onoffdef.ClusterID, onoffdef.CmdOn, nil)
+	expect(t, r.command(), method, payload)
+	if st, _ := onoffdef.StateFrom(r.values("act", onoffdef.ClusterID)); st.OnOff {
+		t.Fatal("OnOff true after On, want false")
+	}
+	r.noMore()
+}
+
 // switchEvents are the Switch events of the entity's endpoint, by id, in
 // report order.
 func (r *rig) switchEvents(key string) []uint32 {

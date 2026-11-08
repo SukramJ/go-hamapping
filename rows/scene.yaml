@@ -1,0 +1,21 @@
+# Home Assistant's scene: an action target. Its state is the timestamp of
+# the last activation; a controller's On activates it.
+platform: scene
+rows:
+  - id: plug
+    when: {}
+    type: OnOffPlugInUnit
+    verdict: mappable
+    cites:
+      - matter.js packages/model/src/standard/elements/on-off-plug-in-unit.element.ts:27-31 @862ad75f (OnOff mandatory, feature LT)
+      - home-assistant/core homeassistant/components/scene/services.yaml:3-14 @2026.10.3 (turn_on, optional transition)
+      - home-assistant/core homeassistant/components/scene/__init__.py:104-110 @2026.10.3 (the state is the last activation's timestamp or None)
+      - home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/scene/index.ts:9-19 @664575a (PlugOnOffServer; scenes are momentary, isOn always false, On is scene.turn_on)
+    clusters:
+      - cluster: OnOff
+        attributes:
+          - {attribute: OnOff, const: false}
+        commands:
+          - handle: "On"
+            method: turn_on
+            raw: {const: ACTIVATE}
