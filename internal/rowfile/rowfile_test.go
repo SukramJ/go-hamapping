@@ -117,7 +117,7 @@ func TestLoad(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(files) < 13 || files[0].Name != "binary_sensor.yaml" {
+	if len(files) < 13 || files[0].Name != "automation.yaml" {
 		t.Fatalf("%d files, first %s", len(files), files[0].Name)
 	}
 	if _, err := Load(t.TempDir()); err == nil {

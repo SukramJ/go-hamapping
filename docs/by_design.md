@@ -49,6 +49,22 @@ OnOff stays off, as home-assistant-matter-hub serves it
 triggers, while a GenericSwitch reports presses to the controller — the
 other direction. Row `button/plug`.
 
+## A script, scene or automation is a plug-in unit that always reads off
+
+A Home Assistant `script`, `scene` or `automation` becomes an
+OnOffPlugInUnit whose On calls `script.turn_on`, `scene.turn_on` or
+`automation.trigger` (`script/services.yaml:4-8`, `scene/services.yaml:3-14`,
+`automation/services.yaml:22-30` at `2026.10.3`) and whose OnOff stays off,
+as home-assistant-matter-hub serves them since its #423
+(`packages/backend/src/matter/endpoints/legacy/script/index.ts:8-14`,
+`legacy/scene/index.ts:9-19`, `legacy/automation/index.ts:8-14` at
+`664575a`, `isOn: () => false`). A controller's On is a trigger, while the
+entity's own state means something else — a script is on while it runs
+(`script/__init__.py:606-610`), a scene's state is its last activation's
+timestamp (`scene/__init__.py:104-110`), an automation is on while it is
+enabled (`automation/__init__.py:122-127`) — so the plug stays off and never
+flips. Rows `script/plug`, `scene/plug`, `automation/plug`.
+
 ## A select's mode is its option's index
 
 A Home Assistant `select` becomes a ModeSelect whose modes are its options

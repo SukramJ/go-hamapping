@@ -81,6 +81,7 @@ const (
 	MethodTemperatureHigh = "temperature_high"
 	MethodTemperatureLow  = "temperature_low"
 	MethodTilt            = "tilt"
+	MethodTrigger         = "trigger"
 	MethodTurnOff         = "turn_off"
 	MethodTurnOn          = "turn_on"
 	MethodVolumeLevel     = "volume_level"
@@ -88,10 +89,49 @@ const (
 )
 
 // methods are the method constants, sorted.
-var methods = []string{MethodCloseValve, MethodDirection, MethodFanMode, MethodGoHome, MethodKey, MethodMediaPause, MethodMediaPlay, MethodMediaStop, MethodMode, MethodOpenValve, MethodOperationMode, MethodOscillation, MethodPause, MethodPercentage, MethodPresetMode, MethodPress, MethodResume, MethodRunMode, MethodSelectOption, MethodSetPosition, MethodTemperature, MethodTemperatureHigh, MethodTemperatureLow, MethodTilt, MethodTurnOff, MethodTurnOn, MethodVolumeLevel, MethodVolumeMute}
+var methods = []string{MethodCloseValve, MethodDirection, MethodFanMode, MethodGoHome, MethodKey, MethodMediaPause, MethodMediaPlay, MethodMediaStop, MethodMode, MethodOpenValve, MethodOperationMode, MethodOscillation, MethodPause, MethodPercentage, MethodPresetMode, MethodPress, MethodResume, MethodRunMode, MethodSelectOption, MethodSetPosition, MethodTemperature, MethodTemperatureHigh, MethodTemperatureLow, MethodTilt, MethodTrigger, MethodTurnOff, MethodTurnOn, MethodVolumeLevel, MethodVolumeMute}
 
 // rows is the table, in the order [Map] tries it.
 var rows = []Row{
+	{
+		ID: "automation/plug", Platform: "automation",
+		When:  When{},
+		State: eligibility.StateMappable,
+		Cites: []string{"matter.js packages/model/src/standard/elements/on-off-plug-in-unit.element.ts:27-31 @862ad75f (OnOff mandatory, feature LT)", "home-assistant/core homeassistant/components/automation/services.yaml:22-30 @2026.10.3 (trigger, skip_condition default true)", "home-assistant/core homeassistant/components/automation/__init__.py:122-127 @2026.10.3 (is_on means enabled, not running)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/automation/index.ts:8-14 @664575a (PlugOnOffServer; isOn always false, On is automation.trigger)"},
+		Type:  device.OnOffPlugInUnitType(),
+		Clusters: []Cluster{
+			{
+				Name: "OnOff", ID: onoffdef.ClusterID,
+				Attributes: []Attr{
+					{Name: "OnOff", Value: Value{Const: false, HasConst: true}},
+				},
+				Commands: []Command{
+					{Kind: "handle", On: []string{"On"}, Method: "trigger", Raw: &Value{Const: "TRIGGER", HasConst: true}},
+				},
+				declare: func(b *binding, ci int) device.Declaration {
+					var d onoffdef.Declare
+					d.HandleOn = func(_ context.Context, req onoffdef.OnRequest) (resp struct{}, err error) {
+						f := func(string) (any, bool) { return nil, false }
+						if true {
+							b.emit(ci, 0, f)
+						}
+						return resp, err
+					}
+					return d
+				},
+				apply: func(b *binding, ci int, st model.State) (any, error) {
+					var p onoffdef.Patch
+					n := 0
+					p.OnOff = new(false)
+					n++
+					if n == 0 {
+						return nil, nil
+					}
+					return p, onoffdef.Wrap(b.server(onoffdef.ClusterID)).Set(p)
+				},
+			},
+		},
+	},
 	{
 		ID: "binary_sensor/contact", Platform: "binary_sensor",
 		When:  When{DeviceClass: []string{"door", "window", "opening", "garage_door"}},
@@ -2992,6 +3032,84 @@ var rows = []Row{
 		When:   When{},
 		State:  eligibility.StateUnmappable,
 		Reason: "no generic Matter counterpart for a number entity",
+	},
+	{
+		ID: "scene/plug", Platform: "scene",
+		When:  When{},
+		State: eligibility.StateMappable,
+		Cites: []string{"matter.js packages/model/src/standard/elements/on-off-plug-in-unit.element.ts:27-31 @862ad75f (OnOff mandatory, feature LT)", "home-assistant/core homeassistant/components/scene/services.yaml:3-14 @2026.10.3 (turn_on, optional transition)", "home-assistant/core homeassistant/components/scene/__init__.py:104-110 @2026.10.3 (the state is the last activation's timestamp or None)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/scene/index.ts:9-19 @664575a (PlugOnOffServer; scenes are momentary, isOn always false, On is scene.turn_on)"},
+		Type:  device.OnOffPlugInUnitType(),
+		Clusters: []Cluster{
+			{
+				Name: "OnOff", ID: onoffdef.ClusterID,
+				Attributes: []Attr{
+					{Name: "OnOff", Value: Value{Const: false, HasConst: true}},
+				},
+				Commands: []Command{
+					{Kind: "handle", On: []string{"On"}, Method: "turn_on", Raw: &Value{Const: "ACTIVATE", HasConst: true}},
+				},
+				declare: func(b *binding, ci int) device.Declaration {
+					var d onoffdef.Declare
+					d.HandleOn = func(_ context.Context, req onoffdef.OnRequest) (resp struct{}, err error) {
+						f := func(string) (any, bool) { return nil, false }
+						if true {
+							b.emit(ci, 0, f)
+						}
+						return resp, err
+					}
+					return d
+				},
+				apply: func(b *binding, ci int, st model.State) (any, error) {
+					var p onoffdef.Patch
+					n := 0
+					p.OnOff = new(false)
+					n++
+					if n == 0 {
+						return nil, nil
+					}
+					return p, onoffdef.Wrap(b.server(onoffdef.ClusterID)).Set(p)
+				},
+			},
+		},
+	},
+	{
+		ID: "script/plug", Platform: "script",
+		When:  When{},
+		State: eligibility.StateMappable,
+		Cites: []string{"matter.js packages/model/src/standard/elements/on-off-plug-in-unit.element.ts:27-31 @862ad75f (OnOff mandatory, feature LT)", "home-assistant/core homeassistant/components/script/services.yaml:4-8 @2026.10.3 (turn_on, target domain script, no fields)", "home-assistant/core homeassistant/components/script/__init__.py:606-610 @2026.10.3 (is_on is script.is_running, on only while it runs)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/script/index.ts:8-14 @664575a (PlugOnOffServer; isOn always false, On is script.turn_on, no Off)"},
+		Type:  device.OnOffPlugInUnitType(),
+		Clusters: []Cluster{
+			{
+				Name: "OnOff", ID: onoffdef.ClusterID,
+				Attributes: []Attr{
+					{Name: "OnOff", Value: Value{Const: false, HasConst: true}},
+				},
+				Commands: []Command{
+					{Kind: "handle", On: []string{"On"}, Method: "turn_on", Raw: &Value{Const: "RUN", HasConst: true}},
+				},
+				declare: func(b *binding, ci int) device.Declaration {
+					var d onoffdef.Declare
+					d.HandleOn = func(_ context.Context, req onoffdef.OnRequest) (resp struct{}, err error) {
+						f := func(string) (any, bool) { return nil, false }
+						if true {
+							b.emit(ci, 0, f)
+						}
+						return resp, err
+					}
+					return d
+				},
+				apply: func(b *binding, ci int, st model.State) (any, error) {
+					var p onoffdef.Patch
+					n := 0
+					p.OnOff = new(false)
+					n++
+					if n == 0 {
+						return nil, nil
+					}
+					return p, onoffdef.Wrap(b.server(onoffdef.ClusterID)).Set(p)
+				},
+			},
+		},
 	},
 	{
 		ID: "select/mode_select", Platform: "select",

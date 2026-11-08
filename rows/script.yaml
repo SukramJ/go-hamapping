@@ -1,0 +1,21 @@
+# Home Assistant's script: an action target. Its state is on only while it
+# runs; a controller's On runs it.
+platform: script
+rows:
+  - id: plug
+    when: {}
+    type: OnOffPlugInUnit
+    verdict: mappable
+    cites:
+      - matter.js packages/model/src/standard/elements/on-off-plug-in-unit.element.ts:27-31 @862ad75f (OnOff mandatory, feature LT)
+      - home-assistant/core homeassistant/components/script/services.yaml:4-8 @2026.10.3 (turn_on, target domain script, no fields)
+      - home-assistant/core homeassistant/components/script/__init__.py:606-610 @2026.10.3 (is_on is script.is_running, on only while it runs)
+      - home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/script/index.ts:8-14 @664575a (PlugOnOffServer; isOn always false, On is script.turn_on, no Off)
+    clusters:
+      - cluster: OnOff
+        attributes:
+          - {attribute: OnOff, const: false}
+        commands:
+          - handle: "On"
+            method: turn_on
+            raw: {const: RUN}

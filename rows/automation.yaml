@@ -1,0 +1,21 @@
+# Home Assistant's automation: an action target. Its state is on while it is
+# enabled, not while it runs; a controller's On triggers it.
+platform: automation
+rows:
+  - id: plug
+    when: {}
+    type: OnOffPlugInUnit
+    verdict: mappable
+    cites:
+      - matter.js packages/model/src/standard/elements/on-off-plug-in-unit.element.ts:27-31 @862ad75f (OnOff mandatory, feature LT)
+      - home-assistant/core homeassistant/components/automation/services.yaml:22-30 @2026.10.3 (trigger, skip_condition default true)
+      - home-assistant/core homeassistant/components/automation/__init__.py:122-127 @2026.10.3 (is_on means enabled, not running)
+      - home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/automation/index.ts:8-14 @664575a (PlugOnOffServer; isOn always false, On is automation.trigger)
+    clusters:
+      - cluster: OnOff
+        attributes:
+          - {attribute: OnOff, const: false}
+        commands:
+          - handle: "On"
+            method: trigger
+            raw: {const: TRIGGER}
