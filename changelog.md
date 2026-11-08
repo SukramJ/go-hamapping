@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.5] - 2026-11-08
+
 ### Added
 
 - Rows for Home Assistant's `script`, `scene` and `automation`: each is an
