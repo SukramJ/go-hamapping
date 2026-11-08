@@ -863,6 +863,9 @@ func (g *gen) commands(w *bytes.Buffer, c *rowfile.Cluster, d def) error {
 		if cmd.Derive != "" {
 			fmt.Fprintf(w, ", Derive: %q", cmd.Derive)
 		}
+		if cmd.Discard {
+			w.WriteString(", Discard: true")
+		}
 		w.WriteString("},\n")
 	}
 	w.WriteString("},\n")
@@ -1129,6 +1132,14 @@ func (g *gen) handlers(w *bytes.Buffer, c *rowfile.Cluster, d def) error {
 		var cmds []*rowfile.Command
 		for _, i := range byName[h] {
 			cmds = append(cmds, &c.Commands[i])
+		}
+		if slices.ContainsFunc(cmds, func(c *rowfile.Command) bool { return c.Discard }) {
+			if len(cmds) != 1 {
+				return fmt.Errorf("handle %s: a discard is the handler's only command", h)
+			}
+			g.useStd("context")
+			fmt.Fprintf(w, "d.Handle%s = func(_ context.Context, _ %s) (resp %s, err error) {\nb.discard(ci, %d)\nreturn resp, err\n}\n", h, req, resp, byName[h][0])
+			continue
 		}
 		fn, err := fieldsFn(d, cmds, "req")
 		if err != nil {

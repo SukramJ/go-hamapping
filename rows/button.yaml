@@ -1,5 +1,8 @@
 # Home Assistant's button: an action target. Its state is the timestamp of
 # the last press; a controller's On presses it.
+# The plug is momentary: it always reads off, so every command of the
+# on family activates it and the off family has nothing to do — it is
+# discarded, visibly (Plan.OnDiscard), not left to the cluster's server.
 platform: button
 rows:
   - id: plug
@@ -11,6 +14,9 @@ rows:
       - home-assistant/core homeassistant/components/button/__init__.py:101-106 @2026.10.3 (the state is the last press's timestamp)
       - home-assistant/core homeassistant/components/button/services.py:11-15 @2026.10.3 (press, no fields)
       - home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/button/index.ts:22-49 @664575a (OnOffPlugInUnit; On presses, OnOff returns to off)
+      - home-assistant-matter-hub packages/backend/src/matter/behaviors/on-off-server.ts:121-125,168-172 @664575a (turnOff null — Off only schedules the auto-reset, no action)
+      - home-assistant-matter-hub packages/backend/src/matter/behaviors/on-off-server.ts:275-299 @664575a (PlugOnOffServer — OnWithTimedOff and OnWithRecallGlobalScene turn on from off; matter.js's Toggle from off is on)
+      - go-fabric cluster/onoff/server.go:748-767 @v0.18.0 (a registered handler replaces the server's handling of that command only; the rest the server runs itself)
     clusters:
       - cluster: OnOff
         attributes:
@@ -19,3 +25,16 @@ rows:
           - handle: "On"
             method: press
             raw: {const: PRESS}
+          - handle: Toggle
+            method: press
+            raw: {const: PRESS}
+          - handle: OnWithTimedOff
+            method: press
+            raw: {const: PRESS}
+          - handle: OnWithRecallGlobalScene
+            method: press
+            raw: {const: PRESS}
+          - handle: "Off"
+            discard: true
+          - handle: OffWithEffect
+            discard: true

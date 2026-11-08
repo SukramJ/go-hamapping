@@ -1,5 +1,8 @@
 # Home Assistant's scene: an action target. Its state is the timestamp of
 # the last activation; a controller's On activates it.
+# The plug is momentary: it always reads off, so every command of the
+# on family activates it and the off family has nothing to do — it is
+# discarded, visibly (Plan.OnDiscard), not left to the cluster's server.
 platform: scene
 rows:
   - id: plug
@@ -11,6 +14,9 @@ rows:
       - home-assistant/core homeassistant/components/scene/services.yaml:3-14 @2026.10.3 (turn_on, optional transition)
       - home-assistant/core homeassistant/components/scene/__init__.py:104-110 @2026.10.3 (the state is the last activation's timestamp or None)
       - home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/scene/index.ts:9-19 @664575a (PlugOnOffServer; scenes are momentary, isOn always false, On is scene.turn_on)
+      - home-assistant-matter-hub packages/backend/src/matter/behaviors/on-off-server.ts:121-125,168-172 @664575a (turnOff null — Off only schedules the auto-reset, no action)
+      - home-assistant-matter-hub packages/backend/src/matter/behaviors/on-off-server.ts:275-299 @664575a (PlugOnOffServer — OnWithTimedOff and OnWithRecallGlobalScene turn on from off; matter.js's Toggle from off is on)
+      - go-fabric cluster/onoff/server.go:748-767 @v0.18.0 (a registered handler replaces the server's handling of that command only; the rest the server runs itself)
     clusters:
       - cluster: OnOff
         attributes:
@@ -19,3 +25,16 @@ rows:
           - handle: "On"
             method: turn_on
             raw: {const: ACTIVATE}
+          - handle: Toggle
+            method: turn_on
+            raw: {const: ACTIVATE}
+          - handle: OnWithTimedOff
+            method: turn_on
+            raw: {const: ACTIVATE}
+          - handle: OnWithRecallGlobalScene
+            method: turn_on
+            raw: {const: ACTIVATE}
+          - handle: "Off"
+            discard: true
+          - handle: OffWithEffect
+            discard: true

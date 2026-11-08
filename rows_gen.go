@@ -81,6 +81,7 @@ const (
 	MethodTemperatureHigh = "temperature_high"
 	MethodTemperatureLow  = "temperature_low"
 	MethodTilt            = "tilt"
+	MethodToggle          = "toggle"
 	MethodTrigger         = "trigger"
 	MethodTurnOff         = "turn_off"
 	MethodTurnOn          = "turn_on"
@@ -89,7 +90,7 @@ const (
 )
 
 // methods are the method constants, sorted.
-var methods = []string{MethodCloseValve, MethodDirection, MethodFanMode, MethodGoHome, MethodKey, MethodMediaPause, MethodMediaPlay, MethodMediaStop, MethodMode, MethodOpenValve, MethodOperationMode, MethodOscillation, MethodPause, MethodPercentage, MethodPresetMode, MethodPress, MethodResume, MethodRunMode, MethodSelectOption, MethodSetPosition, MethodTemperature, MethodTemperatureHigh, MethodTemperatureLow, MethodTilt, MethodTrigger, MethodTurnOff, MethodTurnOn, MethodVolumeLevel, MethodVolumeMute}
+var methods = []string{MethodCloseValve, MethodDirection, MethodFanMode, MethodGoHome, MethodKey, MethodMediaPause, MethodMediaPlay, MethodMediaStop, MethodMode, MethodOpenValve, MethodOperationMode, MethodOscillation, MethodPause, MethodPercentage, MethodPresetMode, MethodPress, MethodResume, MethodRunMode, MethodSelectOption, MethodSetPosition, MethodTemperature, MethodTemperatureHigh, MethodTemperatureLow, MethodTilt, MethodToggle, MethodTrigger, MethodTurnOff, MethodTurnOn, MethodVolumeLevel, MethodVolumeMute}
 
 // rows is the table, in the order [Map] tries it.
 var rows = []Row{
@@ -97,7 +98,7 @@ var rows = []Row{
 		ID: "automation/plug", Platform: "automation",
 		When:  When{},
 		State: eligibility.StateMappable,
-		Cites: []string{"matter.js packages/model/src/standard/elements/on-off-plug-in-unit.element.ts:27-31 @862ad75f (OnOff mandatory, feature LT)", "home-assistant/core homeassistant/components/automation/services.yaml:22-30 @2026.10.3 (trigger, skip_condition default true)", "home-assistant/core homeassistant/components/automation/__init__.py:122-127 @2026.10.3 (is_on means enabled, not running)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/automation/index.ts:8-14 @664575a (PlugOnOffServer; isOn always false, On is automation.trigger)"},
+		Cites: []string{"matter.js packages/model/src/standard/elements/on-off-plug-in-unit.element.ts:27-31 @862ad75f (OnOff mandatory, feature LT)", "home-assistant/core homeassistant/components/automation/services.yaml:22-30 @2026.10.3 (trigger, skip_condition default true)", "home-assistant/core homeassistant/components/automation/__init__.py:122-127 @2026.10.3 (is_on means enabled, not running)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/automation/index.ts:8-14 @664575a (PlugOnOffServer; isOn always false, On is automation.trigger)", "home-assistant-matter-hub packages/backend/src/matter/behaviors/on-off-server.ts:121-125,168-172 @664575a (turnOff null — Off only schedules the auto-reset, no action)", "home-assistant-matter-hub packages/backend/src/matter/behaviors/on-off-server.ts:275-299 @664575a (PlugOnOffServer — OnWithTimedOff and OnWithRecallGlobalScene turn on from off; matter.js's Toggle from off is on)", "go-fabric cluster/onoff/server.go:748-767 @v0.18.0 (a registered handler replaces the server's handling of that command only; the rest the server runs itself)"},
 		Type:  device.OnOffPlugInUnitType(),
 		Clusters: []Cluster{
 			{
@@ -107,6 +108,11 @@ var rows = []Row{
 				},
 				Commands: []Command{
 					{Kind: "handle", On: []string{"On"}, Method: "trigger", Raw: &Value{Const: "TRIGGER", HasConst: true}},
+					{Kind: "handle", On: []string{"Toggle"}, Method: "trigger", Raw: &Value{Const: "TRIGGER", HasConst: true}},
+					{Kind: "handle", On: []string{"OnWithTimedOff"}, Method: "trigger", Raw: &Value{Const: "TRIGGER", HasConst: true}},
+					{Kind: "handle", On: []string{"OnWithRecallGlobalScene"}, Method: "trigger", Raw: &Value{Const: "TRIGGER", HasConst: true}},
+					{Kind: "handle", On: []string{"Off"}, Discard: true},
+					{Kind: "handle", On: []string{"OffWithEffect"}, Discard: true},
 				},
 				declare: func(b *binding, ci int) device.Declaration {
 					var d onoffdef.Declare
@@ -115,6 +121,35 @@ var rows = []Row{
 						if true {
 							b.emit(ci, 0, f)
 						}
+						return resp, err
+					}
+					d.HandleToggle = func(_ context.Context, req onoffdef.ToggleRequest) (resp struct{}, err error) {
+						f := func(string) (any, bool) { return nil, false }
+						if true {
+							b.emit(ci, 1, f)
+						}
+						return resp, err
+					}
+					d.HandleOnWithTimedOff = func(_ context.Context, req onoffdef.OnWithTimedOffRequest) (resp struct{}, err error) {
+						f := func(string) (any, bool) { return nil, false }
+						if true {
+							b.emit(ci, 2, f)
+						}
+						return resp, err
+					}
+					d.HandleOnWithRecallGlobalScene = func(_ context.Context, req onoffdef.OnWithRecallGlobalSceneRequest) (resp struct{}, err error) {
+						f := func(string) (any, bool) { return nil, false }
+						if true {
+							b.emit(ci, 3, f)
+						}
+						return resp, err
+					}
+					d.HandleOff = func(_ context.Context, _ onoffdef.OffRequest) (resp struct{}, err error) {
+						b.discard(ci, 4)
+						return resp, err
+					}
+					d.HandleOffWithEffect = func(_ context.Context, _ onoffdef.OffWithEffectRequest) (resp struct{}, err error) {
+						b.discard(ci, 5)
 						return resp, err
 					}
 					return d
@@ -533,7 +568,7 @@ var rows = []Row{
 		ID: "button/plug", Platform: "button",
 		When:  When{},
 		State: eligibility.StateMappable,
-		Cites: []string{"matter.js packages/model/src/standard/elements/on-off-plug-in-unit.element.ts:27-31 @862ad75f (OnOff mandatory, feature LT)", "home-assistant/core homeassistant/components/button/__init__.py:101-106 @2026.10.3 (the state is the last press's timestamp)", "home-assistant/core homeassistant/components/button/services.py:11-15 @2026.10.3 (press, no fields)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/button/index.ts:22-49 @664575a (OnOffPlugInUnit; On presses, OnOff returns to off)"},
+		Cites: []string{"matter.js packages/model/src/standard/elements/on-off-plug-in-unit.element.ts:27-31 @862ad75f (OnOff mandatory, feature LT)", "home-assistant/core homeassistant/components/button/__init__.py:101-106 @2026.10.3 (the state is the last press's timestamp)", "home-assistant/core homeassistant/components/button/services.py:11-15 @2026.10.3 (press, no fields)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/button/index.ts:22-49 @664575a (OnOffPlugInUnit; On presses, OnOff returns to off)", "home-assistant-matter-hub packages/backend/src/matter/behaviors/on-off-server.ts:121-125,168-172 @664575a (turnOff null — Off only schedules the auto-reset, no action)", "home-assistant-matter-hub packages/backend/src/matter/behaviors/on-off-server.ts:275-299 @664575a (PlugOnOffServer — OnWithTimedOff and OnWithRecallGlobalScene turn on from off; matter.js's Toggle from off is on)", "go-fabric cluster/onoff/server.go:748-767 @v0.18.0 (a registered handler replaces the server's handling of that command only; the rest the server runs itself)"},
 		Type:  device.OnOffPlugInUnitType(),
 		Clusters: []Cluster{
 			{
@@ -543,6 +578,11 @@ var rows = []Row{
 				},
 				Commands: []Command{
 					{Kind: "handle", On: []string{"On"}, Method: "press", Raw: &Value{Const: "PRESS", HasConst: true}},
+					{Kind: "handle", On: []string{"Toggle"}, Method: "press", Raw: &Value{Const: "PRESS", HasConst: true}},
+					{Kind: "handle", On: []string{"OnWithTimedOff"}, Method: "press", Raw: &Value{Const: "PRESS", HasConst: true}},
+					{Kind: "handle", On: []string{"OnWithRecallGlobalScene"}, Method: "press", Raw: &Value{Const: "PRESS", HasConst: true}},
+					{Kind: "handle", On: []string{"Off"}, Discard: true},
+					{Kind: "handle", On: []string{"OffWithEffect"}, Discard: true},
 				},
 				declare: func(b *binding, ci int) device.Declaration {
 					var d onoffdef.Declare
@@ -551,6 +591,35 @@ var rows = []Row{
 						if true {
 							b.emit(ci, 0, f)
 						}
+						return resp, err
+					}
+					d.HandleToggle = func(_ context.Context, req onoffdef.ToggleRequest) (resp struct{}, err error) {
+						f := func(string) (any, bool) { return nil, false }
+						if true {
+							b.emit(ci, 1, f)
+						}
+						return resp, err
+					}
+					d.HandleOnWithTimedOff = func(_ context.Context, req onoffdef.OnWithTimedOffRequest) (resp struct{}, err error) {
+						f := func(string) (any, bool) { return nil, false }
+						if true {
+							b.emit(ci, 2, f)
+						}
+						return resp, err
+					}
+					d.HandleOnWithRecallGlobalScene = func(_ context.Context, req onoffdef.OnWithRecallGlobalSceneRequest) (resp struct{}, err error) {
+						f := func(string) (any, bool) { return nil, false }
+						if true {
+							b.emit(ci, 3, f)
+						}
+						return resp, err
+					}
+					d.HandleOff = func(_ context.Context, _ onoffdef.OffRequest) (resp struct{}, err error) {
+						b.discard(ci, 4)
+						return resp, err
+					}
+					d.HandleOffWithEffect = func(_ context.Context, _ onoffdef.OffWithEffectRequest) (resp struct{}, err error) {
+						b.discard(ci, 5)
 						return resp, err
 					}
 					return d
@@ -638,7 +707,7 @@ var rows = []Row{
 		ID: "climate/air_conditioner", Platform: "climate",
 		When:  When{Features: &Set{All: []string{"FAN_MODE", "TURN_ON", "TURN_OFF"}}, Extra: map[string]Set{"modes": Set{Any: []string{"heat", "cool", "heat_cool"}}}},
 		State: eligibility.StateMappable,
-		Cites: []string{"go-fabric cluster/thermo/presets.go:246-257 @v0.15.4 (every preset needs the setpoints of the selected Heating and Cooling features)", "go-fabric device/room_air_conditioner_gen.go:39-86 @v0.15.4 (OnOff mandatory with DF, Thermostat mandatory, FanControl and RelativeHumidityMeasurement optional)", "matter.js packages/model/src/standard/resources/fan-control.resource.ts:44,80,95 @862ad75f (FanMode, PercentSetting, PercentCurrent)", "matter.js packages/model/src/standard/resources/relative-humidity-measurement.resource.ts:20-26 @862ad75f (MeasuredValue = 100 x water content)", "home-assistant/core homeassistant/components/climate/const.py:71-81,194-205 @2026.10.3 (fan modes; FAN_MODE, TURN_OFF, TURN_ON)", "home-assistant/core homeassistant/components/climate/__init__.py:318-325 @2026.10.3 (current_humidity and fan_mode state attributes)", "home-assistant/core homeassistant/components/climate/services.py:170-180,214-218 @2026.10.3 (turn_on, turn_off, set_fan_mode)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/climate/index.ts:83-102,172-186 @664575a (FAN_MODE makes a RoomAirConditioner; OnOff with TURN_ON and TURN_OFF; humidity from current_humidity)", "go-ha-catalog data/features.json:14-24 (climate feature flags)", "go-ha-catalog data/mqtt.json:1200-1647 (climate schema; modes at 1385 with its default, mode_command_topic at 1370, temperature_command_topic at 1572, temperature_low/high_command_topic at 1582/1602)", "go-ha-catalog gen_vocab.go:837-847 (HVACMode vocabulary)"},
+		Cites: []string{"go-fabric cluster/thermo/presets.go:246-257 @v0.15.4 (every preset needs the setpoints of the selected Heating and Cooling features)", "go-fabric device/room_air_conditioner_gen.go:39-86 @v0.15.4 (OnOff mandatory with DF, Thermostat mandatory, FanControl and RelativeHumidityMeasurement optional)", "matter.js packages/model/src/standard/resources/fan-control.resource.ts:44,80,95 @862ad75f (FanMode, PercentSetting, PercentCurrent)", "matter.js packages/model/src/standard/resources/relative-humidity-measurement.resource.ts:20-26 @862ad75f (MeasuredValue = 100 x water content)", "home-assistant/core homeassistant/components/climate/const.py:71-81,194-205 @2026.10.3 (fan modes; FAN_MODE, TURN_OFF, TURN_ON)", "home-assistant/core homeassistant/components/climate/__init__.py:318-325 @2026.10.3 (current_humidity and fan_mode state attributes)", "home-assistant/core homeassistant/components/climate/services.py:170-180,214-218 @2026.10.3 (turn_on, turn_off, set_fan_mode)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/climate/index.ts:83-102,172-186 @664575a (FAN_MODE makes a RoomAirConditioner; OnOff with TURN_ON and TURN_OFF; humidity from current_humidity)", "go-ha-catalog data/features.json:14-24 (climate feature flags)", "home-assistant/core homeassistant/components/climate/services.yaml:131-151 @2026.10.3 (turn_on, turn_off, toggle; toggle needs TURN_ON and TURN_OFF)", "go-ha-catalog data/mqtt.json:1200-1647 (climate schema; modes at 1385 with its default, mode_command_topic at 1370, temperature_command_topic at 1572, temperature_low/high_command_topic at 1582/1602)", "go-ha-catalog gen_vocab.go:837-847 (HVACMode vocabulary)"},
 		Type:  device.RoomAirConditionerType(),
 		Caveats: []Caveat{
 			{When: When{Extra: map[string]Set{"modes": Set{Any: []string{"auto"}}}}, Reason: "the hvac mode auto (the device's own schedule) has no SystemMode: it is not mapped"},
@@ -656,6 +725,7 @@ var rows = []Row{
 				Commands: []Command{
 					{Kind: "handle", On: []string{"On"}, Method: "turn_on", Raw: &Value{Const: "ON", HasConst: true}},
 					{Kind: "handle", On: []string{"Off"}, Method: "turn_off", Raw: &Value{Const: "OFF", HasConst: true}},
+					{Kind: "handle", On: []string{"Toggle"}, Method: "toggle", Raw: &Value{Const: "TOGGLE", HasConst: true}},
 				},
 				declare: func(b *binding, ci int) device.Declaration {
 					var d onoffdef.Declare
@@ -671,6 +741,13 @@ var rows = []Row{
 						f := func(string) (any, bool) { return nil, false }
 						if true {
 							b.emit(ci, 1, f)
+						}
+						return resp, err
+					}
+					d.HandleToggle = func(_ context.Context, req onoffdef.ToggleRequest) (resp struct{}, err error) {
+						f := func(string) (any, bool) { return nil, false }
+						if true {
+							b.emit(ci, 2, f)
 						}
 						return resp, err
 					}
@@ -1040,7 +1117,7 @@ var rows = []Row{
 		ID: "climate/thermostat", Platform: "climate",
 		When:  When{Extra: map[string]Set{"modes": Set{Any: []string{"heat", "cool", "heat_cool"}}}},
 		State: eligibility.StateMappable,
-		Cites: []string{"matter.js packages/model/src/standard/elements/thermostat-device.element.ts:25 @862ad75f (Thermostat mandatory)", "matter.js packages/model/src/standard/resources/thermostat-cluster.resource.ts:50,163,322 @862ad75f (LocalTemperature, OccupiedHeatingSetpoint, SystemMode)", "matter.js packages/model/src/standard/elements/temperature.element.ts:12 @862ad75f (the temperature datatype, int16 in 0.01 degC)", "go-fabric cluster/thermo/presets.go:246-257 @v0.15.4 (every preset needs the setpoints of the selected Heating and Cooling features)", "go-ha-catalog data/mqtt.json:1200-1647 (climate schema; modes at 1385 with its default, mode_command_topic at 1370, temperature_command_topic at 1572, temperature_low/high_command_topic at 1582/1602)", "go-ha-catalog gen_vocab.go:837-847 (HVACMode vocabulary)"},
+		Cites: []string{"matter.js packages/model/src/standard/elements/thermostat-device.element.ts:25 @862ad75f (Thermostat mandatory)", "matter.js packages/model/src/standard/resources/thermostat-cluster.resource.ts:50,163,322 @862ad75f (LocalTemperature, OccupiedHeatingSetpoint, SystemMode)", "matter.js packages/model/src/standard/elements/temperature.element.ts:12 @862ad75f (the temperature datatype, int16 in 0.01 degC)", "go-fabric cluster/thermo/presets.go:246-257 @v0.15.4 (every preset needs the setpoints of the selected Heating and Cooling features)", "home-assistant/core homeassistant/components/climate/services.yaml:131-151 @2026.10.3 (turn_on, turn_off, toggle; toggle needs TURN_ON and TURN_OFF)", "go-ha-catalog data/mqtt.json:1200-1647 (climate schema; modes at 1385 with its default, mode_command_topic at 1370, temperature_command_topic at 1572, temperature_low/high_command_topic at 1582/1602)", "go-ha-catalog gen_vocab.go:837-847 (HVACMode vocabulary)"},
 		Type:  device.ThermostatType(),
 		Caveats: []Caveat{
 			{When: When{Extra: map[string]Set{"modes": Set{Any: []string{"auto"}}}}, Reason: "the hvac mode auto (the device's own schedule) has no SystemMode: it is not mapped"},
@@ -1272,7 +1349,7 @@ var rows = []Row{
 		When:   When{},
 		State:  eligibility.StateUnmappable,
 		Reason: "a climate entity without the hvac modes heat, cool or heat_cool has no Thermostat feature (Heating or Cooling)",
-		Cites:  []string{"go-ha-catalog data/mqtt.json:1200-1647 (climate schema; modes at 1385 with its default, mode_command_topic at 1370, temperature_command_topic at 1572, temperature_low/high_command_topic at 1582/1602)", "go-ha-catalog gen_vocab.go:837-847 (HVACMode vocabulary)"},
+		Cites:  []string{"home-assistant/core homeassistant/components/climate/services.yaml:131-151 @2026.10.3 (turn_on, turn_off, toggle; toggle needs TURN_ON and TURN_OFF)", "go-ha-catalog data/mqtt.json:1200-1647 (climate schema; modes at 1385 with its default, mode_command_topic at 1370, temperature_command_topic at 1572, temperature_low/high_command_topic at 1582/1602)", "go-ha-catalog gen_vocab.go:837-847 (HVACMode vocabulary)"},
 	},
 	{
 		ID: "cover/window_covering", Platform: "cover",
@@ -2481,7 +2558,7 @@ var rows = []Row{
 		ID: "lock/door_lock", Platform: "lock",
 		When:  When{},
 		State: eligibility.StateMappable,
-		Cites: []string{"matter.js packages/model/src/standard/elements/door-lock-device.element.ts:30 @862ad75f (DoorLock mandatory)", "matter.js packages/model/src/standard/resources/door-lock-cluster.resource.ts:151 @862ad75f (LockState)", "go-ha-catalog data/mqtt.json:4445-4649 (lock schema; payload_lock at 4558, payload_unlock at 4578, state_locked/unlocked/jammed at 4593-4627)", "go-ha-catalog data/features.json:58-60 (lock feature OPEN)", "go-ha-catalog gen_vocab.go:1005-1015 (LockState vocabulary)"},
+		Cites: []string{"matter.js packages/model/src/standard/elements/door-lock-device.element.ts:30 @862ad75f (DoorLock mandatory)", "matter.js packages/model/src/standard/resources/door-lock-cluster.resource.ts:151 @862ad75f (LockState)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/lock/lock-unlock-with-timeout-bringup.test.ts:21-23,126-141 @664575a (UnlockWithTimeout unlocks through Home Assistant; left to matter.js it only flipped LockState)", "go-ha-catalog data/mqtt.json:4445-4649 (lock schema; payload_lock at 4558, payload_unlock at 4578, state_locked/unlocked/jammed at 4593-4627)", "go-ha-catalog data/features.json:58-60 (lock feature OPEN)", "go-ha-catalog gen_vocab.go:1005-1015 (LockState vocabulary)"},
 		Type:  device.DoorLockType(),
 		Caveats: []Caveat{
 			{When: When{Features: &Set{Any: []string{"OPEN"}}}, Reason: "the lock's open (unlatch) is not mapped in H1: DoorLock's Unbolting feature is H2"},
@@ -2496,6 +2573,7 @@ var rows = []Row{
 				Commands: []Command{
 					{Kind: "handle", On: []string{"LockDoor"}, Raw: &Value{From: "extra.payload_lock", Catalog: true}},
 					{Kind: "handle", On: []string{"UnlockDoor"}, Raw: &Value{From: "extra.payload_unlock", Catalog: true}},
+					{Kind: "handle", On: []string{"UnlockWithTimeout"}, Raw: &Value{From: "extra.payload_unlock", Catalog: true}},
 				},
 				declare: func(b *binding, ci int) device.Declaration {
 					var d doorlockdef.Declare
@@ -2510,6 +2588,13 @@ var rows = []Row{
 						f := func(string) (any, bool) { return nil, false }
 						if true {
 							b.emit(ci, 1, f)
+						}
+						return resp, err
+					}
+					d.HandleUnlockWithTimeout = func(_ context.Context, req doorlockdef.UnlockWithTimeoutRequest) (resp struct{}, err error) {
+						f := func(string) (any, bool) { return nil, false }
+						if true {
+							b.emit(ci, 2, f)
 						}
 						return resp, err
 					}
@@ -2558,6 +2643,7 @@ var rows = []Row{
 				Commands: []Command{
 					{Kind: "handle", On: []string{"On"}, Method: "turn_on", Raw: &Value{Const: "ON", HasConst: true}, When: &When{Features: &Set{All: []string{"TURN_ON", "TURN_OFF"}}}},
 					{Kind: "handle", On: []string{"Off"}, Method: "turn_off", Raw: &Value{Const: "OFF", HasConst: true}, When: &When{Features: &Set{All: []string{"TURN_ON", "TURN_OFF"}}}},
+					{Kind: "handle", On: []string{"Toggle"}, Method: "toggle", Raw: &Value{Const: "TOGGLE", HasConst: true}, When: &When{Features: &Set{All: []string{"TURN_ON", "TURN_OFF"}}}},
 				},
 				declare: func(b *binding, ci int) device.Declaration {
 					var d onoffdef.Declare
@@ -2575,6 +2661,15 @@ var rows = []Row{
 							f := func(string) (any, bool) { return nil, false }
 							if true {
 								b.emit(ci, 1, f)
+							}
+							return resp, err
+						}
+					}
+					if b.match(&When{Features: &Set{All: []string{"TURN_ON", "TURN_OFF"}}}) {
+						d.HandleToggle = func(_ context.Context, req onoffdef.ToggleRequest) (resp struct{}, err error) {
+							f := func(string) (any, bool) { return nil, false }
+							if true {
+								b.emit(ci, 2, f)
 							}
 							return resp, err
 						}
@@ -2718,7 +2813,7 @@ var rows = []Row{
 		ID: "media_player/speaker", Platform: "media_player",
 		When:  When{Features: &Set{All: []string{"TURN_ON", "TURN_OFF"}}},
 		State: eligibility.StateMappable,
-		Cites: []string{"matter.js packages/model/src/standard/elements/speaker.element.ts:18-19 @862ad75f (OnOff and LevelControl mandatory)", "go-fabric cluster/spec/levelcontrol/values.go:19-44 @v0.15.4 (levels 0 to 254, a unit value times 254)", "home-assistant/core homeassistant/components/media_player/__init__.py:334,362-364,379-381 @2026.10.3 (volume_level 0 to 1, is_volume_muted)", "home-assistant/core homeassistant/components/media_player/services.py:125-130,182-203 @2026.10.3 (turn_on, turn_off, volume_set, volume_mute)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/index.ts:41-91 @664575a (a Speaker; power with TURN_ON and TURN_OFF, else mute as OnOff; VolumeSet as LevelControl)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/behaviors/media-player-power-on-off-server.ts:8-16 @664575a (off and standby are off)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/behaviors/media-player-on-off-server.ts:8-17 @664575a (OnOff is not muted)", "go-ha-catalog data/features.json:61-83 (media_player feature flags)", "home-assistant/core homeassistant/components/media_player/const.py:69-84,196-230 @2026.10.3 (the states, the feature flags, the device classes)"},
+		Cites: []string{"matter.js packages/model/src/standard/elements/speaker.element.ts:18-19 @862ad75f (OnOff and LevelControl mandatory)", "go-fabric cluster/spec/levelcontrol/values.go:19-44 @v0.15.4 (levels 0 to 254, a unit value times 254)", "home-assistant/core homeassistant/components/media_player/__init__.py:334,362-364,379-381 @2026.10.3 (volume_level 0 to 1, is_volume_muted)", "home-assistant/core homeassistant/components/media_player/services.py:125-130,182-203 @2026.10.3 (turn_on, turn_off, volume_set, volume_mute)", "home-assistant/core homeassistant/components/media_player/services.yaml:3-24 @2026.10.3 (turn_on, turn_off, toggle; toggle needs TURN_ON and TURN_OFF; no service toggles mute)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/index.ts:41-91 @664575a (a Speaker; power with TURN_ON and TURN_OFF, else mute as OnOff; VolumeSet as LevelControl)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/behaviors/media-player-power-on-off-server.ts:8-16 @664575a (off and standby are off)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/behaviors/media-player-on-off-server.ts:8-17 @664575a (OnOff is not muted)", "go-ha-catalog data/features.json:61-83 (media_player feature flags)", "home-assistant/core homeassistant/components/media_player/const.py:69-84,196-230 @2026.10.3 (the states, the feature flags, the device classes)"},
 		Type:  device.SpeakerType(),
 		Clusters: []Cluster{
 			{
@@ -2729,6 +2824,7 @@ var rows = []Row{
 				Commands: []Command{
 					{Kind: "handle", On: []string{"On"}, Method: "turn_on", Raw: &Value{Const: "ON", HasConst: true}},
 					{Kind: "handle", On: []string{"Off"}, Method: "turn_off", Raw: &Value{Const: "OFF", HasConst: true}},
+					{Kind: "handle", On: []string{"Toggle"}, Method: "toggle", Raw: &Value{Const: "TOGGLE", HasConst: true}},
 				},
 				declare: func(b *binding, ci int) device.Declaration {
 					var d onoffdef.Declare
@@ -2743,6 +2839,13 @@ var rows = []Row{
 						f := func(string) (any, bool) { return nil, false }
 						if true {
 							b.emit(ci, 1, f)
+						}
+						return resp, err
+					}
+					d.HandleToggle = func(_ context.Context, req onoffdef.ToggleRequest) (resp struct{}, err error) {
+						f := func(string) (any, bool) { return nil, false }
+						if true {
+							b.emit(ci, 2, f)
 						}
 						return resp, err
 					}
@@ -2830,7 +2933,7 @@ var rows = []Row{
 		ID: "media_player/speaker_mute", Platform: "media_player",
 		When:  When{Features: &Set{Any: []string{"VOLUME_MUTE"}}},
 		State: eligibility.StateMappable,
-		Cites: []string{"matter.js packages/model/src/standard/elements/speaker.element.ts:18-19 @862ad75f (OnOff and LevelControl mandatory)", "go-fabric cluster/spec/levelcontrol/values.go:19-44 @v0.15.4 (levels 0 to 254, a unit value times 254)", "home-assistant/core homeassistant/components/media_player/__init__.py:334,362-364,379-381 @2026.10.3 (volume_level 0 to 1, is_volume_muted)", "home-assistant/core homeassistant/components/media_player/services.py:125-130,182-203 @2026.10.3 (turn_on, turn_off, volume_set, volume_mute)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/index.ts:41-91 @664575a (a Speaker; power with TURN_ON and TURN_OFF, else mute as OnOff; VolumeSet as LevelControl)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/behaviors/media-player-power-on-off-server.ts:8-16 @664575a (off and standby are off)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/behaviors/media-player-on-off-server.ts:8-17 @664575a (OnOff is not muted)", "go-ha-catalog data/features.json:61-83 (media_player feature flags)", "home-assistant/core homeassistant/components/media_player/const.py:69-84,196-230 @2026.10.3 (the states, the feature flags, the device classes)"},
+		Cites: []string{"matter.js packages/model/src/standard/elements/speaker.element.ts:18-19 @862ad75f (OnOff and LevelControl mandatory)", "go-fabric cluster/spec/levelcontrol/values.go:19-44 @v0.15.4 (levels 0 to 254, a unit value times 254)", "home-assistant/core homeassistant/components/media_player/__init__.py:334,362-364,379-381 @2026.10.3 (volume_level 0 to 1, is_volume_muted)", "home-assistant/core homeassistant/components/media_player/services.py:125-130,182-203 @2026.10.3 (turn_on, turn_off, volume_set, volume_mute)", "home-assistant/core homeassistant/components/media_player/services.yaml:3-24 @2026.10.3 (turn_on, turn_off, toggle; toggle needs TURN_ON and TURN_OFF; no service toggles mute)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/index.ts:41-91 @664575a (a Speaker; power with TURN_ON and TURN_OFF, else mute as OnOff; VolumeSet as LevelControl)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/behaviors/media-player-power-on-off-server.ts:8-16 @664575a (off and standby are off)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/behaviors/media-player-on-off-server.ts:8-17 @664575a (OnOff is not muted)", "go-ha-catalog data/features.json:61-83 (media_player feature flags)", "home-assistant/core homeassistant/components/media_player/const.py:69-84,196-230 @2026.10.3 (the states, the feature flags, the device classes)"},
 		Type:  device.SpeakerType(),
 		Clusters: []Cluster{
 			{
@@ -2841,6 +2944,7 @@ var rows = []Row{
 				Commands: []Command{
 					{Kind: "handle", On: []string{"On"}, Method: "volume_mute", Raw: &Value{Const: false, HasConst: true}},
 					{Kind: "handle", On: []string{"Off"}, Method: "volume_mute", Raw: &Value{Const: true, HasConst: true}},
+					{Kind: "handle", On: []string{"Toggle"}, Discard: true},
 				},
 				declare: func(b *binding, ci int) device.Declaration {
 					var d onoffdef.Declare
@@ -2856,6 +2960,10 @@ var rows = []Row{
 						if true {
 							b.emit(ci, 1, f)
 						}
+						return resp, err
+					}
+					d.HandleToggle = func(_ context.Context, _ onoffdef.ToggleRequest) (resp struct{}, err error) {
+						b.discard(ci, 2)
 						return resp, err
 					}
 					return d
@@ -2927,7 +3035,7 @@ var rows = []Row{
 		ID: "media_player/speaker_volume", Platform: "media_player",
 		When:  When{Features: &Set{Any: []string{"VOLUME_SET"}}},
 		State: eligibility.StateMappable,
-		Cites: []string{"matter.js packages/model/src/standard/elements/speaker.element.ts:18-19 @862ad75f (OnOff and LevelControl mandatory)", "go-fabric cluster/spec/levelcontrol/values.go:19-44 @v0.15.4 (levels 0 to 254, a unit value times 254)", "home-assistant/core homeassistant/components/media_player/__init__.py:334,362-364,379-381 @2026.10.3 (volume_level 0 to 1, is_volume_muted)", "home-assistant/core homeassistant/components/media_player/services.py:125-130,182-203 @2026.10.3 (turn_on, turn_off, volume_set, volume_mute)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/index.ts:41-91 @664575a (a Speaker; power with TURN_ON and TURN_OFF, else mute as OnOff; VolumeSet as LevelControl)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/behaviors/media-player-power-on-off-server.ts:8-16 @664575a (off and standby are off)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/behaviors/media-player-on-off-server.ts:8-17 @664575a (OnOff is not muted)", "go-ha-catalog data/features.json:61-83 (media_player feature flags)", "home-assistant/core homeassistant/components/media_player/const.py:69-84,196-230 @2026.10.3 (the states, the feature flags, the device classes)"},
+		Cites: []string{"matter.js packages/model/src/standard/elements/speaker.element.ts:18-19 @862ad75f (OnOff and LevelControl mandatory)", "go-fabric cluster/spec/levelcontrol/values.go:19-44 @v0.15.4 (levels 0 to 254, a unit value times 254)", "home-assistant/core homeassistant/components/media_player/__init__.py:334,362-364,379-381 @2026.10.3 (volume_level 0 to 1, is_volume_muted)", "home-assistant/core homeassistant/components/media_player/services.py:125-130,182-203 @2026.10.3 (turn_on, turn_off, volume_set, volume_mute)", "home-assistant/core homeassistant/components/media_player/services.yaml:3-24 @2026.10.3 (turn_on, turn_off, toggle; toggle needs TURN_ON and TURN_OFF; no service toggles mute)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/index.ts:41-91 @664575a (a Speaker; power with TURN_ON and TURN_OFF, else mute as OnOff; VolumeSet as LevelControl)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/behaviors/media-player-power-on-off-server.ts:8-16 @664575a (off and standby are off)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/behaviors/media-player-on-off-server.ts:8-17 @664575a (OnOff is not muted)", "go-ha-catalog data/features.json:61-83 (media_player feature flags)", "home-assistant/core homeassistant/components/media_player/const.py:69-84,196-230 @2026.10.3 (the states, the feature flags, the device classes)"},
 		Type:  device.SpeakerType(),
 		Caveats: []Caveat{
 			{When: When{}, Reason: "without turn_on and turn_off or volume_mute the Speaker's OnOff only shows the state"},
@@ -3037,7 +3145,7 @@ var rows = []Row{
 		ID: "scene/plug", Platform: "scene",
 		When:  When{},
 		State: eligibility.StateMappable,
-		Cites: []string{"matter.js packages/model/src/standard/elements/on-off-plug-in-unit.element.ts:27-31 @862ad75f (OnOff mandatory, feature LT)", "home-assistant/core homeassistant/components/scene/services.yaml:3-14 @2026.10.3 (turn_on, optional transition)", "home-assistant/core homeassistant/components/scene/__init__.py:104-110 @2026.10.3 (the state is the last activation's timestamp or None)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/scene/index.ts:9-19 @664575a (PlugOnOffServer; scenes are momentary, isOn always false, On is scene.turn_on)"},
+		Cites: []string{"matter.js packages/model/src/standard/elements/on-off-plug-in-unit.element.ts:27-31 @862ad75f (OnOff mandatory, feature LT)", "home-assistant/core homeassistant/components/scene/services.yaml:3-14 @2026.10.3 (turn_on, optional transition)", "home-assistant/core homeassistant/components/scene/__init__.py:104-110 @2026.10.3 (the state is the last activation's timestamp or None)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/scene/index.ts:9-19 @664575a (PlugOnOffServer; scenes are momentary, isOn always false, On is scene.turn_on)", "home-assistant-matter-hub packages/backend/src/matter/behaviors/on-off-server.ts:121-125,168-172 @664575a (turnOff null — Off only schedules the auto-reset, no action)", "home-assistant-matter-hub packages/backend/src/matter/behaviors/on-off-server.ts:275-299 @664575a (PlugOnOffServer — OnWithTimedOff and OnWithRecallGlobalScene turn on from off; matter.js's Toggle from off is on)", "go-fabric cluster/onoff/server.go:748-767 @v0.18.0 (a registered handler replaces the server's handling of that command only; the rest the server runs itself)"},
 		Type:  device.OnOffPlugInUnitType(),
 		Clusters: []Cluster{
 			{
@@ -3047,6 +3155,11 @@ var rows = []Row{
 				},
 				Commands: []Command{
 					{Kind: "handle", On: []string{"On"}, Method: "turn_on", Raw: &Value{Const: "ACTIVATE", HasConst: true}},
+					{Kind: "handle", On: []string{"Toggle"}, Method: "turn_on", Raw: &Value{Const: "ACTIVATE", HasConst: true}},
+					{Kind: "handle", On: []string{"OnWithTimedOff"}, Method: "turn_on", Raw: &Value{Const: "ACTIVATE", HasConst: true}},
+					{Kind: "handle", On: []string{"OnWithRecallGlobalScene"}, Method: "turn_on", Raw: &Value{Const: "ACTIVATE", HasConst: true}},
+					{Kind: "handle", On: []string{"Off"}, Discard: true},
+					{Kind: "handle", On: []string{"OffWithEffect"}, Discard: true},
 				},
 				declare: func(b *binding, ci int) device.Declaration {
 					var d onoffdef.Declare
@@ -3055,6 +3168,35 @@ var rows = []Row{
 						if true {
 							b.emit(ci, 0, f)
 						}
+						return resp, err
+					}
+					d.HandleToggle = func(_ context.Context, req onoffdef.ToggleRequest) (resp struct{}, err error) {
+						f := func(string) (any, bool) { return nil, false }
+						if true {
+							b.emit(ci, 1, f)
+						}
+						return resp, err
+					}
+					d.HandleOnWithTimedOff = func(_ context.Context, req onoffdef.OnWithTimedOffRequest) (resp struct{}, err error) {
+						f := func(string) (any, bool) { return nil, false }
+						if true {
+							b.emit(ci, 2, f)
+						}
+						return resp, err
+					}
+					d.HandleOnWithRecallGlobalScene = func(_ context.Context, req onoffdef.OnWithRecallGlobalSceneRequest) (resp struct{}, err error) {
+						f := func(string) (any, bool) { return nil, false }
+						if true {
+							b.emit(ci, 3, f)
+						}
+						return resp, err
+					}
+					d.HandleOff = func(_ context.Context, _ onoffdef.OffRequest) (resp struct{}, err error) {
+						b.discard(ci, 4)
+						return resp, err
+					}
+					d.HandleOffWithEffect = func(_ context.Context, _ onoffdef.OffWithEffectRequest) (resp struct{}, err error) {
+						b.discard(ci, 5)
 						return resp, err
 					}
 					return d
@@ -3076,7 +3218,7 @@ var rows = []Row{
 		ID: "script/plug", Platform: "script",
 		When:  When{},
 		State: eligibility.StateMappable,
-		Cites: []string{"matter.js packages/model/src/standard/elements/on-off-plug-in-unit.element.ts:27-31 @862ad75f (OnOff mandatory, feature LT)", "home-assistant/core homeassistant/components/script/services.yaml:4-8 @2026.10.3 (turn_on, target domain script, no fields)", "home-assistant/core homeassistant/components/script/__init__.py:606-610 @2026.10.3 (is_on is script.is_running, on only while it runs)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/script/index.ts:8-14 @664575a (PlugOnOffServer; isOn always false, On is script.turn_on, no Off)"},
+		Cites: []string{"matter.js packages/model/src/standard/elements/on-off-plug-in-unit.element.ts:27-31 @862ad75f (OnOff mandatory, feature LT)", "home-assistant/core homeassistant/components/script/services.yaml:4-8 @2026.10.3 (turn_on, target domain script, no fields)", "home-assistant/core homeassistant/components/script/__init__.py:606-610 @2026.10.3 (is_on is script.is_running, on only while it runs)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/script/index.ts:8-14 @664575a (PlugOnOffServer; isOn always false, On is script.turn_on, no Off)", "home-assistant-matter-hub packages/backend/src/matter/behaviors/on-off-server.ts:121-125,168-172 @664575a (turnOff null — Off only schedules the auto-reset, no action)", "home-assistant-matter-hub packages/backend/src/matter/behaviors/on-off-server.ts:275-299 @664575a (PlugOnOffServer — OnWithTimedOff and OnWithRecallGlobalScene turn on from off; matter.js's Toggle from off is on)", "go-fabric cluster/onoff/server.go:748-767 @v0.18.0 (a registered handler replaces the server's handling of that command only; the rest the server runs itself)"},
 		Type:  device.OnOffPlugInUnitType(),
 		Clusters: []Cluster{
 			{
@@ -3086,6 +3228,11 @@ var rows = []Row{
 				},
 				Commands: []Command{
 					{Kind: "handle", On: []string{"On"}, Method: "turn_on", Raw: &Value{Const: "RUN", HasConst: true}},
+					{Kind: "handle", On: []string{"Toggle"}, Method: "turn_on", Raw: &Value{Const: "RUN", HasConst: true}},
+					{Kind: "handle", On: []string{"OnWithTimedOff"}, Method: "turn_on", Raw: &Value{Const: "RUN", HasConst: true}},
+					{Kind: "handle", On: []string{"OnWithRecallGlobalScene"}, Method: "turn_on", Raw: &Value{Const: "RUN", HasConst: true}},
+					{Kind: "handle", On: []string{"Off"}, Discard: true},
+					{Kind: "handle", On: []string{"OffWithEffect"}, Discard: true},
 				},
 				declare: func(b *binding, ci int) device.Declaration {
 					var d onoffdef.Declare
@@ -3094,6 +3241,35 @@ var rows = []Row{
 						if true {
 							b.emit(ci, 0, f)
 						}
+						return resp, err
+					}
+					d.HandleToggle = func(_ context.Context, req onoffdef.ToggleRequest) (resp struct{}, err error) {
+						f := func(string) (any, bool) { return nil, false }
+						if true {
+							b.emit(ci, 1, f)
+						}
+						return resp, err
+					}
+					d.HandleOnWithTimedOff = func(_ context.Context, req onoffdef.OnWithTimedOffRequest) (resp struct{}, err error) {
+						f := func(string) (any, bool) { return nil, false }
+						if true {
+							b.emit(ci, 2, f)
+						}
+						return resp, err
+					}
+					d.HandleOnWithRecallGlobalScene = func(_ context.Context, req onoffdef.OnWithRecallGlobalSceneRequest) (resp struct{}, err error) {
+						f := func(string) (any, bool) { return nil, false }
+						if true {
+							b.emit(ci, 3, f)
+						}
+						return resp, err
+					}
+					d.HandleOff = func(_ context.Context, _ onoffdef.OffRequest) (resp struct{}, err error) {
+						b.discard(ci, 4)
+						return resp, err
+					}
+					d.HandleOffWithEffect = func(_ context.Context, _ onoffdef.OffWithEffectRequest) (resp struct{}, err error) {
+						b.discard(ci, 5)
 						return resp, err
 					}
 					return d

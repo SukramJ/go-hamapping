@@ -48,6 +48,7 @@ type rig struct {
 	plan   *hamapping.Plan
 	devs   []*device.Device
 	cmds   chan model.Command
+	disc   chan hamapping.Discard
 	verdct []hamapping.Verdict
 }
 
@@ -62,8 +63,9 @@ func serve(t *testing.T, entities ...model.Entity) *rig {
 	if err != nil {
 		t.Fatal(err)
 	}
-	r := &rig{t: t, ctx: ctx, plan: plan, devs: devs, cmds: make(chan model.Command, 16), verdct: verdicts}
+	r := &rig{t: t, ctx: ctx, plan: plan, devs: devs, cmds: make(chan model.Command, 16), disc: make(chan hamapping.Discard, 16), verdct: verdicts}
 	plan.OnChange(func(c model.Command) { r.cmds <- c })
+	plan.OnDiscard(func(d hamapping.Discard) { r.disc <- d })
 	eps := make([]node.Endpoint, len(devs))
 	for i, d := range devs {
 		eps[i] = d
@@ -74,6 +76,7 @@ func serve(t *testing.T, entities ...model.Entity) *rig {
 		t.Fatalf("device-type violations: %+v", v)
 	}
 	t.Cleanup(plan.Close)
+	bindsEveryCommand(t, r)
 	return r
 }
 
@@ -132,8 +135,29 @@ func (r *rig) command() model.Command {
 	return got
 }
 
-// noMore fails when the plan hands out another command once the site is
-// quiet: one controller command is one model.Command.
+// discard waits for the next discarded command the plan reports.
+func (r *rig) discard() hamapping.Discard {
+	r.t.Helper()
+	var got hamapping.Discard
+	ctx, cancel := context.WithTimeout(r.ctx, 10*time.Second)
+	defer cancel()
+	err := r.site.Eventually(ctx, "a discard", func() bool {
+		select {
+		case got = <-r.disc:
+			return true
+		default:
+			return false
+		}
+	})
+	if err != nil {
+		r.t.Fatalf("no discard: %v", err)
+	}
+	return got
+}
+
+// noMore fails when the plan hands out another command, or reports another
+// discard, once the site is quiet: one controller command is one
+// model.Command or one Discard.
 func (r *rig) noMore() {
 	r.t.Helper()
 	if err := r.site.Settle(r.ctx); err != nil {
@@ -142,7 +166,17 @@ func (r *rig) noMore() {
 	select {
 	case c := <-r.cmds:
 		r.t.Fatalf("an extra command: %s %s", c.Method, c.Payload)
+	case d := <-r.disc:
+		r.t.Fatalf("an extra discard: %s %s", d.Cluster, d.Command)
 	default:
+	}
+}
+
+// expectDiscard checks a discard's entity, cluster and command.
+func expectDiscard(t *testing.T, got hamapping.Discard, key, cluster, command string) {
+	t.Helper()
+	if got.Entity == nil || got.Entity.Key() != key || got.Cluster != cluster || got.Command != command {
+		t.Errorf("discard %v %s %s, want %s %s %s", got.Entity, got.Cluster, got.Command, key, cluster, command)
 	}
 }
 

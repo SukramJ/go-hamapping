@@ -250,6 +250,13 @@ func (b *binding) emit(ci, k int, f func(name string) (any, bool)) {
 	b.plan.deliver(mc)
 }
 
+// discard reports command k of cluster ci as discarded: answered with the
+// cluster's success, handed to no one but the plan's OnDiscard.
+func (b *binding) discard(ci, k int) {
+	c := &b.row.Clusters[ci]
+	b.plan.deliverDiscard(Discard{Entity: b.entity, Cluster: c.Name, Command: c.Commands[k].On[0]})
+}
+
 // render is a command's payload: one value, or a JSON object.
 func (b *binding) render(cmd *Command, f func(string) (any, bool)) ([]byte, bool) {
 	if cmd.Raw != nil {

@@ -17,6 +17,7 @@ rows:
     cites:
       - matter.js packages/model/src/standard/elements/door-lock-device.element.ts:30 @862ad75f (DoorLock mandatory)
       - matter.js packages/model/src/standard/resources/door-lock-cluster.resource.ts:151 @862ad75f (LockState)
+      - home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/lock/lock-unlock-with-timeout-bringup.test.ts:21-23,126-141 @664575a (UnlockWithTimeout unlocks through Home Assistant; left to matter.js it only flipped LockState)
     clusters:
       - cluster: DoorLock
         attributes:
@@ -25,4 +26,6 @@ rows:
           - handle: LockDoor
             raw: {from: extra.payload_lock, catalog: true}
           - handle: UnlockDoor
+            raw: {from: extra.payload_unlock, catalog: true}
+          - handle: UnlockWithTimeout
             raw: {from: extra.payload_unlock, catalog: true}

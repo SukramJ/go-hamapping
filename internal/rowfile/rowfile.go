@@ -231,6 +231,10 @@ type Command struct {
 	// command is refused with a status of the cluster's own (a handle
 	// with an if only).
 	Otherwise map[string]any `yaml:"otherwise"`
+	// Discard answers the handled command with the cluster's success and
+	// hands it to no one but Plan.OnDiscard: the entity has no action for
+	// it (a handle alone).
+	Discard bool `yaml:"discard"`
 }
 
 // Derives are the derived payloads a command may add, with the fields
@@ -544,6 +548,13 @@ func (cmd *Command) check() error {
 	}
 	if kinds != 1 {
 		return errors.New("one of handle, write and change")
+	}
+	if cmd.Discard {
+		if cmd.Handle == "" || cmd.Method != "" || cmd.Raw != nil || len(cmd.JSON) > 0 || cmd.Derive != "" ||
+			cmd.If != nil || cmd.When != nil || cmd.Otherwise != nil {
+			return errors.New("discard: a handle's alone")
+		}
+		return nil
 	}
 	if len(cmd.Unless) > 0 && len(cmd.Change) == 0 {
 		return errors.New("unless is a change's")

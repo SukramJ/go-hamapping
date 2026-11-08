@@ -38,6 +38,10 @@ rows:
             when: *power
             method: turn_off
             raw: {const: "OFF"}
+          - handle: Toggle
+            when: *power
+            method: toggle
+            raw: {const: TOGGLE}
       - cluster: MediaPlayback
         initial:
           - {attribute: CurrentState, const: PlaybackStateNotPlaying}
@@ -69,6 +73,7 @@ rows:
       - go-fabric cluster/spec/levelcontrol/values.go:19-44 @v0.15.4 (levels 0 to 254, a unit value times 254)
       - home-assistant/core homeassistant/components/media_player/__init__.py:334,362-364,379-381 @2026.10.3 (volume_level 0 to 1, is_volume_muted)
       - home-assistant/core homeassistant/components/media_player/services.py:125-130,182-203 @2026.10.3 (turn_on, turn_off, volume_set, volume_mute)
+      - home-assistant/core homeassistant/components/media_player/services.yaml:3-24 @2026.10.3 (turn_on, turn_off, toggle; toggle needs TURN_ON and TURN_OFF; no service toggles mute)
       - home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/index.ts:41-91 @664575a (a Speaker; power with TURN_ON and TURN_OFF, else mute as OnOff; VolumeSet as LevelControl)
       - home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/behaviors/media-player-power-on-off-server.ts:8-16 @664575a (off and standby are off)
       - home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/behaviors/media-player-on-off-server.ts:8-17 @664575a (OnOff is not muted)
@@ -83,6 +88,9 @@ rows:
           - handle: "Off"
             method: turn_off
             raw: {const: "OFF"}
+          - handle: Toggle
+            method: toggle
+            raw: {const: TOGGLE}
       - &volume
         cluster: LevelControl
         start_null: [CurrentLevel]
@@ -109,6 +117,8 @@ rows:
           - handle: "Off"
             method: volume_mute
             raw: {const: true}
+          - handle: Toggle
+            discard: true
       - *volume
   - id: speaker_volume
     when: {features: {any: [VOLUME_SET]}}

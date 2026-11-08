@@ -1,5 +1,8 @@
 # Home Assistant's automation: an action target. Its state is on while it is
 # enabled, not while it runs; a controller's On triggers it.
+# The plug is momentary: it always reads off, so every command of the
+# on family activates it and the off family has nothing to do — it is
+# discarded, visibly (Plan.OnDiscard), not left to the cluster's server.
 platform: automation
 rows:
   - id: plug
@@ -11,6 +14,9 @@ rows:
       - home-assistant/core homeassistant/components/automation/services.yaml:22-30 @2026.10.3 (trigger, skip_condition default true)
       - home-assistant/core homeassistant/components/automation/__init__.py:122-127 @2026.10.3 (is_on means enabled, not running)
       - home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/automation/index.ts:8-14 @664575a (PlugOnOffServer; isOn always false, On is automation.trigger)
+      - home-assistant-matter-hub packages/backend/src/matter/behaviors/on-off-server.ts:121-125,168-172 @664575a (turnOff null — Off only schedules the auto-reset, no action)
+      - home-assistant-matter-hub packages/backend/src/matter/behaviors/on-off-server.ts:275-299 @664575a (PlugOnOffServer — OnWithTimedOff and OnWithRecallGlobalScene turn on from off; matter.js's Toggle from off is on)
+      - go-fabric cluster/onoff/server.go:748-767 @v0.18.0 (a registered handler replaces the server's handling of that command only; the rest the server runs itself)
     clusters:
       - cluster: OnOff
         attributes:
@@ -19,3 +25,16 @@ rows:
           - handle: "On"
             method: trigger
             raw: {const: TRIGGER}
+          - handle: Toggle
+            method: trigger
+            raw: {const: TRIGGER}
+          - handle: OnWithTimedOff
+            method: trigger
+            raw: {const: TRIGGER}
+          - handle: OnWithRecallGlobalScene
+            method: trigger
+            raw: {const: TRIGGER}
+          - handle: "Off"
+            discard: true
+          - handle: OffWithEffect
+            discard: true

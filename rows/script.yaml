@@ -1,5 +1,8 @@
 # Home Assistant's script: an action target. Its state is on only while it
 # runs; a controller's On runs it.
+# The plug is momentary: it always reads off, so every command of the
+# on family activates it and the off family has nothing to do — it is
+# discarded, visibly (Plan.OnDiscard), not left to the cluster's server.
 platform: script
 rows:
   - id: plug
@@ -11,6 +14,9 @@ rows:
       - home-assistant/core homeassistant/components/script/services.yaml:4-8 @2026.10.3 (turn_on, target domain script, no fields)
       - home-assistant/core homeassistant/components/script/__init__.py:606-610 @2026.10.3 (is_on is script.is_running, on only while it runs)
       - home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/script/index.ts:8-14 @664575a (PlugOnOffServer; isOn always false, On is script.turn_on, no Off)
+      - home-assistant-matter-hub packages/backend/src/matter/behaviors/on-off-server.ts:121-125,168-172 @664575a (turnOff null — Off only schedules the auto-reset, no action)
+      - home-assistant-matter-hub packages/backend/src/matter/behaviors/on-off-server.ts:275-299 @664575a (PlugOnOffServer — OnWithTimedOff and OnWithRecallGlobalScene turn on from off; matter.js's Toggle from off is on)
+      - go-fabric cluster/onoff/server.go:748-767 @v0.18.0 (a registered handler replaces the server's handling of that command only; the rest the server runs itself)
     clusters:
       - cluster: OnOff
         attributes:
@@ -19,3 +25,16 @@ rows:
           - handle: "On"
             method: turn_on
             raw: {const: RUN}
+          - handle: Toggle
+            method: turn_on
+            raw: {const: RUN}
+          - handle: OnWithTimedOff
+            method: turn_on
+            raw: {const: RUN}
+          - handle: OnWithRecallGlobalScene
+            method: turn_on
+            raw: {const: RUN}
+          - handle: "Off"
+            discard: true
+          - handle: OffWithEffect
+            discard: true
