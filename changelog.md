@@ -6,6 +6,16 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Rows for Home Assistant's `script`, `scene` and `automation`: each is an
+  OnOffPlugInUnit whose OnOff always reads off and whose On calls
+  `script.turn_on`, `scene.turn_on` or `automation.trigger` (the new
+  `MethodTrigger`), as home-assistant-matter-hub serves them
+  (`rows/script.yaml`, `rows/scene.yaml`, `rows/automation.yaml`,
+  `docs/by_design.md`). go-ha2fabric showed scripts exposed to Assist as
+  "no row for platform script".
+
 ## [0.4.4] - 2026-11-07
 
 ### Fixed
