@@ -196,6 +196,49 @@ func TestGenerateOtherwise(t *testing.T) {
 	}
 }
 
+func TestGenerateRowPort(t *testing.T) {
+	lock := "          - handle: LockDoor\n            raw: {const: LOCK}"
+	rowPort := strings.Replace(base, "      - cluster: DoorLock\n", "      - cluster: DoorLock\n        ports: row\n", 1)
+	out, err := GenerateFiles([]rowfile.File{parse(t, rowPort)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := string(out)
+	for _, want := range []string{"b.rowPortsDoorLock(&d, ci)", "b.rowPortsDoorLockApply(ci, p)", `Ports: "row"`} {
+		if !strings.Contains(strings.Join(strings.Fields(s), " "), want) { // gofmt aligns the literal's values
+			t.Errorf("no %s:\n%s", want, s)
+		}
+	}
+	if strings.Contains(s, "d.HandleLockDoor") {
+		t.Error("a handler registered on a row-port cluster")
+	}
+	withIf := strings.Replace(rowPort, lock, "          - handle: LockDoor\n            if: {field: PinCode, in: [\"1\"]}\n            raw: {const: LOCK}", 1)
+	if err := generate(t, withIf); err == nil {
+		t.Error("a handle with an if under ports: row generated")
+	}
+	if _, err := GenerateFiles([]rowfile.File{parse(t, strings.Replace(vacuum, "      - cluster: RvcRunMode\n", "      - cluster: RvcRunMode\n        ports: row\n", 1))}); err == nil {
+		t.Error("ports: row on a cluster without a row port generated")
+	}
+}
+
+func TestGenerateStateIf(t *testing.T) {
+	lock := "          - handle: LockDoor\n            raw: {const: LOCK}"
+	src := strings.Replace(base, lock, "          - handle: LockDoor\n            if: {state: ActuatorEnabled, in: [\"true\"]}\n            raw: {const: LOCK}", 1)
+	out, err := GenerateFiles([]rowfile.File{parse(t, src)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := string(out)
+	for _, want := range []string{"st := doorlockdef.Wrap(b.server(doorlockdef.ClusterID)).Get()", "st.ActuatorEnabled"} {
+		if !strings.Contains(s, want) {
+			t.Errorf("no %s:\n%s", want, s)
+		}
+	}
+	if err := generate(t, strings.Replace(src, "state: ActuatorEnabled", "state: Nope", 1)); err == nil {
+		t.Error("an if on an unknown state attribute generated")
+	}
+}
+
 func TestGenerateDiscard(t *testing.T) {
 	lock := "          - handle: LockDoor\n            raw: {const: LOCK}"
 	out, err := GenerateFiles([]rowfile.File{parse(t, strings.Replace(base, lock, "          - handle: LockDoor\n            discard: true", 1))})

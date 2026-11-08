@@ -91,6 +91,12 @@ type Cluster struct {
 	// Options is a list of the entity a materializer turns into the
 	// cluster's attributes and command (options.go); nil for none.
 	Options *OptionList
+	// Ports is "host" for a cluster whose kit server runs on the
+	// consumer's ports ([Options.Ports]), "row" for one whose server runs
+	// on a port the row serves (the lock's actuator): the server runs the
+	// controller's commands, and the row's handle commands are the actions
+	// it asks for. Empty for a cluster the row drives itself.
+	Ports string
 
 	declare func(b *binding, ci int) device.Declaration
 	apply   func(b *binding, ci int, st model.State) (any, error)

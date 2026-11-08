@@ -6,6 +6,33 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.7] - 2026-11-08
+
+The lock as the DoorLock server's actuator; a handle on the cluster's state
+(go-hamapping #23, #24).
+
+### Added
+
+- `ports: row` on a cluster: the kit's server runs on a port the row itself
+  serves, runs the controller's commands and asks the row to act; the
+  row's `handle` commands are those actions (`rowports.go`,
+  `docs/rows.md` Ports). DoorLock's StateSource is the first.
+- `if: {state: <Attribute>, in|not_in: […]}` on a command: the condition
+  reads the cluster's current state when the command arrives, beside
+  `field` (`docs/rows.md` Commands).
+
+### Fixed
+
+- A lock's UnlockWithTimeout relocks when the timeout is up (#23): the row
+  is go-fabric's DoorLock server's actuator, so the server keeps the
+  auto-relock timer and asks the row to lock through it; LockState is the
+  entity's state through the row port — null until known, NotFullyLocked
+  for jammed — and a command changes it only once Home Assistant reports
+  it (`rows/lock.yaml`, `docs/by_design.md`). AutoRelockTime works the
+  same way.
+- Toggle on `media_player/speaker_mute` calls `volume_mute` with the
+  inverse of the plug's OnOff instead of being discarded (#24).
+
 ## [0.4.6] - 2026-11-08
 
 Every command of an entity-run cluster is bound; a discard is visible

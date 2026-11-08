@@ -452,23 +452,56 @@ func TestClimateWithoutHeatingOrCooling(t *testing.T) {
 	}
 }
 
+// TestLock: the row is the DoorLock server's actuator (ports: row).
+// LockState is the entity's state through the row port — null until
+// known, NotFullyLocked for jammed — and a command changes it only once
+// Home Assistant says so; the server runs the commands and asks the row
+// to lock or unlock, and UnlockWithTimeout relocks through the row when
+// the timeout is up (brief C4 §1).
 func TestLock(t *testing.T) {
 	r := serve(t, entity("lock", hacatalog.PlatformLock, model.Description{}))
 	wantType(t, r, "lock", device.DoorLockType(), eligibility.StateMappable)
+	r.wantLockState("lock", nil)
 	r.apply("lock", value("LOCKED"))
-	st, _ := doorlockdef.StateFrom(r.values("lock", doorlockdef.ClusterID))
-	if st.LockState == nil || *st.LockState != doorlockdef.LockStateLocked {
-		t.Fatalf("LockState %v", st.LockState)
-	}
+	r.wantLockState("lock", new(doorlockdef.LockStateLocked))
+	r.apply("lock", value("JAMMED"))
+	r.wantLockState("lock", new(doorlockdef.LockStateNotFullyLocked))
+	r.apply("lock", value("LOCKED"))
+
 	r.invokeTimed("lock", doorlockdef.ClusterID, doorlockdef.CmdUnlockDoor, doorlockdef.UnlockDoorRequest{})
 	expect(t, r.command(), "", "UNLOCK")
+	// Home Assistant's state is the truth: still locked until it says otherwise.
+	r.wantLockState("lock", new(doorlockdef.LockStateLocked))
+	r.apply("lock", value("UNLOCKED"))
+	r.wantLockState("lock", new(doorlockdef.LockStateUnlocked))
 	r.invokeTimed("lock", doorlockdef.ClusterID, doorlockdef.CmdLockDoor, doorlockdef.LockDoorRequest{})
 	expect(t, r.command(), "", "LOCK")
-	// UnlockWithTimeout unlocks through the entity; the relock after the
-	// timeout is open (brief C3 §3a).
-	r.invokeTimed("lock", doorlockdef.ClusterID, doorlockdef.CmdUnlockWithTimeout, doorlockdef.UnlockWithTimeoutRequest{Timeout: 5})
+	r.apply("lock", value("LOCKED"))
+
+	// UnlockWithTimeout: the unlock now, the relock through the row when
+	// the timeout is up (the site's clock is the system clock).
+	// UnlockWithTimeout: the unlock now; the relock through the row when
+	// the timeout is up (the site's fake clock, which the rig's wait
+	// advances) — once the lock is unlocked, as matter.js's
+	// (DoorLockServer.ts:971 at 862ad75f: a relock of a locked lock is
+	// skipped).
+	r.invokeTimed("lock", doorlockdef.ClusterID, doorlockdef.CmdUnlockWithTimeout, doorlockdef.UnlockWithTimeoutRequest{Timeout: 1})
 	expect(t, r.command(), "", "UNLOCK")
+	r.apply("lock", value("UNLOCKED"))
+	expect(t, r.command(), "", "LOCK")
 	r.noMore()
+}
+
+// wantLockState reads LockState through the controller and compares.
+func (r *rig) wantLockState(key string, want *doorlockdef.LockStateEnum) {
+	r.t.Helper()
+	st, _ := doorlockdef.StateFrom(r.values(key, doorlockdef.ClusterID))
+	switch {
+	case want == nil && st.LockState != nil:
+		r.t.Fatalf("LockState %v, want null", *st.LockState)
+	case want != nil && (st.LockState == nil || *st.LockState != *want):
+		r.t.Fatalf("LockState %v, want %v", st.LockState, *want)
+	}
 }
 
 func TestLockOpenIsPartial(t *testing.T) {

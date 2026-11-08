@@ -89,6 +89,22 @@ and the media players' OnOff (`climate.toggle`, `media_player.toggle`:
 toggles mute) and bound UnlockWithTimeout on `lock/door_lock` to the unlock
 (the relock after the timeout stays open).
 
+Since v0.4.7 the lock row is the DoorLock server's actuator (`ports: row`,
+go-hamapping #23): go-fabric's server runs LockDoor, UnlockDoor and
+UnlockWithTimeout — authorization, LockOperation events, the auto-relock
+timer armed with the request's timeout — and asks the row to lock or
+unlock through its StateSource (`cluster/lock/doorlock_server.go:131-145,826-849,956-969`
+at v0.18.0; matter.js `DoorLockServer.ts:203-205,956-974` at 862ad75f); the
+relock when the timeout is up arrives as LockDoor and calls the entity's
+lock, as matter-hub relocks through Home Assistant
+(`legacy/lock/lock-unlock-with-timeout-bringup.test.ts:126-141` at
+664575a). LockState is the entity's state, read from the row at every read
+(`:644-662`): a command changes nothing until Home Assistant reports it,
+jammed is NotFullyLocked, an unknown state is null. Toggle on
+`media_player/speaker_mute` is no longer discarded: a handle may branch on
+the cluster's current state (`if: {state: OnOff, …}`, #24), so Toggle calls
+`volume_mute` with the inverse of what the controller sees.
+
 ## A select's mode is its option's index
 
 A Home Assistant `select` becomes a ModeSelect whose modes are its options

@@ -17,15 +17,22 @@ rows:
     cites:
       - matter.js packages/model/src/standard/elements/door-lock-device.element.ts:30 @862ad75f (DoorLock mandatory)
       - matter.js packages/model/src/standard/resources/door-lock-cluster.resource.ts:151 @862ad75f (LockState)
-      - home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/lock/lock-unlock-with-timeout-bringup.test.ts:21-23,126-141 @664575a (UnlockWithTimeout unlocks through Home Assistant; left to matter.js it only flipped LockState)
+      - home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/lock/lock-unlock-with-timeout-bringup.test.ts:21-23,126-141 @664575a (UnlockWithTimeout unlocks through Home Assistant and relocks through Home Assistant when the timeout is up)
+      - go-fabric cluster/lock/doorlock_server.go:131-145,826-849,956-969 @v0.18.0 (StateSource — the server runs the lock commands, arms the auto-relock with UnlockWithTimeout's timeout, and asks LockInvoke to lock, unlock or unbolt; the relock arrives as LockDoor)
+      - go-fabric cluster/lock/doorlock_server.go:644-662 @v0.18.0 (LockState is read from the source at every read — jammed is NotFullyLocked, an unknown state null)
+      - go-fabric cluster/spec/doorlock/server_gen.go:695-712,807-808 @v0.18.0 (Declare.StateSource); device/defaults.go:519-538 @v0.18.0 (the kit hands it to lock.New)
+      - matter.js packages/node/src/behaviors/door-lock/DoorLockServer.ts:203-205,956-974 @862ad75f (unlockWithTimeout schedules the auto-relock with the request's timeout)
     clusters:
+      # The row is the server's actuator (ports: row): go-fabric's DoorLock
+      # server runs LockDoor, UnlockDoor and UnlockWithTimeout, keeps the
+      # auto-relock timer, and asks the row to lock or unlock; the handles
+      # below are those actions. LockState is the entity's, applied.
       - cluster: DoorLock
+        ports: row
         attributes:
           - {attribute: LockState, from: state, enum: {locked: LockStateLocked, unlocked: LockStateUnlocked, jammed: LockStateNotFullyLocked, open: LockStateUnlatched}}
         commands:
           - handle: LockDoor
             raw: {from: extra.payload_lock, catalog: true}
           - handle: UnlockDoor
-            raw: {from: extra.payload_unlock, catalog: true}
-          - handle: UnlockWithTimeout
             raw: {from: extra.payload_unlock, catalog: true}

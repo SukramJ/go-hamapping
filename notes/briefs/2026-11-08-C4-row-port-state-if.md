@@ -71,8 +71,10 @@ false (the plug's OnOff is "not muted"); the `discard` goes.
 commands. `TestLock`: LockState follows the applied state through the source
 (LOCKED → Locked, UNLOCKED → Unlocked, JAMMED → NotFullyLocked, an unknown
 state → null); UnlockDoor emits UNLOCK and LockState stays what Home Assistant
-says; UnlockWithTimeout{Timeout: 1} emits UNLOCK and then LOCK within the
-rig's wait (the site's clock is the system clock); LockDoor emits LOCK.
+says; UnlockWithTimeout{Timeout: 1} emits UNLOCK and, once the state is unlocked,
+LOCK within the rig's wait (the site's fake clock, which the wait advances;
+a relock of a locked lock is skipped, DoorLockServer.ts:971); LockDoor emits
+LOCK.
 `TestMediaPlayerMute`: Toggle while unmuted → `volume_mute` true, after the
 state muted → false. rowfile: `if` with field and state refused, `ports: row`
 parses; gen: `ports: row` on DoorLock generates the materializer calls and
