@@ -64,7 +64,8 @@ func TestRowsNameGoFabricTypes(t *testing.T) {
 // served AcceptedCommandList names only handled or discarded commands,
 // so none falls to the kit's server unheard (go-ha2fabric #51: an Off on
 // a scene's plug answered success and reached no one). A cluster with a
-// change command is the server's and is not held.
+// change command, or one with a port (`ports`), is the server's and is
+// not held.
 func bindsEveryCommand(t *testing.T, r *rig) {
 	t.Helper()
 	all := hamapping.Rows()
@@ -88,7 +89,7 @@ func bindsEveryCommand(t *testing.T, r *rig) {
 					change = true
 				}
 			}
-			if len(bound) == 0 || change {
+			if len(bound) == 0 || change || c.Ports != "" {
 				continue
 			}
 			def := spec.Lookup(c.ID)

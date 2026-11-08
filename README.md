@@ -18,7 +18,7 @@ Twin of [`go-ha2fabric`](https://github.com/SukramJ/go-ha2fabric); both are buil
 setup (pure Go, `CGO_ENABLED=0`, Apache-2.0 with a contributor licence
 agreement, the same guards in CI).
 
-> **Status: v0.4.6 (brief C3, every command of an entity-run cluster is bound; `discard` and `Plan.OnDiscard`).** The row format, its generated Go form,
+> **Status: v0.4.7 (brief C4, `ports: row` — the lock as the DoorLock server's actuator; `if: {state}`).** The row format, its generated Go form,
 > the guards and the first rows, each with a round trip through go-fabric's
 > in-process controller (v0.1.0, brief H1); a stable identity a source
 > supplies, the method constants and the table of keys a source fills

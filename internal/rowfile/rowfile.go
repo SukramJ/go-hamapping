@@ -113,12 +113,19 @@ type Cluster struct {
 	Options *Options `yaml:"options"`
 	// Ports is "host" for a cluster whose kit server runs on ports the
 	// consumer supplies (hamapping.Options.Ports): the row does not apply
-	// to an entity whose host lacks one the cluster needs.
+	// to an entity whose host lacks one the cluster needs. "row" for a
+	// cluster whose kit server runs on a port the row itself serves
+	// (hamapping rowports.go): the server runs the controller's commands
+	// and asks the row to act, and the row's handle commands are the
+	// actions it emits.
 	Ports string `yaml:"ports"`
 }
 
-// PortsHost is the one value of Cluster.Ports.
-const PortsHost = "host"
+// The values of Cluster.Ports.
+const (
+	PortsHost = "host"
+	PortsRow  = "row"
+)
 
 // Options is a list of strings of the entity, the value that names its
 // current entry and the method a controller's choice goes to.
@@ -247,9 +254,21 @@ var Derives = map[string][]string{
 
 // Cond tests a command field against constant names.
 type Cond struct {
+	// Field is a field of the handled request (handle) or of the
+	// cluster's state (write, change); State is an attribute of the
+	// cluster's current state, read when the command arrives. One of them.
 	Field string   `yaml:"field"`
+	State string   `yaml:"state"`
 	In    []string `yaml:"in"`
 	NotIn []string `yaml:"not_in"`
+}
+
+// Name is the field or state attribute the condition reads.
+func (c *Cond) Name() string {
+	if c.State != "" {
+		return c.State
+	}
+	return c.Field
 }
 
 // Verdicts.
@@ -492,8 +511,8 @@ func (c *Cluster) check() error {
 			return fmt.Errorf("options: method %q", o.Method)
 		}
 	}
-	if c.Ports != "" && c.Ports != PortsHost {
-		return fmt.Errorf("ports %q: the one value is %s", c.Ports, PortsHost)
+	if c.Ports != "" && c.Ports != PortsHost && c.Ports != PortsRow {
+		return fmt.Errorf("ports %q: the values are %s and %s", c.Ports, PortsHost, PortsRow)
 	}
 	return nil
 }
@@ -564,8 +583,8 @@ func (cmd *Command) check() error {
 			return fmt.Errorf("attribute %q", n)
 		}
 	}
-	if cmd.If != nil && (!ident(cmd.If.Field) || (len(cmd.If.In) == 0) == (len(cmd.If.NotIn) == 0)) {
-		return errors.New("if: a field and one of in and not_in")
+	if cmd.If != nil && ((cmd.If.Field == "") == (cmd.If.State == "") || !ident(cmd.If.Name()) || (len(cmd.If.In) == 0) == (len(cmd.If.NotIn) == 0)) {
+		return errors.New("if: one of field and state, and one of in and not_in")
 	}
 	if cmd.If != nil {
 		for _, n := range slices.Concat(cmd.If.In, cmd.If.NotIn) {

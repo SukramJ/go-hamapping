@@ -36,6 +36,9 @@ type binding struct {
 	hostObj   any
 	hostAsked bool
 	noPorts   string
+	// ports are the row ports of `ports: row` clusters, by cluster index
+	// (rowports.go).
+	ports map[int]any
 
 	// mu guards last: the baseline of each event's value (events.go).
 	mu   sync.Mutex

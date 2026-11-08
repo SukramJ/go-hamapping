@@ -59,12 +59,16 @@ func TestMediaPlayerMute(t *testing.T) {
 	expect(t, r.command(), hamapping.MethodVolumeMute, "false")
 	r.invoke("spk", onoffdef.ClusterID, onoffdef.CmdOff, nil)
 	expect(t, r.command(), hamapping.MethodVolumeMute, "true")
-	// No service toggles mute and a handler reads no state: discarded, visibly.
+	// No service toggles mute: Toggle branches on the plug's OnOff ("not
+	// muted") and calls volume_mute with the inverse (if: {state: OnOff}).
 	r.invoke("spk", onoffdef.ClusterID, onoffdef.CmdToggle, nil)
-	expectDiscard(t, r.discard(), "spk", "OnOff", "Toggle")
-	if st, _ := onoffdef.StateFrom(r.values("spk", onoffdef.ClusterID)); st.OnOff {
-		t.Fatal("OnOff true after the discarded Toggle")
+	expect(t, r.command(), hamapping.MethodVolumeMute, "false")
+	r.apply("spk", on(map[string]any{"state": "playing", "is_volume_muted": false, "volume_level": 0.2}))
+	if st, _ := onoffdef.StateFrom(r.values("spk", onoffdef.ClusterID)); !st.OnOff {
+		t.Fatal("OnOff false while unmuted")
 	}
+	r.invoke("spk", onoffdef.ClusterID, onoffdef.CmdToggle, nil)
+	expect(t, r.command(), hamapping.MethodVolumeMute, "true")
 	r.noMore()
 }
 

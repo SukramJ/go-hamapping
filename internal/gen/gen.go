@@ -682,6 +682,9 @@ func field(d def, name string) (patch, state reflect.Type, sub string, err error
 func (g *gen) cluster(w *bytes.Buffer, c *rowfile.Cluster, d def) error {
 	alias := g.use(d)
 	fmt.Fprintf(w, "{\nName: %q, ID: %s.ClusterID,\n", d.name, alias)
+	if c.Ports != "" {
+		fmt.Fprintf(w, "Ports: %q,\n", c.Ports)
+	}
 	if len(c.Features) > 0 {
 		w.WriteString("Features: []Feature{")
 		for _, f := range c.Features {
@@ -1006,7 +1009,18 @@ func (g *gen) declare(w *bytes.Buffer, c *rowfile.Cluster, d def) error {
 		}
 		fmt.Fprintf(&body, "d.Initial.Null = append(d.Initial.Null, %s.Attr%s)\n", alias, n)
 	}
-	if err := g.handlers(&body, c, d); err != nil {
+	if c.Ports == rowfile.PortsRow {
+		m, ok := rowPortMaterializers[d.name]
+		if !ok {
+			return fmt.Errorf("ports: %s has no row port", d.name)
+		}
+		for i := range c.Commands {
+			if cmd := &c.Commands[i]; cmd.Handle != "" && (cmd.If != nil || cmd.Otherwise != nil || cmd.Discard) {
+				return fmt.Errorf("ports: row: handle %s is the port's action and takes no if, otherwise or discard", cmd.Handle)
+			}
+		}
+		fmt.Fprintf(&body, "b.rowPorts%s(&d, ci)\n", m)
+	} else if err := g.handlers(&body, c, d); err != nil {
 		return err
 	}
 	if err := g.onWrite(&body, c, d); err != nil {
@@ -1067,11 +1081,20 @@ func (g *gen) cond(d def, cmd *rowfile.Command, src string) (string, error) {
 	if cmd.If == nil {
 		return "true", nil
 	}
-	t, err := commandField(d, cmd, cmd.If.Field)
-	if err != nil {
+	name := cmd.If.Name()
+	var t reflect.Type
+	var err error
+	if cmd.If.State != "" {
+		// The cluster's current state, read when the command arrives.
+		f, ok := d.state.FieldByName(name)
+		if !ok {
+			return "", fmt.Errorf("if state %q: %s has none", name, d.state)
+		}
+		t, src = f.Type, "st"
+	} else if t, err = commandField(d, cmd, name); err != nil {
 		return "", err
 	}
-	ref := src + "." + cmd.If.Field
+	ref := src + "." + name
 	nilCheck := ""
 	if t.Kind() == reflect.Pointer {
 		nilCheck = ref + " != nil && "
@@ -1163,20 +1186,29 @@ func (g *gen) handlers(w *bytes.Buffer, c *rowfile.Cluster, d def) error {
 		if err != nil {
 			return fmt.Errorf("handle %s: %w", h, err)
 		}
-		fmt.Fprintf(w, "d.Handle%s = func(_ context.Context, req %s) (resp %s, err error) {\nf := %s\n", h, req, resp, fn)
-		if otherwise != "" {
-			w.WriteString("handled := false\n")
-		}
+		var conds []string
+		get := ""
 		for _, i := range byName[h] {
 			cond, err := g.cond(d, &c.Commands[i], "req")
 			if err != nil {
 				return err
 			}
+			if c.Commands[i].If != nil && c.Commands[i].If.State != "" {
+				// The cluster's state at the command, as the change hook reads it.
+				get = fmt.Sprintf("st := %s.Wrap(b.server(%s.ClusterID)).Get()\n", d.alias, d.alias)
+			}
+			conds = append(conds, cond)
+		}
+		fmt.Fprintf(w, "d.Handle%s = func(_ context.Context, req %s) (resp %s, err error) {\n%sf := %s\n", h, req, resp, get, fn)
+		if otherwise != "" {
+			w.WriteString("handled := false\n")
+		}
+		for j, i := range byName[h] {
 			mark := ""
 			if otherwise != "" {
 				mark = "\nhandled = true"
 			}
-			fmt.Fprintf(w, "if %s {\nb.emit(ci, %d, f)%s\n}\n", cond, i, mark)
+			fmt.Fprintf(w, "if %s {\nb.emit(ci, %d, f)%s\n}\n", conds[j], i, mark)
 		}
 		if otherwise != "" {
 			fmt.Fprintf(w, "if !handled {\nresp = %s\n}\n", otherwise)
@@ -1261,8 +1293,12 @@ func (g *gen) apply(w *bytes.Buffer, c *rowfile.Cluster, d def) error {
 	if c.Options != nil {
 		fmt.Fprintf(&body, "n += b.options%sApply(&p, &st, ci)\n", materializers[d.name])
 	}
-	fmt.Fprintf(w, "apply: func(b *binding, ci int, st model.State) (any, error) {\nvar p %s.Patch\nn := 0\n%sif n == 0 {\nreturn nil, nil\n}\nreturn p, %s.Wrap(b.server(%s.ClusterID)).Set(p)\n},\n",
-		d.alias, body.String(), d.alias, d.alias)
+	set := fmt.Sprintf("%s.Wrap(b.server(%s.ClusterID)).Set(p)", d.alias, d.alias)
+	if c.Ports == rowfile.PortsRow {
+		set = fmt.Sprintf("b.rowPorts%sApply(ci, p)", rowPortMaterializers[d.name])
+	}
+	fmt.Fprintf(w, "apply: func(b *binding, ci int, st model.State) (any, error) {\nvar p %s.Patch\nn := 0\n%sif n == 0 {\nreturn nil, nil\n}\nreturn p, %s\n},\n",
+		d.alias, body.String(), set)
 	return nil
 }
 
@@ -1327,6 +1363,15 @@ var materializers = map[string]string{
 var portMaterializers = map[string]string{
 	"WebRtcTransportProvider":  "WebRTCProvider",
 	"CameraAvStreamManagement": "AvStream",
+}
+
+// rowPortMaterializers are the clusters a row may mark `ports: row`: the
+// row itself serves the kit server's port (rowports.go: b.rowPorts<Name>
+// sets the declaration's port, b.rowPorts<Name>Apply takes the state the
+// port answers from). The server runs the controller's commands and asks
+// the port to act; the row's handle commands are the actions it emits.
+var rowPortMaterializers = map[string]string{
+	"DoorLock": "DoorLock",
 }
 
 // Commands lists the command kinds a row may use, for the docs.

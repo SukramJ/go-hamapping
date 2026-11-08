@@ -71,6 +71,8 @@ func TestParseRefuses(t *testing.T) {
 		"command two sources":  {"raw: {from: extra.payload_on, catalog: true}", "raw: {from: extra.payload_on, field: X}"},
 		"enum constant":        {`enum: {"on": true}`, `enum: {"on": "a b"}`},
 		"if without in":        {`if: {field: OnOff, in: ["true"]}`, `if: {field: OnOff}`},
+		"if field and state":   {`if: {field: OnOff, in: ["true"]}`, `if: {field: OnOff, state: OnOff, in: ["true"]}`},
+		"if state name":        {`if: {field: OnOff, in: ["true"]}`, `if: {state: "On Off", in: ["true"]}`},
 		"if constant":          {`in: ["true"]`, `in: ["a-b"]`},
 		"feature name":         {"[Lighting,", "[\"Light ing\","},
 		"duplicate cluster":    {"      - cluster: OnOff\n", "      - cluster: OnOff\n      - cluster: OnOff\n"},

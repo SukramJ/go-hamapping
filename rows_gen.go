@@ -650,6 +650,7 @@ var rows = []Row{
 		Clusters: []Cluster{
 			{
 				Name: "CameraAvStreamManagement", ID: cameraavstreammanagementdef.ClusterID,
+				Ports:    "host",
 				Features: []Feature{{Name: "Video", When: nil}, {Name: "Audio", When: nil}, {Name: "Snapshot", When: nil}},
 				Initial: []Attr{
 					{Name: "SupportedStreamUsages", Value: Value{}},
@@ -686,6 +687,7 @@ var rows = []Row{
 			},
 			{
 				Name: "WebRtcTransportProvider", ID: webrtctransportproviderdef.ClusterID,
+				Ports: "host",
 				declare: func(b *binding, ci int) device.Declaration {
 					var d webrtctransportproviderdef.Declare
 					if !b.portsWebRTCProvider(&d) {
@@ -2558,7 +2560,7 @@ var rows = []Row{
 		ID: "lock/door_lock", Platform: "lock",
 		When:  When{},
 		State: eligibility.StateMappable,
-		Cites: []string{"matter.js packages/model/src/standard/elements/door-lock-device.element.ts:30 @862ad75f (DoorLock mandatory)", "matter.js packages/model/src/standard/resources/door-lock-cluster.resource.ts:151 @862ad75f (LockState)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/lock/lock-unlock-with-timeout-bringup.test.ts:21-23,126-141 @664575a (UnlockWithTimeout unlocks through Home Assistant; left to matter.js it only flipped LockState)", "go-ha-catalog data/mqtt.json:4445-4649 (lock schema; payload_lock at 4558, payload_unlock at 4578, state_locked/unlocked/jammed at 4593-4627)", "go-ha-catalog data/features.json:58-60 (lock feature OPEN)", "go-ha-catalog gen_vocab.go:1005-1015 (LockState vocabulary)"},
+		Cites: []string{"matter.js packages/model/src/standard/elements/door-lock-device.element.ts:30 @862ad75f (DoorLock mandatory)", "matter.js packages/model/src/standard/resources/door-lock-cluster.resource.ts:151 @862ad75f (LockState)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/lock/lock-unlock-with-timeout-bringup.test.ts:21-23,126-141 @664575a (UnlockWithTimeout unlocks through Home Assistant and relocks through Home Assistant when the timeout is up)", "go-fabric cluster/lock/doorlock_server.go:131-145,826-849,956-969 @v0.18.0 (StateSource — the server runs the lock commands, arms the auto-relock with UnlockWithTimeout's timeout, and asks LockInvoke to lock, unlock or unbolt; the relock arrives as LockDoor)", "go-fabric cluster/lock/doorlock_server.go:644-662 @v0.18.0 (LockState is read from the source at every read — jammed is NotFullyLocked, an unknown state null)", "go-fabric cluster/spec/doorlock/server_gen.go:695-712,807-808 @v0.18.0 (Declare.StateSource); device/defaults.go:519-538 @v0.18.0 (the kit hands it to lock.New)", "matter.js packages/node/src/behaviors/door-lock/DoorLockServer.ts:203-205,956-974 @862ad75f (unlockWithTimeout schedules the auto-relock with the request's timeout)", "go-ha-catalog data/mqtt.json:4445-4649 (lock schema; payload_lock at 4558, payload_unlock at 4578, state_locked/unlocked/jammed at 4593-4627)", "go-ha-catalog data/features.json:58-60 (lock feature OPEN)", "go-ha-catalog gen_vocab.go:1005-1015 (LockState vocabulary)"},
 		Type:  device.DoorLockType(),
 		Caveats: []Caveat{
 			{When: When{Features: &Set{Any: []string{"OPEN"}}}, Reason: "the lock's open (unlatch) is not mapped in H1: DoorLock's Unbolting feature is H2"},
@@ -2567,37 +2569,17 @@ var rows = []Row{
 		Clusters: []Cluster{
 			{
 				Name: "DoorLock", ID: doorlockdef.ClusterID,
+				Ports: "row",
 				Attributes: []Attr{
 					{Name: "LockState", Value: Value{From: "state"}},
 				},
 				Commands: []Command{
 					{Kind: "handle", On: []string{"LockDoor"}, Raw: &Value{From: "extra.payload_lock", Catalog: true}},
 					{Kind: "handle", On: []string{"UnlockDoor"}, Raw: &Value{From: "extra.payload_unlock", Catalog: true}},
-					{Kind: "handle", On: []string{"UnlockWithTimeout"}, Raw: &Value{From: "extra.payload_unlock", Catalog: true}},
 				},
 				declare: func(b *binding, ci int) device.Declaration {
 					var d doorlockdef.Declare
-					d.HandleLockDoor = func(_ context.Context, req doorlockdef.LockDoorRequest) (resp struct{}, err error) {
-						f := func(string) (any, bool) { return nil, false }
-						if true {
-							b.emit(ci, 0, f)
-						}
-						return resp, err
-					}
-					d.HandleUnlockDoor = func(_ context.Context, req doorlockdef.UnlockDoorRequest) (resp struct{}, err error) {
-						f := func(string) (any, bool) { return nil, false }
-						if true {
-							b.emit(ci, 1, f)
-						}
-						return resp, err
-					}
-					d.HandleUnlockWithTimeout = func(_ context.Context, req doorlockdef.UnlockWithTimeoutRequest) (resp struct{}, err error) {
-						f := func(string) (any, bool) { return nil, false }
-						if true {
-							b.emit(ci, 2, f)
-						}
-						return resp, err
-					}
+					b.rowPortsDoorLock(&d, ci)
 					return d
 				},
 				apply: func(b *binding, ci int, st model.State) (any, error) {
@@ -2620,7 +2602,7 @@ var rows = []Row{
 					if n == 0 {
 						return nil, nil
 					}
-					return p, doorlockdef.Wrap(b.server(doorlockdef.ClusterID)).Set(p)
+					return p, b.rowPortsDoorLockApply(ci, p)
 				},
 			},
 		},
@@ -2944,7 +2926,8 @@ var rows = []Row{
 				Commands: []Command{
 					{Kind: "handle", On: []string{"On"}, Method: "volume_mute", Raw: &Value{Const: false, HasConst: true}},
 					{Kind: "handle", On: []string{"Off"}, Method: "volume_mute", Raw: &Value{Const: true, HasConst: true}},
-					{Kind: "handle", On: []string{"Toggle"}, Discard: true},
+					{Kind: "handle", On: []string{"Toggle"}, Method: "volume_mute", Raw: &Value{Const: true, HasConst: true}},
+					{Kind: "handle", On: []string{"Toggle"}, Method: "volume_mute", Raw: &Value{Const: false, HasConst: true}},
 				},
 				declare: func(b *binding, ci int) device.Declaration {
 					var d onoffdef.Declare
@@ -2962,8 +2945,15 @@ var rows = []Row{
 						}
 						return resp, err
 					}
-					d.HandleToggle = func(_ context.Context, _ onoffdef.ToggleRequest) (resp struct{}, err error) {
-						b.discard(ci, 2)
+					d.HandleToggle = func(_ context.Context, req onoffdef.ToggleRequest) (resp struct{}, err error) {
+						st := onoffdef.Wrap(b.server(onoffdef.ClusterID)).Get()
+						f := func(string) (any, bool) { return nil, false }
+						if slices.Contains([]bool{true}, st.OnOff) {
+							b.emit(ci, 2, f)
+						}
+						if slices.Contains([]bool{false}, st.OnOff) {
+							b.emit(ci, 3, f)
+						}
 						return resp, err
 					}
 					return d

@@ -117,8 +117,16 @@ rows:
           - handle: "Off"
             method: volume_mute
             raw: {const: true}
+          # No service toggles mute: Toggle branches on the plug's OnOff
+          # ("not muted") and calls volume_mute with the inverse.
           - handle: Toggle
-            discard: true
+            if: {state: OnOff, in: ["true"]}
+            method: volume_mute
+            raw: {const: true}
+          - handle: Toggle
+            if: {state: OnOff, in: ["false"]}
+            method: volume_mute
+            raw: {const: false}
       - *volume
   - id: speaker_volume
     when: {features: {any: [VOLUME_SET]}}

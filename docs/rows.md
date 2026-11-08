@@ -64,7 +64,7 @@ rows:
             units: {"°C": {scale: 100}}   # the conversion (below)
         commands:                # the command mapping Plan.OnChange hands out
           - handle: LockDoor     # | write: [Attr, ...] | change: [Attr, ...]
-            if: {field: SystemMode, in: [SystemModeAuto]}   # or not_in
+            if: {field: SystemMode, in: [SystemModeAuto]}   # or not_in; or state: <Attribute>, the cluster's current value
             when: {...}          # entities the command applies to
             method: set_position # the entity's named method; empty: its command binding
             raw: {...}           # the payload as one value, or
@@ -81,7 +81,7 @@ rows:
           list: desc.options     # or extra.<key>: a list of strings
           current: state         # the value whose entry is the current one
           method: select_option  # a choice's method; the payload is the string
-        ports: host              # the kit's server runs on the consumer's ports (Options.Ports)
+        ports: host              # the kit's server runs on the consumer's ports (Options.Ports); row: on the row's own port
 ```
 
 **Values.** `from` reads the entity: `state` (the primary state value; for a
@@ -91,7 +91,10 @@ nested keys, else of `State.Extra`), `extra.<key>` (a key of
 default for the key when the entity states none), `device_class`, `unit`,
 `desc.min`, `desc.max`, `desc.step`. A command value reads `field` (the
 handled request's field, or the cluster's state field for `write` and
-`change`) or a `const`. A number converts as
+`change`) or a `const`; an `if` reads `field` the same way, or `state`, an
+attribute of the cluster's current state when the command arrives (a
+Toggle that calls the entity's set-to-true or set-to-false by what the
+controller sees). A number converts as
 `y = func(x / per + offset) * scale + add`, times `times`, clamped to
 `[min, max]`; `func` is `log10`, `pow10` or `reciprocal`; `units` replaces
 offset, scale and add by the entity's unit (`default_unit` for an entity
@@ -159,7 +162,14 @@ for another answers INVALID_COMMAND; served on the generated server
 The table names the
 options as `[options <list> at <current> to <method>]`.
 
-**Ports.** `ports: host` (the one value) marks a cluster whose kit server
+**Ports.** `ports: row` marks a cluster whose kit server runs on a port the
+row itself serves (`rowports.go`, `rowPortMaterializers`; DoorLock's
+StateSource): the server runs the controller's commands — authorization,
+state, events, timers such as the lock's auto-relock — and asks the port to
+act; the row's `handle` commands are those actions, emitted by name
+(LockDoor, UnlockDoor), and its attribute mapping is the state the port
+answers from. Such a `handle` takes no `if`, `otherwise` or `discard`.
+`ports: host` marks a cluster whose kit server
 runs on ports the consumer supplies: `Options.Ports` returns, per entity,
 a host object, and a port materializer of the root package (`ports.go`)
 sets the cluster's `Declare` port fields from the interfaces it
@@ -206,7 +216,7 @@ table names the key as `[ports: host]`.
 | `light/color_temperature` | supported_color_modes any of color_temp | ColorTemperatureLight | OnOff; LevelControl; ColorControl (ColorTemperature) | mappable | matter.js packages/model/src/standard/elements/color-temperature-light.element.ts:28-48 @862ad75f (OnOff LT, LevelControl OO+LT, ColorControl CT); matter.js packages/model/src/standard/resources/color-control.resource.ts:139-154 @862ad75f (ColorTemperatureMireds, mireds = 1,000,000 / K) |
 | `light/dimmable` | supported_color_modes any of brightness, white | DimmableLight | OnOff; LevelControl | mappable | matter.js packages/model/src/standard/elements/dimmable-light.element.ts:28-39 @862ad75f (OnOff LT, LevelControl LT+OO, CurrentLevel 1 to 254); go-fabric cluster/spec/levelcontrol/values.go:28-44 @v0.11.0 (LevelFromUnit, UnitFromLevel) |
 | `light/onoff` | any | OnOffLight | OnOff | mappable | matter.js packages/model/src/standard/elements/on-off-light.element.ts:28-30 @862ad75f (OnOff mandatory, feature LT) |
-| `lock/door_lock` | any | DoorLock | DoorLock | mappable | matter.js packages/model/src/standard/elements/door-lock-device.element.ts:30 @862ad75f (DoorLock mandatory); matter.js packages/model/src/standard/resources/door-lock-cluster.resource.ts:151 @862ad75f (LockState); home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/lock/lock-unlock-with-timeout-bringup.test.ts:21-23,126-141 @664575a (UnlockWithTimeout unlocks through Home Assistant; left to matter.js it only flipped LockState) |
+| `lock/door_lock` | any | DoorLock | DoorLock [ports: row] | mappable | matter.js packages/model/src/standard/elements/door-lock-device.element.ts:30 @862ad75f (DoorLock mandatory); matter.js packages/model/src/standard/resources/door-lock-cluster.resource.ts:151 @862ad75f (LockState); home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/lock/lock-unlock-with-timeout-bringup.test.ts:21-23,126-141 @664575a (UnlockWithTimeout unlocks through Home Assistant and relocks through Home Assistant when the timeout is up); go-fabric cluster/lock/doorlock_server.go:131-145,826-849,956-969 @v0.18.0 (StateSource — the server runs the lock commands, arms the auto-relock with UnlockWithTimeout's timeout, and asks LockInvoke to lock, unlock or unbolt; the relock arrives as LockDoor); go-fabric cluster/lock/doorlock_server.go:644-662 @v0.18.0 (LockState is read from the source at every read — jammed is NotFullyLocked, an unknown state null); go-fabric cluster/spec/doorlock/server_gen.go:695-712,807-808 @v0.18.0 (Declare.StateSource); device/defaults.go:519-538 @v0.18.0 (the kit hands it to lock.New); matter.js packages/node/src/behaviors/door-lock/DoorLockServer.ts:203-205,956-974 @862ad75f (unlockWithTimeout schedules the auto-relock with the request's timeout) |
 | `media_player/video_player` | device_class tv | BasicVideoPlayer | OnOff; MediaPlayback; KeypadInput | mappable | matter.js packages/model/src/standard/elements/basic-video-player.element.ts:22,27,30 @862ad75f (OnOff, MediaPlayback and KeypadInput mandatory); go-fabric cluster/spec/mediaplayback/definition_gen.go:45-48,169-172,192-197,425-428 @v0.15.4 (Play, Pause, Stop; PlaybackStateEnum; StatusEnum; PlaybackResponse); go-fabric cluster/spec/keypadinput/definition_gen.go:95-98,238-240,253-255,272-274 @v0.15.4 (Power, VolumeUp, VolumeDown, Mute; StatusEnum; SendKey); go-fabric device/defaults_media.go:63-72 @v0.15.4 (the kit's media servers need their ports; without them the generated servers); home-assistant/core homeassistant/components/media_player/services.py:125-163 @2026.10.3 (turn_on, turn_off, toggle, volume_up, volume_down, media_play, media_pause, media_stop); home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/index.ts:24-39 @664575a (device_class tv is a video player); home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/behaviors/media-player-media-playback-server.ts:17-63 @664575a (the playback states and commands); home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/behaviors/media-player-keypad-input-server.ts:42-130 @664575a (keys onto services) |
 | `media_player/speaker` | features all of TURN_ON, TURN_OFF | Speaker | OnOff; LevelControl | mappable | matter.js packages/model/src/standard/elements/speaker.element.ts:18-19 @862ad75f (OnOff and LevelControl mandatory); go-fabric cluster/spec/levelcontrol/values.go:19-44 @v0.15.4 (levels 0 to 254, a unit value times 254); home-assistant/core homeassistant/components/media_player/__init__.py:334,362-364,379-381 @2026.10.3 (volume_level 0 to 1, is_volume_muted); home-assistant/core homeassistant/components/media_player/services.py:125-130,182-203 @2026.10.3 (turn_on, turn_off, volume_set, volume_mute); home-assistant/core homeassistant/components/media_player/services.yaml:3-24 @2026.10.3 (turn_on, turn_off, toggle; toggle needs TURN_ON and TURN_OFF; no service toggles mute); home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/index.ts:41-91 @664575a (a Speaker; power with TURN_ON and TURN_OFF, else mute as OnOff; VolumeSet as LevelControl); home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/behaviors/media-player-power-on-off-server.ts:8-16 @664575a (off and standby are off); home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/behaviors/media-player-on-off-server.ts:8-17 @664575a (OnOff is not muted) |
 | `media_player/speaker_mute` | features any of VOLUME_MUTE | Speaker | OnOff; LevelControl | mappable | matter.js packages/model/src/standard/elements/speaker.element.ts:18-19 @862ad75f (OnOff and LevelControl mandatory); go-fabric cluster/spec/levelcontrol/values.go:19-44 @v0.15.4 (levels 0 to 254, a unit value times 254); home-assistant/core homeassistant/components/media_player/__init__.py:334,362-364,379-381 @2026.10.3 (volume_level 0 to 1, is_volume_muted); home-assistant/core homeassistant/components/media_player/services.py:125-130,182-203 @2026.10.3 (turn_on, turn_off, volume_set, volume_mute); home-assistant/core homeassistant/components/media_player/services.yaml:3-24 @2026.10.3 (turn_on, turn_off, toggle; toggle needs TURN_ON and TURN_OFF; no service toggles mute); home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/index.ts:41-91 @664575a (a Speaker; power with TURN_ON and TURN_OFF, else mute as OnOff; VolumeSet as LevelControl); home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/behaviors/media-player-power-on-off-server.ts:8-16 @664575a (off and standby are off); home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/media-player/behaviors/media-player-on-off-server.ts:8-17 @664575a (OnOff is not muted) |
