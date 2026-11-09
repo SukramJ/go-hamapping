@@ -6,6 +6,20 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.8] - 2026-11-09
+
+### Changed
+
+- go-fabric `v0.19.1` (was `v0.18.0`). What it carries for a host: every
+  device-side reader of real time on the node's UTC, `Node.SetNodeLabel`,
+  the mDNS interface allow-list, a session's datagrams handled in arrival
+  order, the acknowledgement pump idle while nothing is owed (a `fabrictest`
+  site on a fake clock moves to the next real deadline) and a bounded
+  `fabrictest` quiet-period check (0.19.0); the camera's Answer before the
+  requestor holds the session (0.19.1). None of the breaks below the facade
+  touches a row or its tests; the rows, their citations at `v0.18.0` and the
+  generated table are unchanged.
+
 ## [0.4.7] - 2026-11-08
 
 The lock as the DoorLock server's actuator; a handle on the cluster's state
