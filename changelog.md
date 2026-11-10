@@ -6,6 +6,19 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.9] - 2026-11-10
+
+### Changed
+
+- go-fabric `v0.20.0` (was `v0.19.1`). What it carries for a host: the
+  fabric-leaving flush (`Node.FactoryReset`, `Node.RemoveFabric`) sends the
+  Leave event and the attributes owed as one report and waits at most 500 ms
+  for its answer (0.19.2); the controller reconnects to a node through the
+  host its last session proved, so a border router answering a Thread node's
+  instance with its own host no longer delays every reconnect (0.20.0).
+  Neither touches a row or its tests; the rows, their citations at `v0.18.0`
+  and the generated table are unchanged.
+
 ## [0.4.8] - 2026-11-09
 
 ### Changed
