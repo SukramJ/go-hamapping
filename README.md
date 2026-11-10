@@ -18,7 +18,7 @@ Twin of [`go-ha2fabric`](https://github.com/SukramJ/go-ha2fabric); both are buil
 setup (pure Go, `CGO_ENABLED=0`, Apache-2.0 with a contributor licence
 agreement, the same guards in CI).
 
-> **Status: v0.4.9 (brief C6, go-fabric v0.20.0).** The row format, its generated Go form,
+> **Status: v0.4.10 (brief C7, go-fabric v0.21.0).** The row format, its generated Go form,
 > the guards and the first rows, each with a round trip through go-fabric's
 > in-process controller (v0.1.0, brief H1); a stable identity a source
 > supplies, the method constants and the table of keys a source fills

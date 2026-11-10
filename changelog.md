@@ -6,6 +6,20 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.10] - 2026-11-10
+
+### Changed
+
+- go-fabric `v0.21.0` (was `v0.20.0`). What it carries for a host: the
+  controller serves diagnostics (the new package `diag`, which `node`'s
+  diagnostic types now alias, with no source change for a consumer); the
+  reconnect residuals of go-fabric#488 (a peer learns its proven operational
+  host from discovery, a link-local address leaves the service on every
+  interface); BlueZ reports the ATT_MTU exchange; the CommodityTariff server
+  reads its declared `TimeSource` inside a node again. None touches a row or
+  its tests; the rows, their citations at `v0.18.0` and the generated table
+  are unchanged.
+
 ## [0.4.9] - 2026-11-10
 
 ### Changed
