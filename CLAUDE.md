@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Home Assistant component to Matter cluster mapping for go-fabric bridges. Twin of `go-ha2fabric`; both are built on
 [go-fabric](https://github.com/SukramJ/go-fabric) and share its project
-setup. **State: v0.4.10 (brief C7, go-fabric v0.21.0).** `CONCEPT.md` is the design,
+setup. **State: v0.4.11 (go-fabric v0.22.0).** `CONCEPT.md` is the design,
 `docs/rows.md` the row format. The table is `rows/*.yaml`; `rows_gen.go`
 is generated from it (`make generate`) and never hand-edited.
 
@@ -20,7 +20,7 @@ make race      # go test -race (CGO_ENABLED=1 for this run only)
 make fmt       # gofumpt -w .
 ```
 
-Go 1.27.3, `CGO_ENABLED=0`. Dependencies: go-fabric, go-hamqtt,
+Go 1.27.4, `CGO_ENABLED=0`. Dependencies: go-fabric, go-hamqtt,
 go-ha-catalog, gopkg.in/yaml.v3 (`THIRD-PARTY-NOTICES.md`). Every further
 dependency is a decision: Apache-2.0 / MIT / BSD only, and it updates the
 notices.

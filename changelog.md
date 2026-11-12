@@ -6,6 +6,20 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.11] - 2026-11-12
+
+### Changed
+
+- Built with Go 1.27.4: `GO-2026-6859` (`net/http`, fixed in 1.27.4); `go.mod`, the workflows and the Dockerfiles move together.
+- go-fabric `v0.22.0` (was `v0.21.0`). What it carries for a host: BLE and
+  Wi-Fi commissioning on the device side (milestone 7, phase 28 —
+  `contract.BLEPeripheral`, `node.Network.BLE`, `node.Network.WiFi.Driver`,
+  the nested `wifi/wpasupplicant` module); `fabrictest.UseWiFiCommissioning`
+  is removed; the mDNS responder joins interfaces that come up after start;
+  the controller's pairing timeout bounds the search only. None touches a
+  row or its tests; the rows, their citations at `v0.18.0` and the
+  generated table are unchanged.
+
 ## [0.4.10] - 2026-11-10
 
 ### Changed
