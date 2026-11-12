@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.12] - 2026-11-12
+
+### Changed
+
+- go-fabric `v0.22.2` (was `v0.22.1`, patch): the dependency only — its fix
+  is in the nested `ble/esphome` module (go-fabric PR 512), which is not
+  imported here; the root module carries no code change.
+
 ## [0.4.11] - 2026-11-12
 
 ### Changed
