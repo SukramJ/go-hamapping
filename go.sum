@@ -4,8 +4,8 @@ github.com/SukramJ/go-fabric v0.22.2 h1:HnyaeM+hhrfiD+IYHcH1oPj0NvOpYgimzU+2jc4C
 github.com/SukramJ/go-fabric v0.22.2/go.mod h1:ZENqwL+a1p3zfhSO7vjwhx6PqVxsCY8UhgNAY/FBD+c=
 github.com/SukramJ/go-ha-catalog v0.3.2-0.20261024093528-d9582e022b8f h1:Y0N1A6rojgi1e4GeNuA3twBQbwkTcfalTYfMOK9qPDU=
 github.com/SukramJ/go-ha-catalog v0.3.2-0.20261024093528-d9582e022b8f/go.mod h1:qonkN9S2mQc8Hs4fH8XfVqlORR/yrbmgx6n0ImFlsbc=
-github.com/SukramJ/go-hamqtt v0.39.0 h1:0Ec78wVnCfiae3hrpzWE2k50e1BkDQre/Am+jEAZ924=
-github.com/SukramJ/go-hamqtt v0.39.0/go.mod h1:a6HY+xpK4BE/6az0CdSUnNzbLxs1SlHSTO1tTFqYxA4=
+github.com/SukramJ/go-hamqtt v0.40.0 h1:d4M8OZlhbByIOJkVYYxEjFWMJ+6PwBtan21IhaQ2qDg=
+github.com/SukramJ/go-hamqtt v0.40.0/go.mod h1:7rtxzUbuNpOpi0IXJWHwjxJSBXVLPOkcBCrglJAgI4k=
 github.com/dustin/go-humanize v1.1.0 h1:dbKTrvD0klcbBV/h4AWJdMuZogJACoMlvWIWZ5b2xWg=
 github.com/dustin/go-humanize v1.1.0/go.mod h1:hc1CvRkJMsgxqjmjMQF3QNRAZBwY8AXBAzKYoSX9sFI=
 github.com/google/pprof v0.0.0-20261016150608-1facf8f91b50 h1:PlNWJRxu5APSV0pWqfIsZ0qt9OOGHSWfZQ4zvx+WgWs=
