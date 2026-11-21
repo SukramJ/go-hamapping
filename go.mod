@@ -5,7 +5,7 @@ go 1.27.4
 require (
 	github.com/SukramJ/go-fabric v0.22.2
 	github.com/SukramJ/go-ha-catalog v0.3.2-0.20261024093528-d9582e022b8f
-	github.com/SukramJ/go-hamqtt v0.39.0
+	github.com/SukramJ/go-hamqtt v0.40.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
