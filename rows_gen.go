@@ -9,49 +9,49 @@ import (
 	"context"
 	"slices"
 
-	airqualitydef "github.com/SukramJ/go-fabric/cluster/spec/airquality"
-	booleanstatedef "github.com/SukramJ/go-fabric/cluster/spec/booleanstate"
-	cameraavstreammanagementdef "github.com/SukramJ/go-fabric/cluster/spec/cameraavstreammanagement"
-	carbondioxideconcentrationmeasurementdef "github.com/SukramJ/go-fabric/cluster/spec/carbondioxideconcentrationmeasurement"
-	carbonmonoxideconcentrationmeasurementdef "github.com/SukramJ/go-fabric/cluster/spec/carbonmonoxideconcentrationmeasurement"
-	colorcontroldef "github.com/SukramJ/go-fabric/cluster/spec/colorcontrol"
-	doorlockdef "github.com/SukramJ/go-fabric/cluster/spec/doorlock"
-	electricalenergymeasurementdef "github.com/SukramJ/go-fabric/cluster/spec/electricalenergymeasurement"
-	electricalpowermeasurementdef "github.com/SukramJ/go-fabric/cluster/spec/electricalpowermeasurement"
-	fancontroldef "github.com/SukramJ/go-fabric/cluster/spec/fancontrol"
-	flowmeasurementdef "github.com/SukramJ/go-fabric/cluster/spec/flowmeasurement"
-	illuminancemeasurementdef "github.com/SukramJ/go-fabric/cluster/spec/illuminancemeasurement"
-	keypadinputdef "github.com/SukramJ/go-fabric/cluster/spec/keypadinput"
-	levelcontroldef "github.com/SukramJ/go-fabric/cluster/spec/levelcontrol"
-	mediaplaybackdef "github.com/SukramJ/go-fabric/cluster/spec/mediaplayback"
-	modeselectdef "github.com/SukramJ/go-fabric/cluster/spec/modeselect"
-	nitrogendioxideconcentrationmeasurementdef "github.com/SukramJ/go-fabric/cluster/spec/nitrogendioxideconcentrationmeasurement"
-	occupancysensingdef "github.com/SukramJ/go-fabric/cluster/spec/occupancysensing"
-	onoffdef "github.com/SukramJ/go-fabric/cluster/spec/onoff"
-	ozoneconcentrationmeasurementdef "github.com/SukramJ/go-fabric/cluster/spec/ozoneconcentrationmeasurement"
-	pm10concentrationmeasurementdef "github.com/SukramJ/go-fabric/cluster/spec/pm10concentrationmeasurement"
-	pm1concentrationmeasurementdef "github.com/SukramJ/go-fabric/cluster/spec/pm1concentrationmeasurement"
-	pm25concentrationmeasurementdef "github.com/SukramJ/go-fabric/cluster/spec/pm25concentrationmeasurement"
-	powersourcedef "github.com/SukramJ/go-fabric/cluster/spec/powersource"
-	powertopologydef "github.com/SukramJ/go-fabric/cluster/spec/powertopology"
-	pressuremeasurementdef "github.com/SukramJ/go-fabric/cluster/spec/pressuremeasurement"
-	radonconcentrationmeasurementdef "github.com/SukramJ/go-fabric/cluster/spec/radonconcentrationmeasurement"
-	relativehumiditymeasurementdef "github.com/SukramJ/go-fabric/cluster/spec/relativehumiditymeasurement"
-	rvcoperationalstatedef "github.com/SukramJ/go-fabric/cluster/spec/rvcoperationalstate"
-	rvcrunmodedef "github.com/SukramJ/go-fabric/cluster/spec/rvcrunmode"
-	smokecoalarmdef "github.com/SukramJ/go-fabric/cluster/spec/smokecoalarm"
-	soilmeasurementdef "github.com/SukramJ/go-fabric/cluster/spec/soilmeasurement"
-	switchclusterdef "github.com/SukramJ/go-fabric/cluster/spec/switchcluster"
-	temperaturemeasurementdef "github.com/SukramJ/go-fabric/cluster/spec/temperaturemeasurement"
-	thermostatdef "github.com/SukramJ/go-fabric/cluster/spec/thermostat"
-	totalvolatileorganiccompoundsconcentrationmeasurementdef "github.com/SukramJ/go-fabric/cluster/spec/totalvolatileorganiccompoundsconcentrationmeasurement"
-	valveconfigurationandcontroldef "github.com/SukramJ/go-fabric/cluster/spec/valveconfigurationandcontrol"
-	webrtctransportproviderdef "github.com/SukramJ/go-fabric/cluster/spec/webrtctransportprovider"
-	windowcoveringdef "github.com/SukramJ/go-fabric/cluster/spec/windowcovering"
-	"github.com/SukramJ/go-fabric/contract"
-	"github.com/SukramJ/go-fabric/device"
-	"github.com/SukramJ/go-fabric/eligibility"
 	"github.com/SukramJ/go-hamqtt/model"
+	airqualitydef "thingfabric.dev/go-fabric/cluster/spec/airquality"
+	booleanstatedef "thingfabric.dev/go-fabric/cluster/spec/booleanstate"
+	cameraavstreammanagementdef "thingfabric.dev/go-fabric/cluster/spec/cameraavstreammanagement"
+	carbondioxideconcentrationmeasurementdef "thingfabric.dev/go-fabric/cluster/spec/carbondioxideconcentrationmeasurement"
+	carbonmonoxideconcentrationmeasurementdef "thingfabric.dev/go-fabric/cluster/spec/carbonmonoxideconcentrationmeasurement"
+	colorcontroldef "thingfabric.dev/go-fabric/cluster/spec/colorcontrol"
+	doorlockdef "thingfabric.dev/go-fabric/cluster/spec/doorlock"
+	electricalenergymeasurementdef "thingfabric.dev/go-fabric/cluster/spec/electricalenergymeasurement"
+	electricalpowermeasurementdef "thingfabric.dev/go-fabric/cluster/spec/electricalpowermeasurement"
+	fancontroldef "thingfabric.dev/go-fabric/cluster/spec/fancontrol"
+	flowmeasurementdef "thingfabric.dev/go-fabric/cluster/spec/flowmeasurement"
+	illuminancemeasurementdef "thingfabric.dev/go-fabric/cluster/spec/illuminancemeasurement"
+	keypadinputdef "thingfabric.dev/go-fabric/cluster/spec/keypadinput"
+	levelcontroldef "thingfabric.dev/go-fabric/cluster/spec/levelcontrol"
+	mediaplaybackdef "thingfabric.dev/go-fabric/cluster/spec/mediaplayback"
+	modeselectdef "thingfabric.dev/go-fabric/cluster/spec/modeselect"
+	nitrogendioxideconcentrationmeasurementdef "thingfabric.dev/go-fabric/cluster/spec/nitrogendioxideconcentrationmeasurement"
+	occupancysensingdef "thingfabric.dev/go-fabric/cluster/spec/occupancysensing"
+	onoffdef "thingfabric.dev/go-fabric/cluster/spec/onoff"
+	ozoneconcentrationmeasurementdef "thingfabric.dev/go-fabric/cluster/spec/ozoneconcentrationmeasurement"
+	pm10concentrationmeasurementdef "thingfabric.dev/go-fabric/cluster/spec/pm10concentrationmeasurement"
+	pm1concentrationmeasurementdef "thingfabric.dev/go-fabric/cluster/spec/pm1concentrationmeasurement"
+	pm25concentrationmeasurementdef "thingfabric.dev/go-fabric/cluster/spec/pm25concentrationmeasurement"
+	powersourcedef "thingfabric.dev/go-fabric/cluster/spec/powersource"
+	powertopologydef "thingfabric.dev/go-fabric/cluster/spec/powertopology"
+	pressuremeasurementdef "thingfabric.dev/go-fabric/cluster/spec/pressuremeasurement"
+	radonconcentrationmeasurementdef "thingfabric.dev/go-fabric/cluster/spec/radonconcentrationmeasurement"
+	relativehumiditymeasurementdef "thingfabric.dev/go-fabric/cluster/spec/relativehumiditymeasurement"
+	rvcoperationalstatedef "thingfabric.dev/go-fabric/cluster/spec/rvcoperationalstate"
+	rvcrunmodedef "thingfabric.dev/go-fabric/cluster/spec/rvcrunmode"
+	smokecoalarmdef "thingfabric.dev/go-fabric/cluster/spec/smokecoalarm"
+	soilmeasurementdef "thingfabric.dev/go-fabric/cluster/spec/soilmeasurement"
+	switchclusterdef "thingfabric.dev/go-fabric/cluster/spec/switchcluster"
+	temperaturemeasurementdef "thingfabric.dev/go-fabric/cluster/spec/temperaturemeasurement"
+	thermostatdef "thingfabric.dev/go-fabric/cluster/spec/thermostat"
+	totalvolatileorganiccompoundsconcentrationmeasurementdef "thingfabric.dev/go-fabric/cluster/spec/totalvolatileorganiccompoundsconcentrationmeasurement"
+	valveconfigurationandcontroldef "thingfabric.dev/go-fabric/cluster/spec/valveconfigurationandcontrol"
+	webrtctransportproviderdef "thingfabric.dev/go-fabric/cluster/spec/webrtctransportprovider"
+	windowcoveringdef "thingfabric.dev/go-fabric/cluster/spec/windowcovering"
+	"thingfabric.dev/go-fabric/contract"
+	"thingfabric.dev/go-fabric/device"
+	"thingfabric.dev/go-fabric/eligibility"
 )
 
 // The methods the rows' commands deliver as model.Command.Method: a
@@ -709,7 +709,7 @@ var rows = []Row{
 		ID: "climate/air_conditioner", Platform: "climate",
 		When:  When{Features: &Set{All: []string{"FAN_MODE", "TURN_ON", "TURN_OFF"}}, Extra: map[string]Set{"modes": Set{Any: []string{"heat", "cool", "heat_cool"}}}},
 		State: eligibility.StateMappable,
-		Cites: []string{"go-fabric cluster/thermo/presets.go:246-257 @v0.15.4 (every preset needs the setpoints of the selected Heating and Cooling features)", "go-fabric device/room_air_conditioner_gen.go:39-86 @v0.15.4 (OnOff mandatory with DF, Thermostat mandatory, FanControl and RelativeHumidityMeasurement optional)", "matter.js packages/model/src/standard/resources/fan-control.resource.ts:44,80,95 @862ad75f (FanMode, PercentSetting, PercentCurrent)", "matter.js packages/model/src/standard/resources/relative-humidity-measurement.resource.ts:20-26 @862ad75f (MeasuredValue = 100 x water content)", "home-assistant/core homeassistant/components/climate/const.py:71-81,194-205 @2026.10.3 (fan modes; FAN_MODE, TURN_OFF, TURN_ON)", "home-assistant/core homeassistant/components/climate/__init__.py:318-325 @2026.10.3 (current_humidity and fan_mode state attributes)", "home-assistant/core homeassistant/components/climate/services.py:170-180,214-218 @2026.10.3 (turn_on, turn_off, set_fan_mode)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/climate/index.ts:83-102,172-186 @664575a (FAN_MODE makes a RoomAirConditioner; OnOff with TURN_ON and TURN_OFF; humidity from current_humidity)", "go-ha-catalog data/features.json:14-24 (climate feature flags)", "home-assistant/core homeassistant/components/climate/services.yaml:131-151 @2026.10.3 (turn_on, turn_off, toggle; toggle needs TURN_ON and TURN_OFF)", "go-ha-catalog data/mqtt.json:1200-1647 (climate schema; modes at 1385 with its default, mode_command_topic at 1370, temperature_command_topic at 1572, temperature_low/high_command_topic at 1582/1602)", "go-ha-catalog gen_vocab.go:837-847 (HVACMode vocabulary)"},
+		Cites: []string{"go-fabric cluster/thermo/presets.go:246-257 @v0.15.4 (every preset needs the setpoints of the selected Heating and Cooling features)", "go-fabric device/room_air_conditioner_gen.go:39-86 @v0.15.4 (OnOff mandatory with DF, Thermostat mandatory, FanControl and RelativeHumidityMeasurement optional)", "matter.js packages/model/src/standard/resources/fan-control.resource.ts:44,80,95 @862ad75f (FanMode, PercentSetting, PercentCurrent)", "matter.js packages/model/src/standard/resources/relative-humidity-measurement.resource.ts:20-26 @862ad75f (MeasuredValue = 100 x water content)", "connectedhomeip src/app/clusters/fan-control-server/FanControlCluster.cpp:85-110,137-166 @6170af84 (PercentSetting of a FanMode: Off 0, Low 33, Medium 66, High 100, Auto null; FanMode of a percentage: up to 33 Low, up to 66 Medium, above High)", "home-assistant-matter-hub packages/backend/src/matter/behaviors/fan-control-server.ts:354-355,385-386 @664575a (a preset's percentage is served as PercentSetting and PercentCurrent)", "go-fabric cluster/spec/server.go:105-110,518-529 @v0.25.0 (a write of the value the server holds reaches no veto, so the held value has to follow Home Assistant)", "home-assistant/core homeassistant/components/climate/const.py:71-81,194-205 @2026.10.3 (fan modes; FAN_MODE, TURN_OFF, TURN_ON)", "home-assistant/core homeassistant/components/climate/__init__.py:318-325 @2026.10.3 (current_humidity and fan_mode state attributes)", "home-assistant/core homeassistant/components/climate/services.py:170-180,214-218 @2026.10.3 (turn_on, turn_off, set_fan_mode)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/climate/index.ts:83-102,172-186 @664575a (FAN_MODE makes a RoomAirConditioner; OnOff with TURN_ON and TURN_OFF; humidity from current_humidity)", "go-ha-catalog data/features.json:14-24 (climate feature flags)", "home-assistant/core homeassistant/components/climate/services.yaml:131-151 @2026.10.3 (turn_on, turn_off, toggle; toggle needs TURN_ON and TURN_OFF)", "go-ha-catalog data/mqtt.json:1200-1647 (climate schema; modes at 1385 with its default, mode_command_topic at 1370, temperature_command_topic at 1572, temperature_low/high_command_topic at 1582/1602)", "go-ha-catalog gen_vocab.go:837-847 (HVACMode vocabulary)"},
 		Type:  device.RoomAirConditionerType(),
 		Caveats: []Caveat{
 			{When: When{Extra: map[string]Set{"modes": Set{Any: []string{"auto"}}}}, Reason: "the hvac mode auto (the device's own schedule) has no SystemMode: it is not mapped"},
@@ -1008,6 +1008,8 @@ var rows = []Row{
 				Features: []Feature{{Name: "Auto", When: &When{Extra: map[string]Set{"fan_modes": Set{Any: []string{"auto"}}}}}},
 				Attributes: []Attr{
 					{Name: "FanMode", Value: Value{From: "state.fan_mode"}},
+					{Name: "PercentSetting", Value: Value{From: "state.fan_mode"}},
+					{Name: "PercentCurrent", Value: Value{From: "state.fan_mode"}},
 				},
 				Initial: []Attr{
 					{Name: "FanMode", Value: Value{Const: "FanModeOff", HasConst: true}},
@@ -1079,6 +1081,34 @@ var rows = []Row{
 						n++
 					case "off":
 						p.FanMode = new(fancontroldef.FanModeOff)
+						n++
+					}
+					switch b.text(&st, ci, 1) {
+					case "high":
+						p.PercentSetting = new(uint8(100))
+						n++
+					case "low":
+						p.PercentSetting = new(uint8(33))
+						n++
+					case "medium":
+						p.PercentSetting = new(uint8(66))
+						n++
+					case "off":
+						p.PercentSetting = new(uint8(0))
+						n++
+					}
+					switch b.text(&st, ci, 2) {
+					case "high":
+						p.PercentCurrent = new(uint8(100))
+						n++
+					case "low":
+						p.PercentCurrent = new(uint8(33))
+						n++
+					case "medium":
+						p.PercentCurrent = new(uint8(66))
+						n++
+					case "off":
+						p.PercentCurrent = new(uint8(0))
 						n++
 					}
 					if n == 0 {
@@ -1601,7 +1631,7 @@ var rows = []Row{
 		ID: "fan/fan", Platform: "fan",
 		When:  When{},
 		State: eligibility.StateMappable,
-		Cites: []string{"matter.js packages/model/src/standard/elements/fan.element.ts:25 @862ad75f (FanControl mandatory)", "matter.js packages/model/src/standard/resources/fan-control.resource.ts:44,80,95 @862ad75f (FanMode, PercentSetting, PercentCurrent)", "go-ha-catalog data/mqtt.json:2516-2786 (fan schema; payload_on/off at 2670-2679, payload_oscillation_on/off at 2680-2689, percentage_command_topic at 2705, preset_modes at 2740)", "go-ha-catalog data/features.json:36-43 (fan feature flags)"},
+		Cites: []string{"matter.js packages/model/src/standard/elements/fan.element.ts:25 @862ad75f (FanControl mandatory)", "matter.js packages/model/src/standard/resources/fan-control.resource.ts:44,80,95 @862ad75f (FanMode, PercentSetting, PercentCurrent)", "connectedhomeip src/app/clusters/fan-control-server/FanControlCluster.cpp:137-166 @6170af84 (ComputeFanModeFromPercent: 0 Off, up to 33 Low, up to 66 Medium, above High for a sequence with three speeds)", "home-assistant-matter-hub packages/backend/src/utils/converters/fan-mode.ts:22-33 @664575a (FanMode from the speed percentage)", "home-assistant-matter-hub packages/backend/src/matter/behaviors/fan-control-server.ts:359-361,385 @664575a (PercentSetting 0 while the fan is off)", "go-fabric cluster/fan/fancontrol_server.go:667-668 @v0.25.0 (the deprecated On resolves to High)", "go-fabric cluster/spec/server.go:105-110,518-529 @v0.25.0 (a write of the value the server holds reaches no veto, so the held value has to follow Home Assistant)", "go-ha-catalog data/mqtt.json:2516-2786 (fan schema; payload_on/off at 2670-2679, payload_oscillation_on/off at 2680-2689, percentage_command_topic at 2705, preset_modes at 2740)", "go-ha-catalog data/features.json:36-43 (fan feature flags)"},
 		Type:  device.FanType(),
 		Caveats: []Caveat{
 			{When: When{Extra: map[string]Set{"preset_modes": Set{Present: new(true)}}}, Reason: "preset modes map to FanMode only where the names are low, medium, high or auto"},
@@ -1613,8 +1643,11 @@ var rows = []Row{
 				Attributes: []Attr{
 					{Name: "PercentCurrent", Value: Value{From: "state.percentage", Min: new(float64(0)), Max: new(float64(100))}},
 					{Name: "PercentSetting", Value: Value{From: "state.percentage", Min: new(float64(0)), Max: new(float64(100))}},
+					{Name: "FanMode", Value: Value{From: "state"}},
+					{Name: "FanMode", Value: Value{From: "state.percentage"}},
 					{Name: "FanMode", Value: Value{From: "state.preset_mode"}},
 					{Name: "PercentCurrent", Value: Value{From: "state"}},
+					{Name: "PercentSetting", Value: Value{From: "state"}},
 					{Name: "FanMode", Value: Value{From: "state"}},
 					{Name: "RockSetting", Value: Value{From: "state.oscillating"}, When: &When{Features: &Set{Any: []string{"OSCILLATE"}}}},
 					{Name: "AirflowDirection", Value: Value{From: "state.direction"}, When: &When{Features: &Set{Any: []string{"DIRECTION"}}}},
@@ -1721,6 +1754,313 @@ var rows = []Row{
 						n++
 					}
 					switch b.text(&st, ci, 2) {
+					case "on":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					}
+					switch b.text(&st, ci, 3) {
+					case "1":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "10":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "100":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "11":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "12":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "13":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "14":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "15":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "16":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "17":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "18":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "19":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "2":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "20":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "21":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "22":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "23":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "24":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "25":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "26":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "27":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "28":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "29":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "3":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "30":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "31":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "32":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "33":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "34":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "35":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "36":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "37":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "38":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "39":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "4":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "40":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "41":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "42":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "43":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "44":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "45":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "46":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "47":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "48":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "49":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "5":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "50":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "51":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "52":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "53":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "54":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "55":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "56":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "57":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "58":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "59":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "6":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "60":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "61":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "62":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "63":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "64":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "65":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "66":
+						p.FanMode = new(fancontroldef.FanModeMedium)
+						n++
+					case "67":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "68":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "69":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "7":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "70":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "71":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "72":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "73":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "74":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "75":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "76":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "77":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "78":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "79":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "8":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "80":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "81":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "82":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "83":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "84":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "85":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "86":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "87":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "88":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "89":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "9":
+						p.FanMode = new(fancontroldef.FanModeLow)
+						n++
+					case "90":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "91":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "92":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "93":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "94":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "95":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "96":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "97":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "98":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					case "99":
+						p.FanMode = new(fancontroldef.FanModeHigh)
+						n++
+					}
+					switch b.text(&st, ci, 4) {
 					case "auto":
 						p.FanMode = new(fancontroldef.FanModeAuto)
 						n++
@@ -1734,18 +2074,23 @@ var rows = []Row{
 						p.FanMode = new(fancontroldef.FanModeMedium)
 						n++
 					}
-					switch b.text(&st, ci, 3) {
+					switch b.text(&st, ci, 5) {
 					case "off":
 						p.PercentCurrent = new(uint8(0))
 						n++
 					}
-					switch b.text(&st, ci, 4) {
+					switch b.text(&st, ci, 6) {
+					case "off":
+						p.PercentSetting = new(uint8(0))
+						n++
+					}
+					switch b.text(&st, ci, 7) {
 					case "off":
 						p.FanMode = new(fancontroldef.FanModeOff)
 						n++
 					}
 					if b.match(&When{Features: &Set{Any: []string{"OSCILLATE"}}}) {
-						switch b.text(&st, ci, 5) {
+						switch b.text(&st, ci, 8) {
 						case "off":
 							p.RockSetting = new(fancontroldef.RockBitmap(0))
 							n++
@@ -1755,7 +2100,7 @@ var rows = []Row{
 						}
 					}
 					if b.match(&When{Features: &Set{Any: []string{"DIRECTION"}}}) {
-						switch b.text(&st, ci, 6) {
+						switch b.text(&st, ci, 9) {
 						case "forward":
 							p.AirflowDirection = new(fancontroldef.AirflowDirectionForward)
 							n++

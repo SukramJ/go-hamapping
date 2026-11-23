@@ -8,11 +8,11 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-	"unicode/utf16"
+	"unicode/utf8"
 
-	modeselectdef "github.com/SukramJ/go-fabric/cluster/spec/modeselect"
-	"github.com/SukramJ/go-fabric/contract"
 	"github.com/SukramJ/go-hamqtt/model"
+	modeselectdef "thingfabric.dev/go-fabric/cluster/spec/modeselect"
+	"thingfabric.dev/go-fabric/contract"
 )
 
 // The materializers of a row's options (Cluster.Options): a list of the
@@ -60,18 +60,17 @@ func (b *binding) send(method, payload string) {
 	b.plan.deliver(model.Command{Entity: b.entity, Method: method, Payload: []byte(payload)})
 }
 
-// cut shortens s to at most n of the units go-fabric bounds a string by:
-// UTF-16 code units, matter.js's String.length (cluster/spec/write.go:
-// 538-546 StringLength at v0.15.4).
+// cut shortens s to at most n bytes, between two characters: go-fabric
+// bounds a string by its UTF-8 bytes since v0.24.0, as matter.js does
+// since #4995 (spec.StringLength; go-fabric CHANGELOG [0.24.0]).
 func cut(s string, n int) string {
-	l := 0
-	for i, r := range s {
-		l += utf16.RuneLen(r)
-		if l > n {
-			return s[:i]
-		}
+	if len(s) <= n {
+		return s
 	}
-	return s
+	for n > 0 && !utf8.RuneStart(s[n]) {
+		n--
+	}
+	return s[:n]
 }
 
 // The limits a list must fit: a mode is a uint8 (ModeOptionStruct.Mode,

@@ -6,9 +6,9 @@ package hamapping
 import (
 	"fmt"
 
-	cameraavstreammanagementdef "github.com/SukramJ/go-fabric/cluster/spec/cameraavstreammanagement"
-	webrtctransportproviderdef "github.com/SukramJ/go-fabric/cluster/spec/webrtctransportprovider"
-	"github.com/SukramJ/go-fabric/eligibility"
+	cameraavstreammanagementdef "thingfabric.dev/go-fabric/cluster/spec/cameraavstreammanagement"
+	webrtctransportproviderdef "thingfabric.dev/go-fabric/cluster/spec/webrtctransportprovider"
+	"thingfabric.dev/go-fabric/eligibility"
 )
 
 // The port materializers of a row's `ports: host` clusters: the kit's

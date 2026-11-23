@@ -6,15 +6,15 @@ package hamapping_test
 import (
 	"testing"
 
-	keypaddef "github.com/SukramJ/go-fabric/cluster/spec/keypadinput"
-	levelcontroldef "github.com/SukramJ/go-fabric/cluster/spec/levelcontrol"
-	playbackdef "github.com/SukramJ/go-fabric/cluster/spec/mediaplayback"
-	onoffdef "github.com/SukramJ/go-fabric/cluster/spec/onoff"
-	"github.com/SukramJ/go-fabric/controller/client"
-	"github.com/SukramJ/go-fabric/device"
-	"github.com/SukramJ/go-fabric/eligibility"
-	"github.com/SukramJ/go-fabric/fabrictest"
 	"github.com/SukramJ/go-hamqtt/model"
+	keypaddef "thingfabric.dev/go-fabric/cluster/spec/keypadinput"
+	levelcontroldef "thingfabric.dev/go-fabric/cluster/spec/levelcontrol"
+	playbackdef "thingfabric.dev/go-fabric/cluster/spec/mediaplayback"
+	onoffdef "thingfabric.dev/go-fabric/cluster/spec/onoff"
+	"thingfabric.dev/go-fabric/controller/client"
+	"thingfabric.dev/go-fabric/device"
+	"thingfabric.dev/go-fabric/eligibility"
+	"thingfabric.dev/go-fabric/fabrictest"
 
 	"github.com/SukramJ/go-hamapping"
 )

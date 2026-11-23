@@ -4,10 +4,10 @@
 package hamapping
 
 import (
-	"github.com/SukramJ/go-fabric/contract"
-	"github.com/SukramJ/go-fabric/device"
-	"github.com/SukramJ/go-fabric/eligibility"
 	"github.com/SukramJ/go-hamqtt/model"
+	"thingfabric.dev/go-fabric/contract"
+	"thingfabric.dev/go-fabric/device"
+	"thingfabric.dev/go-fabric/eligibility"
 )
 
 // Row is one row of the table: a Home Assistant platform entity matching

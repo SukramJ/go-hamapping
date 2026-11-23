@@ -9,11 +9,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/SukramJ/go-fabric/cluster/spec"
-	"github.com/SukramJ/go-fabric/device"
-	"github.com/SukramJ/go-fabric/eligibility"
 	hacatalog "github.com/SukramJ/go-ha-catalog"
 	"github.com/SukramJ/go-hamqtt/model"
+	"thingfabric.dev/go-fabric/cluster/spec"
+	"thingfabric.dev/go-fabric/device"
+	"thingfabric.dev/go-fabric/eligibility"
 
 	"github.com/SukramJ/go-hamapping"
 )
@@ -29,7 +29,7 @@ func TestRowsNameGoFabricTypes(t *testing.T) {
 			}
 			continue
 		}
-		if got, ok := device.Lookup(uint32(r.Type.ID)); !ok || got != r.Type {
+		if got, ok := device.Lookup(uint32(r.Type.ID)); !ok || got.ID != r.Type.ID || got.Name != r.Type.Name {
 			t.Errorf("%s: type %s is not go-fabric's", r.ID, r.Type.Name)
 		}
 		parts := make([]struct {

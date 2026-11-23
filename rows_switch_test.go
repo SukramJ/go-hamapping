@@ -6,11 +6,11 @@ package hamapping_test
 import (
 	"testing"
 
-	onoffdef "github.com/SukramJ/go-fabric/cluster/spec/onoff"
-	"github.com/SukramJ/go-fabric/controller/client"
-	"github.com/SukramJ/go-fabric/fabrictest"
 	hacatalog "github.com/SukramJ/go-ha-catalog"
 	"github.com/SukramJ/go-hamqtt/model"
+	onoffdef "thingfabric.dev/go-fabric/cluster/spec/onoff"
+	"thingfabric.dev/go-fabric/controller/client"
+	"thingfabric.dev/go-fabric/fabrictest"
 )
 
 func TestSwitchRoundTrip(t *testing.T) {

@@ -7,15 +7,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/SukramJ/go-fabric/cluster/spec"
-	fancontroldef "github.com/SukramJ/go-fabric/cluster/spec/fancontrol"
-	onoffdef "github.com/SukramJ/go-fabric/cluster/spec/onoff"
-	humiditydef "github.com/SukramJ/go-fabric/cluster/spec/relativehumiditymeasurement"
-	thermostatdef "github.com/SukramJ/go-fabric/cluster/spec/thermostat"
-	"github.com/SukramJ/go-fabric/device"
-	"github.com/SukramJ/go-fabric/eligibility"
 	hacatalog "github.com/SukramJ/go-ha-catalog"
 	"github.com/SukramJ/go-hamqtt/model"
+	"thingfabric.dev/go-fabric/cluster/spec"
+	fancontroldef "thingfabric.dev/go-fabric/cluster/spec/fancontrol"
+	onoffdef "thingfabric.dev/go-fabric/cluster/spec/onoff"
+	humiditydef "thingfabric.dev/go-fabric/cluster/spec/relativehumiditymeasurement"
+	thermostatdef "thingfabric.dev/go-fabric/cluster/spec/thermostat"
+	"thingfabric.dev/go-fabric/device"
+	"thingfabric.dev/go-fabric/eligibility"
 
 	"github.com/SukramJ/go-hamapping"
 )

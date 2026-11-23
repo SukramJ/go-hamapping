@@ -11,13 +11,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SukramJ/go-fabric/cluster/spec"
-	bdbidef "github.com/SukramJ/go-fabric/cluster/spec/bridgeddevicebasicinformation"
-	"github.com/SukramJ/go-fabric/device"
-	"github.com/SukramJ/go-fabric/fabrictest"
-	"github.com/SukramJ/go-fabric/node"
 	hacatalog "github.com/SukramJ/go-ha-catalog"
 	"github.com/SukramJ/go-hamqtt/model"
+	"thingfabric.dev/go-fabric/cluster/spec"
+	bdbidef "thingfabric.dev/go-fabric/cluster/spec/bridgeddevicebasicinformation"
+	"thingfabric.dev/go-fabric/device"
+	"thingfabric.dev/go-fabric/fabrictest"
+	"thingfabric.dev/go-fabric/node"
 
 	"github.com/SukramJ/go-hamapping"
 )

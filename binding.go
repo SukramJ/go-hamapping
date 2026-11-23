@@ -11,11 +11,11 @@ import (
 	"strings"
 	"sync"
 
-	colorcontroldef "github.com/SukramJ/go-fabric/cluster/spec/colorcontrol"
-	"github.com/SukramJ/go-fabric/contract"
-	"github.com/SukramJ/go-fabric/device"
 	hacatalog "github.com/SukramJ/go-ha-catalog"
 	"github.com/SukramJ/go-hamqtt/model"
+	colorcontroldef "thingfabric.dev/go-fabric/cluster/spec/colorcontrol"
+	"thingfabric.dev/go-fabric/contract"
+	"thingfabric.dev/go-fabric/device"
 )
 
 // binding is one entity bound to its row: what the generated closures of
