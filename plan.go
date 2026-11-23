@@ -70,7 +70,8 @@ type Patch struct {
 	// Events are the events emitted on the cluster, by name; nil
 	// otherwise.
 	Events []string
-	// Err is what the Set returned.
+	// Err is what the Set returned, or for a reachability patch what
+	// Device.SetReachable returned.
 	Err error
 }
 

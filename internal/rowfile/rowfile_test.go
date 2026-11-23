@@ -79,6 +79,7 @@ func TestParseRefuses(t *testing.T) {
 		"command two sources":  {"raw: {from: extra.payload_on, catalog: true}", "raw: {from: extra.payload_on, field: X}"},
 		"enum constant":        {`enum: {"on": true}`, `enum: {"on": "a b"}`},
 		"enum value":           {`enum: {"on": true}`, `enum: {"on": [1]}`},
+		"command enum value":   {"            raw: {from: extra.payload_on, catalog: true}", "            raw: {from: extra.payload_on, catalog: true, enum: {\"true\": null}}"},
 		"if without in":        {`if: {field: OnOff, in: ["true"]}`, `if: {field: OnOff}`},
 		"if field and state":   {`if: {field: OnOff, in: ["true"]}`, `if: {field: OnOff, state: OnOff, in: ["true"]}`},
 		"if state name":        {`if: {field: OnOff, in: ["true"]}`, `if: {state: "On Off", in: ["true"]}`},

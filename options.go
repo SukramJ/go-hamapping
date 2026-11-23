@@ -62,7 +62,8 @@ func (b *binding) send(method, payload string) {
 
 // cut shortens s to at most n bytes, between two characters: go-fabric
 // bounds a string by its UTF-8 bytes since v0.24.0, as matter.js does
-// since #4995 (spec.StringLength; go-fabric CHANGELOG [0.24.0]).
+// since #4995 (spec.StringLength; go-fabric CHANGELOG [0.24.0]). s is
+// valid UTF-8 (a source's strings come from JSON); n is not negative.
 func cut(s string, n int) string {
 	if len(s) <= n {
 		return s

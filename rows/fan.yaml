@@ -17,7 +17,7 @@ rows:
     cites:
       - matter.js packages/model/src/standard/elements/fan.element.ts:25 @862ad75f (FanControl mandatory)
       - matter.js packages/model/src/standard/resources/fan-control.resource.ts:44,80,95 @862ad75f (FanMode, PercentSetting, PercentCurrent)
-      - "connectedhomeip src/app/clusters/fan-control-server/FanControlCluster.cpp:137-166 @6170af84 (ComputeFanModeFromPercent: 0 Off, up to 33 Low, up to 66 Medium, above High for a sequence with three speeds)"
+      - "connectedhomeip src/app/clusters/fan-control-server/FanControlCluster.cpp:85-110,137-166 @6170af84 (PercentSetting of a FanMode: Off 0, Auto null; ComputeFanModeFromPercent: 0 Off, up to 33 Low, up to 66 Medium, above High for a sequence with three speeds)"
       - home-assistant-matter-hub packages/backend/src/utils/converters/fan-mode.ts:22-33 @664575a (FanMode from the speed percentage)
       - home-assistant-matter-hub packages/backend/src/matter/behaviors/fan-control-server.ts:359-361,385 @664575a (PercentSetting 0 while the fan is off)
       - go-fabric cluster/fan/fancontrol_server.go:667-668 @v0.25.0 (the deprecated On resolves to High)

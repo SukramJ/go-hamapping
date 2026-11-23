@@ -49,14 +49,16 @@ All notable changes to this project are documented here. The format follows
 
 - Fan: FanMode follows a running fan's percentage (1–33 Low, 34–66 Medium,
   67–100 High; High when on without one), PercentSetting is null under
-  the preset auto and 0 when the fan is off. Before, a fan on without a preset held FanMode Off; since
+  the preset auto and 0 when the fan is off. Before, a fan on without a
+  preset held FanMode Off; since
   go-fabric v0.23.0 a write of the held value reaches no handler, so a
   controller's FanMode Off on such a fan sent no command.
 - Air conditioner: PercentSetting and PercentCurrent follow the fan mode
-  (off 0, low 33, medium 66, high 100, as connectedhomeip's fan control
-  sets them), so a controller's write of the speed the fan already holds
-  is no longer dropped unseen. Under fan mode auto PercentSetting is null,
-  as there; PercentCurrent keeps the last speed.
+  (off 0, low 33, medium 66, high 100 — the PercentSetting connectedhomeip's
+  fan control gives a FanMode), so a controller's write is no longer dropped
+  because the server still held a setting Home Assistant had since left.
+  Under fan mode auto PercentSetting is null, as there; PercentCurrent
+  keeps the last speed.
 
 ## [0.4.12] - 2026-11-12
 

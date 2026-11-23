@@ -643,9 +643,14 @@ func (v *Value) check(command bool) error {
 		if v.Field != "" && !ident(v.Field) {
 			return fmt.Errorf("field %q", v.Field)
 		}
-		for k := range v.Enum {
+		for k, x := range v.Enum {
 			if k != "true" && k != "false" && !ident(k) {
 				return fmt.Errorf("enum key %q", k)
+			}
+			switch x.(type) {
+			case string, bool, int:
+			default:
+				return fmt.Errorf("enum value %v of %s", x, k)
 			}
 		}
 	} else {
