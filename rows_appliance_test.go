@@ -6,17 +6,17 @@ package hamapping_test
 import (
 	"testing"
 
-	"github.com/SukramJ/go-fabric/cluster/spec"
-	rvcopdef "github.com/SukramJ/go-fabric/cluster/spec/rvcoperationalstate"
-	rvcrunmodedef "github.com/SukramJ/go-fabric/cluster/spec/rvcrunmode"
-	thermostatdef "github.com/SukramJ/go-fabric/cluster/spec/thermostat"
-	valvedef "github.com/SukramJ/go-fabric/cluster/spec/valveconfigurationandcontrol"
-	"github.com/SukramJ/go-fabric/controller/client"
-	"github.com/SukramJ/go-fabric/device"
-	"github.com/SukramJ/go-fabric/eligibility"
-	"github.com/SukramJ/go-fabric/fabrictest"
 	hacatalog "github.com/SukramJ/go-ha-catalog"
 	"github.com/SukramJ/go-hamqtt/model"
+	"thingfabric.dev/go-fabric/cluster/spec"
+	rvcopdef "thingfabric.dev/go-fabric/cluster/spec/rvcoperationalstate"
+	rvcrunmodedef "thingfabric.dev/go-fabric/cluster/spec/rvcrunmode"
+	thermostatdef "thingfabric.dev/go-fabric/cluster/spec/thermostat"
+	valvedef "thingfabric.dev/go-fabric/cluster/spec/valveconfigurationandcontrol"
+	"thingfabric.dev/go-fabric/controller/client"
+	"thingfabric.dev/go-fabric/device"
+	"thingfabric.dev/go-fabric/eligibility"
+	"thingfabric.dev/go-fabric/fabrictest"
 
 	"github.com/SukramJ/go-hamapping"
 )

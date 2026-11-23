@@ -7,15 +7,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/SukramJ/go-fabric/cluster/spec"
-	fancontroldef "github.com/SukramJ/go-fabric/cluster/spec/fancontrol"
-	onoffdef "github.com/SukramJ/go-fabric/cluster/spec/onoff"
-	humiditydef "github.com/SukramJ/go-fabric/cluster/spec/relativehumiditymeasurement"
-	thermostatdef "github.com/SukramJ/go-fabric/cluster/spec/thermostat"
-	"github.com/SukramJ/go-fabric/device"
-	"github.com/SukramJ/go-fabric/eligibility"
 	hacatalog "github.com/SukramJ/go-ha-catalog"
 	"github.com/SukramJ/go-hamqtt/model"
+	"thingfabric.dev/go-fabric/cluster/spec"
+	fancontroldef "thingfabric.dev/go-fabric/cluster/spec/fancontrol"
+	onoffdef "thingfabric.dev/go-fabric/cluster/spec/onoff"
+	humiditydef "thingfabric.dev/go-fabric/cluster/spec/relativehumiditymeasurement"
+	thermostatdef "thingfabric.dev/go-fabric/cluster/spec/thermostat"
+	"thingfabric.dev/go-fabric/device"
+	"thingfabric.dev/go-fabric/eligibility"
 
 	"github.com/SukramJ/go-hamapping"
 )
@@ -55,6 +55,20 @@ func TestClimateAirConditioner(t *testing.T) {
 	if th.SystemMode != thermostatdef.SystemModeCool || th.OccupiedCoolingSetpoint != 2400 {
 		t.Fatalf("thermostat %v %d", th.SystemMode, th.OccupiedCoolingSetpoint)
 	}
+	// PercentSetting and PercentCurrent follow the fan mode; under auto
+	// PercentSetting is null, so a write of the last speed reaches the veto.
+	r.apply("ac", on(map[string]any{"state": "cool", "current_temperature": 26, "temperature": 24, "fan_mode": "low"}))
+	fan, _ = fancontroldef.StateFrom(r.values("ac", fancontroldef.ClusterID))
+	if fan.PercentSetting == nil || *fan.PercentSetting != 33 || fan.PercentCurrent != 33 {
+		t.Fatalf("fan low %v %d", fan.PercentSetting, fan.PercentCurrent)
+	}
+	r.apply("ac", on(map[string]any{"state": "cool", "current_temperature": 26, "temperature": 24, "fan_mode": "auto"}))
+	fan, _ = fancontroldef.StateFrom(r.values("ac", fancontroldef.ClusterID))
+	if fan.FanMode != fancontroldef.FanModeAuto || fan.PercentSetting != nil || fan.PercentCurrent != 33 {
+		t.Fatalf("fan auto %v %v %d", fan.FanMode, fan.PercentSetting, fan.PercentCurrent)
+	}
+	r.write("ac", fancontroldef.ClusterID, fancontroldef.AttrPercentSetting, spec.Uint8(33))
+	expect(t, r.command(), hamapping.MethodFanMode, "low")
 	r.invoke("ac", onoffdef.ClusterID, onoffdef.CmdOff, nil)
 	expect(t, r.command(), hamapping.MethodTurnOff, "OFF")
 	r.invoke("ac", onoffdef.ClusterID, onoffdef.CmdOn, nil)

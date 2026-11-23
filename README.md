@@ -9,16 +9,16 @@ The table from Home Assistant's component vocabulary (`light`, `switch`,
 `select`, their attributes and capabilities such as `supported_color_modes`,
 `hvac_modes` and `device_class`) to a Matter device type with its cluster
 declaration, and back from a Matter command to a Home Assistant service
-call, as a Go module on [go-fabric](https://github.com/SukramJ/go-fabric)'s
+call, as a Go module on [go-fabric](https://github.com/thingfabric/go-fabric)'s
 device kit. Two consumers: [`go-ha2fabric`](https://github.com/SukramJ/go-ha2fabric)
 and the `go-*2mqtt` daemons that embed go-fabric in process.
 
 Twin of [`go-ha2fabric`](https://github.com/SukramJ/go-ha2fabric); both are built on
-[go-fabric](https://github.com/SukramJ/go-fabric) and share its project
+[go-fabric](https://github.com/thingfabric/go-fabric) and share its project
 setup (pure Go, `CGO_ENABLED=0`, Apache-2.0 with a contributor licence
 agreement, the same guards in CI).
 
-> **Status: v0.4.12 (go-fabric v0.22.2).** The row format, its generated Go form,
+> **Status: v0.5.0 (go-fabric v0.25.0, `thingfabric.dev/go-fabric`).** The row format, its generated Go form,
 > the guards and the first rows, each with a round trip through go-fabric's
 > in-process controller (v0.1.0, brief H1); a stable identity a source
 > supplies, the method constants and the table of keys a source fills
@@ -26,7 +26,9 @@ agreement, the same guards in CI).
 > roadmap rows — air quality, electrical, flow, soil, button, event,
 > select, climate fan modes, vacuum, valve, water heater, media player —
 > and the format's events, options and otherwise (v0.3.0); host ports in a
-> row and the camera (v0.4.0). The design is in
+> row and the camera (v0.4.0); go-fabric v0.25.0 under its new module path,
+> the fan and climate fan rows keeping their setting true, strings cut by
+> bytes (v0.5.0). The design is in
 > [`CONCEPT.md`](CONCEPT.md), the rows in [`docs/rows.md`](docs/rows.md).
 
 ## Why "Matter" is not in the name
@@ -37,7 +39,7 @@ device, is reserved to Alliance members and certified products under the
 *Connectivity Standards Alliance Trademark and Logo Usage Guidelines and
 Terms* (<https://csa-iot.org/resources/governing-documents/>; the terms are
 restated in go-fabric's
-[`licenses/NOTICE-matter.js.txt`](https://github.com/SukramJ/go-fabric/blob/main/licenses/NOTICE-matter.js.txt):
+[`licenses/NOTICE-matter.js.txt`](https://github.com/thingfabric/go-fabric/blob/main/licenses/NOTICE-matter.js.txt):
 "Only the Alliance and its members may use Alliance trademarks and logos,
 including, without limitation, the Matter trademarks and logos"). This
 project is neither, so the mark is not part of its name; the word appears
@@ -79,7 +81,7 @@ each with its predicate, clusters, verdict and citations):
 A daemon that holds go-hamqtt entities maps them, builds the devices and
 adds them to its go-fabric node; the node, its configuration and its
 lifecycle are go-fabric's
-([embed in a daemon](https://github.com/SukramJ/go-fabric/blob/main/docs/guides/embed-in-a-daemon.md)):
+([embed in a daemon](https://github.com/thingfabric/go-fabric/blob/main/docs/guides/embed-in-a-daemon.md)):
 
 ```go
 plan, verdicts := hamapping.Map(dev, []model.Entity{lamp}) // lamp: a go-hamqtt light entity
@@ -148,7 +150,7 @@ repositories.
 
 ## Acknowledgements
 
-Built on [go-fabric](https://github.com/SukramJ/go-fabric), a semantic
+Built on [go-fabric](https://github.com/thingfabric/go-fabric), a semantic
 port of [matter.js](https://github.com/matter-js/matter.js) (Apache-2.0),
 and on the [Home Assistant](https://www.home-assistant.io/) APIs. The
 pattern of a thin client between Home Assistant and a Matter process is

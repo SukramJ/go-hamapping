@@ -8,11 +8,33 @@ import (
 	"encoding/json"
 	"errors"
 	"math"
+	"strings"
 	"testing"
+	"unicode/utf8"
 
 	hacatalog "github.com/SukramJ/go-ha-catalog"
 	"github.com/SukramJ/go-hamqtt/model"
 )
+
+// TestCut: cut keeps at most n bytes and never splits a character.
+func TestCut(t *testing.T) {
+	for _, c := range []struct {
+		s    string
+		n    int
+		want string
+	}{
+		{"abc", 5, "abc"},
+		{"abc", 0, ""},
+		{"x" + strings.Repeat("ä", 40), 64, "x" + strings.Repeat("ä", 31)},
+		{strings.Repeat("ä", 40), 64, strings.Repeat("ä", 32)},
+		{strings.Repeat("v", 31) + "äyyy", 32, strings.Repeat("v", 31)},
+		{"€uro", 2, ""},
+	} {
+		if got := cut(c.s, c.n); got != c.want || !utf8.ValidString(got) {
+			t.Errorf("cut(%q, %d) = %q; want %q", c.s, c.n, got, c.want)
+		}
+	}
+}
 
 func TestConv(t *testing.T) {
 	if conv[int16](1e9) != math.MaxInt16 || conv[int16](-1e9) != math.MinInt16 || conv[int16](-2.5) != -3 {

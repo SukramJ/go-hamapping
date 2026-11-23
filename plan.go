@@ -11,10 +11,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/SukramJ/go-fabric/contract"
-	"github.com/SukramJ/go-fabric/device"
-	"github.com/SukramJ/go-fabric/eligibility"
 	"github.com/SukramJ/go-hamqtt/model"
+	"thingfabric.dev/go-fabric/contract"
+	"thingfabric.dev/go-fabric/device"
+	"thingfabric.dev/go-fabric/eligibility"
 )
 
 // ErrNotBuilt is the error of a [Patch] applied before [Plan.Build].
@@ -70,7 +70,8 @@ type Patch struct {
 	// Events are the events emitted on the cluster, by name; nil
 	// otherwise.
 	Events []string
-	// Err is what the Set returned.
+	// Err is what the Set returned, or for a reachability patch what
+	// Device.SetReachable returned.
 	Err error
 }
 
@@ -318,6 +319,12 @@ func declarations(b *binding) []device.Declaration {
 	return out
 }
 
+// maxVendor is the bound of Options.Vendor in bytes: go-fabric serves it
+// as BridgedDeviceBasicInformation VendorName, "max 32" UTF-8 bytes, and
+// refuses a longer one since v0.23.0 instead of cutting it
+// (device/bridged_basic_information.go:76-82, endpoint/spec.go:159-166).
+const maxVendor = 32
+
 // options are the device options of an entity's endpoint.
 func (p *Plan) options(e model.Entity) device.Options {
 	var devName, vendor, uid string
@@ -352,7 +359,7 @@ func (p *Plan) options(e model.Entity) device.Options {
 	}
 	return device.Options{
 		StableKey: device.StringKey(stable), Name: device.ComposeNodeLabel(name, ""),
-		Vendor: vendor, DeviceAddress: uid, ChannelAddress: key,
+		Vendor: cut(vendor, maxVendor), DeviceAddress: uid, ChannelAddress: key,
 	}
 }
 
@@ -458,8 +465,8 @@ func (p *Plan) Apply(ctx context.Context, key string, st model.State) []Patch {
 	var out []Patch
 	if b.row.Ride == "" || b.target == p.devices[key] {
 		reachable := st.Available
-		b.target.SetReachable(ctx, reachable)
-		out = append(out, Patch{Key: key, Reachable: &reachable})
+		err := b.target.SetReachable(ctx, reachable)
+		out = append(out, Patch{Key: key, Reachable: &reachable, Err: err})
 		if !reachable {
 			b.forget()
 			return out

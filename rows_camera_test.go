@@ -7,13 +7,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/SukramJ/go-fabric/cluster/camera"
-	csdef "github.com/SukramJ/go-fabric/cluster/spec/cameraavstreammanagement"
-	wpdef "github.com/SukramJ/go-fabric/cluster/spec/webrtctransportprovider"
-	"github.com/SukramJ/go-fabric/device"
-	"github.com/SukramJ/go-fabric/eligibility"
 	hacatalog "github.com/SukramJ/go-ha-catalog"
 	"github.com/SukramJ/go-hamqtt/model"
+	"thingfabric.dev/go-fabric/cluster/camera"
+	csdef "thingfabric.dev/go-fabric/cluster/spec/cameraavstreammanagement"
+	wpdef "thingfabric.dev/go-fabric/cluster/spec/webrtctransportprovider"
+	"thingfabric.dev/go-fabric/device"
+	"thingfabric.dev/go-fabric/eligibility"
 
 	"github.com/SukramJ/go-hamapping"
 )
@@ -99,7 +99,7 @@ func TestCamera(t *testing.T) {
 	if asked != 1 {
 		t.Errorf("the host was asked %d times, want 1", asked)
 	}
-	if len(p.Endpoints) != 1 || p.Endpoints[0].Type != device.CameraType() || len(p.Endpoints[0].Declarations) != 2 {
+	if len(p.Endpoints) != 1 || p.Endpoints[0].Type.ID != device.CameraType().ID || len(p.Endpoints[0].Declarations) != 2 {
 		t.Fatalf("endpoints %+v", p.Endpoints)
 	}
 	devs, err := p.Build(context.Background())

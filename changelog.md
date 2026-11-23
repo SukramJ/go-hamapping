@@ -6,6 +6,60 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-23
+
+### What a host must do
+
+- Import go-fabric from its new module path: `github.com/SukramJ/go-fabric/...`
+  becomes `thingfabric.dev/go-fabric/...` (go-fabric v0.25.0 is v0.24.1
+  under the new path). go-hamapping's API carries go-fabric types
+  (`Plan.Build` returns `[]*device.Device`, `Endpoint.Type`,
+  `Endpoint.Declarations`), so a host moves to the same path and to
+  go-fabric v0.25.0 together with this version.
+- Compare device types by ID, not by pointer: since go-fabric v0.23.0
+  `device.<Name>Type()` and `device.Lookup` return copies, so
+  `Endpoint.Type == device.FanType()` is false; use
+  `Endpoint.Type.ID == device.FanType().ID`.
+- Read `Patch.Err` on a reachability patch: it carries what
+  `Device.SetReachable` returned (an error since go-fabric v0.23.0).
+
+### Added
+
+- Row format: an attribute line's `enum` may map a key to `null`, which sets
+  a nullable attribute null; a later line's value replaces it
+  (`docs/rows.md`).
+
+### Changed
+
+- go-fabric `v0.25.0` under `thingfabric.dev/go-fabric` (was
+  `github.com/SukramJ/go-fabric v0.22.2`); no deprecated go-fabric
+  identifier is used, tests included. What v0.23.0 and v0.24.x change for a
+  row is below; BooleanState's ChangeEvent on by default, a bridged
+  device's SerialNumber no longer derived and cover positions starting null
+  come from go-fabric and need nothing here.
+- Labels and descriptions of a select are cut to 64 UTF-8 bytes between
+  two characters (was 64 UTF-16 units): go-fabric counts a string's bytes
+  since v0.24.0, and a non-ASCII option label within the old count failed
+  `Plan.Build`.
+- A device's manufacturer is cut to 32 UTF-8 bytes between two characters
+  before it becomes `Options.Vendor`: go-fabric refuses a longer one since
+  v0.23.0 instead of cutting it, and `Plan.Build` failed.
+
+### Fixed
+
+- Fan: FanMode follows a running fan's percentage (1–33 Low, 34–66 Medium,
+  67–100 High; High when on without one), PercentSetting is null under
+  the preset auto and 0 when the fan is off. Before, a fan on without a
+  preset held FanMode Off; since
+  go-fabric v0.23.0 a write of the held value reaches no handler, so a
+  controller's FanMode Off on such a fan sent no command.
+- Air conditioner: PercentSetting and PercentCurrent follow the fan mode
+  (off 0, low 33, medium 66, high 100 — the PercentSetting connectedhomeip's
+  fan control gives a FanMode), so a controller's write is no longer dropped
+  because the server still held a setting Home Assistant had since left.
+  Under fan mode auto PercentSetting is null, as there; PercentCurrent
+  keeps the last speed.
+
 ## [0.4.12] - 2026-11-12
 
 ### Changed

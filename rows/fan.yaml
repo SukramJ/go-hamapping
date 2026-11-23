@@ -17,6 +17,11 @@ rows:
     cites:
       - matter.js packages/model/src/standard/elements/fan.element.ts:25 @862ad75f (FanControl mandatory)
       - matter.js packages/model/src/standard/resources/fan-control.resource.ts:44,80,95 @862ad75f (FanMode, PercentSetting, PercentCurrent)
+      - "connectedhomeip src/app/clusters/fan-control-server/FanControlCluster.cpp:85-110,137-166 @6170af84 (PercentSetting of a FanMode: Off 0, Auto null; ComputeFanModeFromPercent: 0 Off, up to 33 Low, up to 66 Medium, above High for a sequence with three speeds)"
+      - home-assistant-matter-hub packages/backend/src/utils/converters/fan-mode.ts:22-33 @664575a (FanMode from the speed percentage)
+      - home-assistant-matter-hub packages/backend/src/matter/behaviors/fan-control-server.ts:359-361,385 @664575a (PercentSetting 0 while the fan is off)
+      - go-fabric cluster/fan/fancontrol_server.go:667-668 @v0.25.0 (the deprecated On resolves to High)
+      - go-fabric cluster/spec/server.go:105-110,518-529 @v0.25.0 (a write of the value the server holds reaches no veto, so the held value has to follow Home Assistant)
     clusters:
       - cluster: FanControl
         features:
@@ -35,8 +40,12 @@ rows:
         attributes:
           - {attribute: PercentCurrent, from: state.percentage, min: 0, max: 100}
           - {attribute: PercentSetting, from: state.percentage, min: 0, max: 100}
+          - {attribute: FanMode, from: state, enum: {"on": FanModeHigh}}
+          - {attribute: FanMode, from: state.percentage, enum: {"1": FanModeLow, "2": FanModeLow, "3": FanModeLow, "4": FanModeLow, "5": FanModeLow, "6": FanModeLow, "7": FanModeLow, "8": FanModeLow, "9": FanModeLow, "10": FanModeLow, "11": FanModeLow, "12": FanModeLow, "13": FanModeLow, "14": FanModeLow, "15": FanModeLow, "16": FanModeLow, "17": FanModeLow, "18": FanModeLow, "19": FanModeLow, "20": FanModeLow, "21": FanModeLow, "22": FanModeLow, "23": FanModeLow, "24": FanModeLow, "25": FanModeLow, "26": FanModeLow, "27": FanModeLow, "28": FanModeLow, "29": FanModeLow, "30": FanModeLow, "31": FanModeLow, "32": FanModeLow, "33": FanModeLow, "34": FanModeMedium, "35": FanModeMedium, "36": FanModeMedium, "37": FanModeMedium, "38": FanModeMedium, "39": FanModeMedium, "40": FanModeMedium, "41": FanModeMedium, "42": FanModeMedium, "43": FanModeMedium, "44": FanModeMedium, "45": FanModeMedium, "46": FanModeMedium, "47": FanModeMedium, "48": FanModeMedium, "49": FanModeMedium, "50": FanModeMedium, "51": FanModeMedium, "52": FanModeMedium, "53": FanModeMedium, "54": FanModeMedium, "55": FanModeMedium, "56": FanModeMedium, "57": FanModeMedium, "58": FanModeMedium, "59": FanModeMedium, "60": FanModeMedium, "61": FanModeMedium, "62": FanModeMedium, "63": FanModeMedium, "64": FanModeMedium, "65": FanModeMedium, "66": FanModeMedium, "67": FanModeHigh, "68": FanModeHigh, "69": FanModeHigh, "70": FanModeHigh, "71": FanModeHigh, "72": FanModeHigh, "73": FanModeHigh, "74": FanModeHigh, "75": FanModeHigh, "76": FanModeHigh, "77": FanModeHigh, "78": FanModeHigh, "79": FanModeHigh, "80": FanModeHigh, "81": FanModeHigh, "82": FanModeHigh, "83": FanModeHigh, "84": FanModeHigh, "85": FanModeHigh, "86": FanModeHigh, "87": FanModeHigh, "88": FanModeHigh, "89": FanModeHigh, "90": FanModeHigh, "91": FanModeHigh, "92": FanModeHigh, "93": FanModeHigh, "94": FanModeHigh, "95": FanModeHigh, "96": FanModeHigh, "97": FanModeHigh, "98": FanModeHigh, "99": FanModeHigh, "100": FanModeHigh}}
           - {attribute: FanMode, from: state.preset_mode, enum: {low: FanModeLow, medium: FanModeMedium, high: FanModeHigh, auto: FanModeAuto}}
+          - {attribute: PercentSetting, from: state.preset_mode, enum: {auto: null}}
           - {attribute: PercentCurrent, from: state, enum: {"off": 0}}
+          - {attribute: PercentSetting, from: state, enum: {"off": 0}}
           - {attribute: FanMode, from: state, enum: {"off": FanModeOff}}
           - {attribute: RockSetting, from: state.oscillating, enum: {"on": RockRockLeftRight, "off": 0}, when: *osc}
           - {attribute: AirflowDirection, from: state.direction, enum: {forward: AirflowDirectionForward, reverse: AirflowDirectionReverse}, when: *dir}

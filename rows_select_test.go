@@ -7,13 +7,13 @@ import (
 	"errors"
 	"testing"
 
-	modeselectdef "github.com/SukramJ/go-fabric/cluster/spec/modeselect"
-	"github.com/SukramJ/go-fabric/controller/client"
-	"github.com/SukramJ/go-fabric/device"
-	"github.com/SukramJ/go-fabric/eligibility"
-	"github.com/SukramJ/go-fabric/fabrictest"
 	hacatalog "github.com/SukramJ/go-ha-catalog"
 	"github.com/SukramJ/go-hamqtt/model"
+	modeselectdef "thingfabric.dev/go-fabric/cluster/spec/modeselect"
+	"thingfabric.dev/go-fabric/controller/client"
+	"thingfabric.dev/go-fabric/device"
+	"thingfabric.dev/go-fabric/eligibility"
+	"thingfabric.dev/go-fabric/fabrictest"
 
 	"github.com/SukramJ/go-hamapping"
 )

@@ -100,11 +100,11 @@ validator of go-fabric judges every generated declaration.
 
 ## References
 
-- go-fabric: [README](https://github.com/SukramJ/go-fabric#readme),
-  [roadmap](https://github.com/SukramJ/go-fabric/blob/main/docs/roadmap.md),
-  [concept v6](https://github.com/SukramJ/go-fabric/blob/main/docs/history/concept-v6-embedding-layer.md)
+- go-fabric: [README](https://github.com/thingfabric/go-fabric#readme),
+  [roadmap](https://github.com/thingfabric/go-fabric/blob/main/docs/roadmap.md),
+  [concept v6](https://github.com/thingfabric/go-fabric/blob/main/docs/history/concept-v6-embedding-layer.md)
   part C (the origin of this document),
-  [concept v7](https://github.com/SukramJ/go-fabric/blob/main/docs/concept-v7-operation-and-packaging.md)
+  [concept v7](https://github.com/thingfabric/go-fabric/blob/main/docs/concept-v7-operation-and-packaging.md)
   decisions 0.4, 0.6, 0.9.
 - go-hamqtt and go-ha-catalog: the Home Assistant vocabulary the table
   reads.

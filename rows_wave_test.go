@@ -6,16 +6,16 @@ package hamapping_test
 import (
 	"testing"
 
-	"github.com/SukramJ/go-fabric/cluster/spec"
-	fancontroldef "github.com/SukramJ/go-fabric/cluster/spec/fancontrol"
-	playbackdef "github.com/SukramJ/go-fabric/cluster/spec/mediaplayback"
-	onoffdef "github.com/SukramJ/go-fabric/cluster/spec/onoff"
-	ozonedef "github.com/SukramJ/go-fabric/cluster/spec/ozoneconcentrationmeasurement"
-	rvcopdef "github.com/SukramJ/go-fabric/cluster/spec/rvcoperationalstate"
-	thermostatdef "github.com/SukramJ/go-fabric/cluster/spec/thermostat"
-	"github.com/SukramJ/go-fabric/eligibility"
 	hacatalog "github.com/SukramJ/go-ha-catalog"
 	"github.com/SukramJ/go-hamqtt/model"
+	"thingfabric.dev/go-fabric/cluster/spec"
+	fancontroldef "thingfabric.dev/go-fabric/cluster/spec/fancontrol"
+	playbackdef "thingfabric.dev/go-fabric/cluster/spec/mediaplayback"
+	onoffdef "thingfabric.dev/go-fabric/cluster/spec/onoff"
+	ozonedef "thingfabric.dev/go-fabric/cluster/spec/ozoneconcentrationmeasurement"
+	rvcopdef "thingfabric.dev/go-fabric/cluster/spec/rvcoperationalstate"
+	thermostatdef "thingfabric.dev/go-fabric/cluster/spec/thermostat"
+	"thingfabric.dev/go-fabric/eligibility"
 
 	"github.com/SukramJ/go-hamapping"
 )

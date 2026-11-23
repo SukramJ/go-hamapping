@@ -3,10 +3,10 @@ module github.com/SukramJ/go-hamapping
 go 1.27.4
 
 require (
-	github.com/SukramJ/go-fabric v0.22.2
 	github.com/SukramJ/go-ha-catalog v0.3.2-0.20261024093528-d9582e022b8f
 	github.com/SukramJ/go-hamqtt v0.40.0
 	gopkg.in/yaml.v3 v3.0.1
+	thingfabric.dev/go-fabric v0.25.0
 )
 
 require (
@@ -22,5 +22,5 @@ require (
 	modernc.org/libc v1.79.0 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.12.1 // indirect
-	modernc.org/sqlite v1.61.0 // indirect
+	modernc.org/sqlite v1.61.1 // indirect
 )

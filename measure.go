@@ -6,7 +6,7 @@ package hamapping
 import (
 	"sync"
 
-	"github.com/SukramJ/go-fabric/contract"
+	"thingfabric.dev/go-fabric/contract"
 )
 
 // measure is the measurement source a riding row declares on its primary

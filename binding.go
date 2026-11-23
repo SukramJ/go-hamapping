@@ -11,11 +11,11 @@ import (
 	"strings"
 	"sync"
 
-	colorcontroldef "github.com/SukramJ/go-fabric/cluster/spec/colorcontrol"
-	"github.com/SukramJ/go-fabric/contract"
-	"github.com/SukramJ/go-fabric/device"
 	hacatalog "github.com/SukramJ/go-ha-catalog"
 	"github.com/SukramJ/go-hamqtt/model"
+	colorcontroldef "thingfabric.dev/go-fabric/cluster/spec/colorcontrol"
+	"thingfabric.dev/go-fabric/contract"
+	"thingfabric.dev/go-fabric/device"
 )
 
 // binding is one entity bound to its row: what the generated closures of
@@ -202,6 +202,12 @@ func (b *binding) null(st *model.State, ci, ai int) bool {
 	}
 	_, num := toFloat(raw)
 	return !num
+}
+
+// drop removes id from a patch's Null: a later mapping's value replaces
+// an earlier enum's null.
+func drop(null []uint32, id uint32) []uint32 { //nolint:unparam // generated calls name the attribute; one does today
+	return slices.DeleteFunc(null, func(x uint32) bool { return x == id })
 }
 
 // text is the mapped string of attribute mapping ai, the key the

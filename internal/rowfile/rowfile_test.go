@@ -47,6 +47,14 @@ func TestParse(t *testing.T) {
 		f.Rows[0].Clusters[0].Ports != PortsHost {
 		t.Fatalf("%+v", f)
 	}
+	// An attribute's enum may map a string to null.
+	f, err = Parse([]byte(strings.Replace(good, `enum: {"on": true}`, `enum: {"on": true, "off": null}`, 1)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v, ok := f.Rows[0].Clusters[0].Attributes[0].Enum["off"]; !ok || v != nil {
+		t.Fatalf("enum off %v %v", v, ok)
+	}
 }
 
 func TestParseRefuses(t *testing.T) {
@@ -70,6 +78,8 @@ func TestParseRefuses(t *testing.T) {
 		"initial reads state":  {"{attribute: A, const: 1}", "{attribute: A, from: state}"},
 		"command two sources":  {"raw: {from: extra.payload_on, catalog: true}", "raw: {from: extra.payload_on, field: X}"},
 		"enum constant":        {`enum: {"on": true}`, `enum: {"on": "a b"}`},
+		"enum value":           {`enum: {"on": true}`, `enum: {"on": [1]}`},
+		"command enum value":   {"            raw: {from: extra.payload_on, catalog: true}", "            raw: {from: extra.payload_on, catalog: true, enum: {\"true\": null}}"},
 		"if without in":        {`if: {field: OnOff, in: ["true"]}`, `if: {field: OnOff}`},
 		"if field and state":   {`if: {field: OnOff, in: ["true"]}`, `if: {field: OnOff, state: OnOff, in: ["true"]}`},
 		"if state name":        {`if: {field: OnOff, in: ["true"]}`, `if: {state: "On Off", in: ["true"]}`},
@@ -138,6 +148,7 @@ func FuzzParse(f *testing.F) {
 	f.Add([]byte(good))
 	f.Add([]byte("platform: x\nrows:\n  - id: a\n    verdict: \"unmappable: b\"\n"))
 	f.Add([]byte("{"))
+	f.Add([]byte(strings.Replace(good, `enum: {"on": true}`, `enum: {"on": true, "off": null}`, 1)))
 	f.Fuzz(func(t *testing.T, data []byte) {
 		file, err := Parse(data)
 		if err != nil {

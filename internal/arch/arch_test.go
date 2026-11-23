@@ -19,7 +19,7 @@ import (
 	"testing"
 )
 
-const goFabric = "github.com/SukramJ/go-fabric/"
+const goFabric = "thingfabric.dev/go-fabric/"
 
 // facade are the go-fabric packages non-test code may import.
 var facade = map[string]bool{

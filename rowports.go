@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"sync"
 
-	doorlockdef "github.com/SukramJ/go-fabric/cluster/spec/doorlock"
+	doorlockdef "thingfabric.dev/go-fabric/cluster/spec/doorlock"
 )
 
 // The row ports of a row's `ports: row` clusters: the kit's server runs on

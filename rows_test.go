@@ -8,30 +8,30 @@ import (
 	"math"
 	"testing"
 
-	"github.com/SukramJ/go-fabric/cluster/spec"
-	booleanstatedef "github.com/SukramJ/go-fabric/cluster/spec/booleanstate"
-	colorcontroldef "github.com/SukramJ/go-fabric/cluster/spec/colorcontrol"
-	doorlockdef "github.com/SukramJ/go-fabric/cluster/spec/doorlock"
-	eemdef "github.com/SukramJ/go-fabric/cluster/spec/electricalenergymeasurement"
-	epmdef "github.com/SukramJ/go-fabric/cluster/spec/electricalpowermeasurement"
-	fancontroldef "github.com/SukramJ/go-fabric/cluster/spec/fancontrol"
-	illuminancedef "github.com/SukramJ/go-fabric/cluster/spec/illuminancemeasurement"
-	levelcontroldef "github.com/SukramJ/go-fabric/cluster/spec/levelcontrol"
-	occupancydef "github.com/SukramJ/go-fabric/cluster/spec/occupancysensing"
-	onoffdef "github.com/SukramJ/go-fabric/cluster/spec/onoff"
-	powersourcedef "github.com/SukramJ/go-fabric/cluster/spec/powersource"
-	pressuredef "github.com/SukramJ/go-fabric/cluster/spec/pressuremeasurement"
-	humiditydef "github.com/SukramJ/go-fabric/cluster/spec/relativehumiditymeasurement"
-	smokecoalarmdef "github.com/SukramJ/go-fabric/cluster/spec/smokecoalarm"
-	temperaturedef "github.com/SukramJ/go-fabric/cluster/spec/temperaturemeasurement"
-	thermostatdef "github.com/SukramJ/go-fabric/cluster/spec/thermostat"
-	windowcoveringdef "github.com/SukramJ/go-fabric/cluster/spec/windowcovering"
-	"github.com/SukramJ/go-fabric/controller/client"
-	"github.com/SukramJ/go-fabric/device"
-	"github.com/SukramJ/go-fabric/eligibility"
-	"github.com/SukramJ/go-fabric/fabrictest"
 	hacatalog "github.com/SukramJ/go-ha-catalog"
 	"github.com/SukramJ/go-hamqtt/model"
+	"thingfabric.dev/go-fabric/cluster/spec"
+	booleanstatedef "thingfabric.dev/go-fabric/cluster/spec/booleanstate"
+	colorcontroldef "thingfabric.dev/go-fabric/cluster/spec/colorcontrol"
+	doorlockdef "thingfabric.dev/go-fabric/cluster/spec/doorlock"
+	eemdef "thingfabric.dev/go-fabric/cluster/spec/electricalenergymeasurement"
+	epmdef "thingfabric.dev/go-fabric/cluster/spec/electricalpowermeasurement"
+	fancontroldef "thingfabric.dev/go-fabric/cluster/spec/fancontrol"
+	illuminancedef "thingfabric.dev/go-fabric/cluster/spec/illuminancemeasurement"
+	levelcontroldef "thingfabric.dev/go-fabric/cluster/spec/levelcontrol"
+	occupancydef "thingfabric.dev/go-fabric/cluster/spec/occupancysensing"
+	onoffdef "thingfabric.dev/go-fabric/cluster/spec/onoff"
+	powersourcedef "thingfabric.dev/go-fabric/cluster/spec/powersource"
+	pressuredef "thingfabric.dev/go-fabric/cluster/spec/pressuremeasurement"
+	humiditydef "thingfabric.dev/go-fabric/cluster/spec/relativehumiditymeasurement"
+	smokecoalarmdef "thingfabric.dev/go-fabric/cluster/spec/smokecoalarm"
+	temperaturedef "thingfabric.dev/go-fabric/cluster/spec/temperaturemeasurement"
+	thermostatdef "thingfabric.dev/go-fabric/cluster/spec/thermostat"
+	windowcoveringdef "thingfabric.dev/go-fabric/cluster/spec/windowcovering"
+	"thingfabric.dev/go-fabric/controller/client"
+	"thingfabric.dev/go-fabric/device"
+	"thingfabric.dev/go-fabric/eligibility"
+	"thingfabric.dev/go-fabric/fabrictest"
 
 	"github.com/SukramJ/go-hamapping"
 )
@@ -512,6 +512,31 @@ func TestLockOpenIsPartial(t *testing.T) {
 	}
 }
 
+// TestFanModeBands: a running fan's FanMode follows its percentage in
+// the row's three bands, 1-33 Low, 34-66 Medium, 67-100 High, every
+// percentage once.
+func TestFanModeBands(t *testing.T) {
+	e := entity("fan", hacatalog.PlatformFan, model.Description{Extra: map[string]any{
+		"supported_features": []string{"SET_SPEED"},
+	}})
+	r := serve(t, e)
+	for pct := 1; pct <= 100; pct++ {
+		want := fancontroldef.FanModeHigh
+		switch {
+		case pct <= 33:
+			want = fancontroldef.FanModeLow
+		case pct <= 66:
+			want = fancontroldef.FanModeMedium
+		}
+		r.apply("fan", on(map[string]any{"state": "on", "percentage": pct}))
+		st, _ := fancontroldef.StateFrom(r.values("fan", fancontroldef.ClusterID))
+		if st.FanMode != want || st.PercentCurrent != uint8(pct) {
+			t.Fatalf("percentage %d: FanMode %v, PercentCurrent %d; want %v, %d", pct, st.FanMode, st.PercentCurrent, want, pct)
+		}
+	}
+	r.noMore()
+}
+
 func TestFan(t *testing.T) {
 	e := entity("fan", hacatalog.PlatformFan, model.Description{Extra: map[string]any{
 		"supported_features": []string{"SET_SPEED", "OSCILLATE", "DIRECTION", "PRESET_MODE"},
@@ -535,6 +560,17 @@ func TestFan(t *testing.T) {
 	expect(t, r.command(), "oscillation", "oscillate_off")
 	r.write("fan", fancontroldef.ClusterID, fancontroldef.AttrAirflowDirection, spec.Uint8(uint8(fancontroldef.AirflowDirectionForward)))
 	expect(t, r.command(), "direction", "forward")
+	// The preset auto sets PercentSetting null; off, a later line, sets 0.
+	r.apply("fan", on(map[string]any{"state": "on", "percentage": 50, "preset_mode": "auto"}))
+	st, _ = fancontroldef.StateFrom(r.values("fan", fancontroldef.ClusterID))
+	if st.FanMode != fancontroldef.FanModeAuto || st.PercentSetting != nil || st.PercentCurrent != 50 {
+		t.Fatalf("preset auto %v %v %d", st.FanMode, st.PercentSetting, st.PercentCurrent)
+	}
+	r.apply("fan", on(map[string]any{"state": "off", "percentage": 50, "preset_mode": "auto"}))
+	st, _ = fancontroldef.StateFrom(r.values("fan", fancontroldef.ClusterID))
+	if st.FanMode != fancontroldef.FanModeOff || st.PercentSetting == nil || *st.PercentSetting != 0 {
+		t.Fatalf("off under preset auto %v %v", st.FanMode, st.PercentSetting)
+	}
 	r.noMore()
 }
 
