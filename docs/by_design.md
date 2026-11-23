@@ -3,6 +3,31 @@
 Deliberate departures from what the brief or matter.js would suggest, one
 paragraph each, with the citations.
 
+## Every endpoint of a device carries its serial number
+
+Home Assistant's device `serial_number` is stated as the
+BridgedDeviceBasicInformation SerialNumber of every endpoint the device's
+entities become, cut to 32 bytes; a device without one states none, which
+go-fabric then does not serve (`endpoint/spec.go:62-70` at v0.25.0;
+"max 32" in bytes, `cluster/spec/bridgeddevicebasicinformation/definition_gen.go:556-562`,
+`cluster/spec/write.go:405, 833-835`). home-assistant-matter-hub uses the registry
+serial only behind its flag `useHaRegistrySerial`, off by default "because
+changing serialNumber after commissioning can confuse controllers"
+(`packages/common/src/bridge-data.ts:102-110` at `664575a`), and otherwise,
+where no per-entity `customSerialNumber` is set, states the entity's
+anchor text
+(`packages/backend/src/matter/behaviors/basic-information-server.ts:58-64,
+96, 128-136`); with the flag on, every entity endpoint of a device carries
+the same serial, as here. Nothing asks for a per-endpoint unique serial —
+that is UniqueId, which go-fabric's assembler owns
+(`device/bridged_basic_information.go:21-25`) — and Home Assistant treats the
+serial as the physical device's, fanned out over a composite's entries
+(`homeassistant/helpers/device_registry.py:787-789` at `2026.10.3`). An
+entity id dressed as a serial number states nothing true about the device;
+the device's own serial does, and a fixed attribute appearing where none
+was served is an addition, not a change of value. Issue #37; owner
+decision of 2026-11-23.
+
 ## Generic binary_sensor is a ContactSensor
 
 A Home Assistant binary_sensor without a device class maps to ContactSensor

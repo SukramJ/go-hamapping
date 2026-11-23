@@ -6,6 +6,19 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-23
+
+### Added
+
+- A bridged endpoint's BridgedDeviceBasicInformation `SerialNumber` is the
+  Home Assistant device's `serial_number`, the same on every endpoint of
+  the device, cut to 32 UTF-8 bytes between two characters; a device
+  without one (or with a blank one) states none (issue #37). Since go-fabric
+  v0.23.0 nothing is derived when the host states none, so controllers saw
+  no serial number for a bridged device. For a bridge already
+  commissioned, the fixed attribute appears where none was served
+  (`docs/by_design.md`).
+
 ## [0.5.0] - 2026-11-23
 
 ### What a host must do
