@@ -55,3 +55,32 @@ func TestVendorCutTo32Bytes(t *testing.T) {
 		}
 	}
 }
+
+// TestBridgedSerialNumber: the Home Assistant device's serial_number is the
+// built device's BridgedDeviceBasicInformation SerialNumber, cut to 32
+// bytes between two characters; a device without one states none, which
+// go-fabric then does not serve (issue #37).
+func TestBridgedSerialNumber(t *testing.T) {
+	for _, tc := range []struct{ serial, want string }{
+		{"", ""},
+		{"  ", ""},
+		{"SN-0042", "SN-0042"},
+		{strings.Repeat("s", 31) + "ä" + "zz", strings.Repeat("s", 31)}, // a two-byte rune across the limit
+	} {
+		dev := *testDevice
+		dev.SerialNumber = tc.serial
+		e := entity("switch.plug", hacatalog.PlatformSwitch, model.Description{Name: model.L("Plug")})
+		p, _ := hamapping.Map(&dev, []model.Entity{e})
+		devs, err := p.Build(context.Background())
+		if err != nil || len(devs) != 1 {
+			t.Fatalf("serial %q: Build %v (%d devices)", tc.serial, err, len(devs))
+		}
+		got := devs[0].Spec().BridgedBasicInformation.SerialNumber
+		switch {
+		case tc.want == "" && got != nil:
+			t.Errorf("no serial: stated %q", *got)
+		case tc.want != "" && (got == nil || *got != tc.want):
+			t.Errorf("serial %q: stated %v, want %q", tc.serial, got, tc.want)
+		}
+	}
+}

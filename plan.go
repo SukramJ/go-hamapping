@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	"github.com/SukramJ/go-hamqtt/model"
+	bdbidef "thingfabric.dev/go-fabric/cluster/spec/bridgeddevicebasicinformation"
 	"thingfabric.dev/go-fabric/contract"
 	"thingfabric.dev/go-fabric/device"
 	"thingfabric.dev/go-fabric/eligibility"
@@ -302,7 +303,7 @@ func (p *Plan) endpoint(b *binding) Endpoint {
 	return Endpoint{
 		Key: b.key, Row: b.row.ID, Type: b.row.Type,
 		Options:      p.options(e),
-		Declarations: declarations(b),
+		Declarations: append(declarations(b), p.serial()...),
 		Features:     features(e),
 		Bindings:     slices.Clone(e.Bindings()),
 	}
@@ -324,6 +325,30 @@ func declarations(b *binding) []device.Declaration {
 // refuses a longer one since v0.23.0 instead of cutting it
 // (device/bridged_basic_information.go:76-82, endpoint/spec.go:159-166).
 const maxVendor = 32
+
+// maxSerial is the bound of BridgedDeviceBasicInformation SerialNumber in
+// bytes, "max 32" (cluster/spec/bridgeddevicebasicinformation/
+// definition_gen.go:556-562 at v0.25.0, counted in UTF-8 bytes by
+// cluster/spec/write.go:405, 833-835); go-fabric refuses a longer stated value
+// instead of cutting it (device/bridged_basic_information.go:68-73).
+const maxSerial = 32
+
+// serial states the Home Assistant device's serial_number as the bridged
+// endpoint's SerialNumber, cut to 32 bytes between two characters: since
+// go-fabric v0.23.0 a bridged SerialNumber is served only when the host
+// states it (endpoint/spec.go:62-70 at v0.25.0; issue #37). Every endpoint
+// of the device states the same serial — it is the physical device's
+// (docs/by_design.md, "Every endpoint of a device carries its serial
+// number"). A device without one, or with a blank one, states nothing.
+// It is added in endpoint, once per endpoint: a rider's declarations go
+// to the primary's list, and a cluster declared twice is refused.
+func (p *Plan) serial() []device.Declaration {
+	if p.Device == nil || strings.TrimSpace(p.Device.SerialNumber) == "" {
+		return nil
+	}
+	sn := cut(strings.TrimSpace(p.Device.SerialNumber), maxSerial)
+	return []device.Declaration{bdbidef.Declare{Initial: bdbidef.Patch{SerialNumber: &sn}}}
+}
 
 // options are the device options of an entity's endpoint.
 func (p *Plan) options(e model.Entity) device.Options {

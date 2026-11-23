@@ -18,7 +18,7 @@ Twin of [`go-ha2fabric`](https://github.com/SukramJ/go-ha2fabric); both are buil
 setup (pure Go, `CGO_ENABLED=0`, Apache-2.0 with a contributor licence
 agreement, the same guards in CI).
 
-> **Status: v0.5.0 (go-fabric v0.25.0, `thingfabric.dev/go-fabric`).** The row format, its generated Go form,
+> **Status: v0.6.0 (go-fabric v0.25.0, `thingfabric.dev/go-fabric`).** The row format, its generated Go form,
 > the guards and the first rows, each with a round trip through go-fabric's
 > in-process controller (v0.1.0, brief H1); a stable identity a source
 > supplies, the method constants and the table of keys a source fills
@@ -28,7 +28,8 @@ agreement, the same guards in CI).
 > and the format's events, options and otherwise (v0.3.0); host ports in a
 > row and the camera (v0.4.0); go-fabric v0.25.0 under its new module path,
 > the fan and climate fan rows keeping their setting true, strings cut by
-> bytes (v0.5.0). The design is in
+> bytes (v0.5.0); the device's serial number on its bridged endpoints
+> (v0.6.0). The design is in
 > [`CONCEPT.md`](CONCEPT.md), the rows in [`docs/rows.md`](docs/rows.md).
 
 ## Why "Matter" is not in the name
