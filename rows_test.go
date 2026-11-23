@@ -512,6 +512,31 @@ func TestLockOpenIsPartial(t *testing.T) {
 	}
 }
 
+// TestFanModeBands: a running fan's FanMode follows its percentage in
+// the row's three bands, 1-33 Low, 34-66 Medium, 67-100 High, every
+// percentage once.
+func TestFanModeBands(t *testing.T) {
+	e := entity("fan", hacatalog.PlatformFan, model.Description{Extra: map[string]any{
+		"supported_features": []string{"SET_SPEED"},
+	}})
+	r := serve(t, e)
+	for pct := 1; pct <= 100; pct++ {
+		want := fancontroldef.FanModeHigh
+		switch {
+		case pct <= 33:
+			want = fancontroldef.FanModeLow
+		case pct <= 66:
+			want = fancontroldef.FanModeMedium
+		}
+		r.apply("fan", on(map[string]any{"state": "on", "percentage": pct}))
+		st, _ := fancontroldef.StateFrom(r.values("fan", fancontroldef.ClusterID))
+		if st.FanMode != want || st.PercentCurrent != uint8(pct) {
+			t.Fatalf("percentage %d: FanMode %v, PercentCurrent %d; want %v, %d", pct, st.FanMode, st.PercentCurrent, want, pct)
+		}
+	}
+	r.noMore()
+}
+
 func TestFan(t *testing.T) {
 	e := entity("fan", hacatalog.PlatformFan, model.Description{Extra: map[string]any{
 		"supported_features": []string{"SET_SPEED", "OSCILLATE", "DIRECTION", "PRESET_MODE"},
