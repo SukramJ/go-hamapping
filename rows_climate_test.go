@@ -55,6 +55,20 @@ func TestClimateAirConditioner(t *testing.T) {
 	if th.SystemMode != thermostatdef.SystemModeCool || th.OccupiedCoolingSetpoint != 2400 {
 		t.Fatalf("thermostat %v %d", th.SystemMode, th.OccupiedCoolingSetpoint)
 	}
+	// PercentSetting and PercentCurrent follow the fan mode; under auto
+	// PercentSetting is null, so a write of the last speed reaches the veto.
+	r.apply("ac", on(map[string]any{"state": "cool", "current_temperature": 26, "temperature": 24, "fan_mode": "low"}))
+	fan, _ = fancontroldef.StateFrom(r.values("ac", fancontroldef.ClusterID))
+	if fan.PercentSetting == nil || *fan.PercentSetting != 33 || fan.PercentCurrent != 33 {
+		t.Fatalf("fan low %v %d", fan.PercentSetting, fan.PercentCurrent)
+	}
+	r.apply("ac", on(map[string]any{"state": "cool", "current_temperature": 26, "temperature": 24, "fan_mode": "auto"}))
+	fan, _ = fancontroldef.StateFrom(r.values("ac", fancontroldef.ClusterID))
+	if fan.FanMode != fancontroldef.FanModeAuto || fan.PercentSetting != nil || fan.PercentCurrent != 33 {
+		t.Fatalf("fan auto %v %v %d", fan.FanMode, fan.PercentSetting, fan.PercentCurrent)
+	}
+	r.write("ac", fancontroldef.ClusterID, fancontroldef.AttrPercentSetting, spec.Uint8(33))
+	expect(t, r.command(), hamapping.MethodFanMode, "low")
 	r.invoke("ac", onoffdef.ClusterID, onoffdef.CmdOff, nil)
 	expect(t, r.command(), hamapping.MethodTurnOff, "OFF")
 	r.invoke("ac", onoffdef.ClusterID, onoffdef.CmdOn, nil)

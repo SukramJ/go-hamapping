@@ -222,6 +222,24 @@ type gen struct {
 	imports  map[string]string
 	std      map[string]bool
 	contract bool
+	// nulls are the attributes an enum of the mappings at hand sets
+	// null: a value assigned to one of them drops it from the patch's
+	// Null again, so the later mapping wins as for a value.
+	nulls map[string]bool
+}
+
+// enumNulls is the set of attributes an enum of attrs maps to null.
+func enumNulls(attrs []rowfile.Attr) map[string]bool {
+	m := map[string]bool{}
+	for i := range attrs {
+		for _, v := range attrs[i].Enum {
+			if v == nil {
+				top, _, _ := strings.Cut(attrs[i].Attribute, ".")
+				m[top] = true
+			}
+		}
+	}
+	return m
 }
 
 func (g *gen) use(d def) string {
@@ -905,6 +923,10 @@ func (g *gen) assignValue(w *bytes.Buffer, d def, a *rowfile.Attr, dst, st, ci s
 	if count {
 		inc = "\nn++"
 	}
+	set := inc
+	if g.nulls[top] {
+		set = fmt.Sprintf("\n%s.Null = drop(%s.Null, %s.Attr%s)%s", dst, dst, d.alias, top, inc)
+	}
 	wrap := func(expr string) (string, error) { return "new(" + expr + ")", nil }
 	if sub != "" {
 		if target.Kind() != reflect.Struct {
@@ -927,19 +949,26 @@ func (g *gen) assignValue(w *bytes.Buffer, d def, a *rowfile.Attr, dst, st, ci s
 			return fmt.Errorf("attribute %s: %w", a.Attribute, err)
 		}
 		expr, _ := wrap(lit)
-		fmt.Fprintf(w, "%s.%s = %s%s\n", dst, top, expr, inc)
+		fmt.Fprintf(w, "%s.%s = %s%s\n", dst, top, expr, set)
 		return nil
 	}
 	if len(a.Enum) > 0 {
 		fmt.Fprintf(w, "switch b.text(%s, %s, %d) {\n", st, ci, ai)
 		keys := slices.Sorted(mapKeys(a.Enum))
 		for _, k := range keys {
+			if a.Enum[k] == nil {
+				if stt.Kind() != reflect.Pointer || sub != "" {
+					return fmt.Errorf("attribute %s: enum %s: null, but the attribute is not nullable", a.Attribute, k)
+				}
+				fmt.Fprintf(w, "case %q:\n%s.Null = append(%s.Null, %s.Attr%s)%s\n", strings.ToLower(k), dst, dst, d.alias, top, inc)
+				continue
+			}
 			lit, err := g.literal(target, a.Enum[k])
 			if err != nil {
 				return fmt.Errorf("attribute %s: enum %s: %w", a.Attribute, k, err)
 			}
 			expr, _ := wrap(lit)
-			fmt.Fprintf(w, "case %q:\n%s.%s = %s%s\n", strings.ToLower(k), dst, top, expr, inc)
+			fmt.Fprintf(w, "case %q:\n%s.%s = %s%s\n", strings.ToLower(k), dst, top, expr, set)
 		}
 		w.WriteString("}\n")
 		return nil
@@ -962,7 +991,7 @@ func (g *gen) assignValue(w *bytes.Buffer, d def, a *rowfile.Attr, dst, st, ci s
 		return fmt.Errorf("attribute %s: a number cannot become %s; map it with enum", a.Attribute, target)
 	}
 	expr, _ := wrap(conv)
-	fmt.Fprintf(w, "if v, ok := b.number(%s, %s, %d); ok {\n%s.%s = %s%s\n}", st, ci, ai, dst, top, expr, inc)
+	fmt.Fprintf(w, "if v, ok := b.number(%s, %s, %d); ok {\n%s.%s = %s%s\n}", st, ci, ai, dst, top, expr, set)
 	if stt.Kind() == reflect.Pointer {
 		fmt.Fprintf(w, " else if b.null(%s, %s, %d) {\n%s.Null = append(%s.Null, %s.Attr%s)%s\n}", st, ci, ai, dst, dst, d.alias, top, inc)
 	}
@@ -985,6 +1014,7 @@ func (g *gen) declare(w *bytes.Buffer, c *rowfile.Cluster, d def) error {
 		}
 		fmt.Fprintf(&body, "if b.match(%s) {\nd.Features |= %s.Feature%s\n}\n", whenp(f.When), alias, f.Name)
 	}
+	g.nulls = enumNulls(c.Initial)
 	for i := range c.Initial {
 		a := &c.Initial[i]
 		if a.Literal != nil {
@@ -1285,6 +1315,7 @@ func (g *gen) onWrite(w *bytes.Buffer, c *rowfile.Cluster, d def) error {
 
 func (g *gen) apply(w *bytes.Buffer, c *rowfile.Cluster, d def) error {
 	var body bytes.Buffer
+	g.nulls = enumNulls(c.Attributes)
 	for i := range c.Attributes {
 		if err := g.assign(&body, d, &c.Attributes[i], "p", "&st", "ci", i, true); err != nil {
 			return err

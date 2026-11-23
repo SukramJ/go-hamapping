@@ -651,7 +651,7 @@ func (v *Value) check(command bool) error {
 	} else {
 		for _, x := range v.Enum {
 			switch t := x.(type) {
-			case bool, int:
+			case nil, bool, int: // nil: the attribute is set null
 			case string:
 				if !ident(t) {
 					return fmt.Errorf("enum constant %q", t)

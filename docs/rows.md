@@ -101,7 +101,9 @@ offset, scale and add by the entity's unit (`default_unit` for an entity
 without one); `digits` rounds a payload number. `enum` maps the entity's
 string (lower case; a boolean state reads `on`/`off`) to a constant of the
 cluster package, a bool or an integer for an attribute, and a constant (or
-`true`/`false`) to the entity's string for a command value. An attribute
+`true`/`false`) to the entity's string for a command value; an attribute's
+`enum` may map a string to `null`, which sets a nullable attribute null
+until a later line or state sets a value. An attribute
 whose value is no number (`unknown`, `unavailable`, null) is set null where
 it is nullable.
 

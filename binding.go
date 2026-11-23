@@ -204,6 +204,12 @@ func (b *binding) null(st *model.State, ci, ai int) bool {
 	return !num
 }
 
+// drop removes id from a patch's Null: a later mapping's value replaces
+// an earlier enum's null.
+func drop(null []uint32, id uint32) []uint32 { //nolint:unparam // generated calls name the attribute; one does today
+	return slices.DeleteFunc(null, func(x uint32) bool { return x == id })
+}
+
 // text is the mapped string of attribute mapping ai, the key the
 // generated switch matches.
 func (b *binding) text(st *model.State, ci, ai int) string {

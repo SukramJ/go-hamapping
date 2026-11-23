@@ -1084,17 +1084,24 @@ var rows = []Row{
 						n++
 					}
 					switch b.text(&st, ci, 1) {
+					case "auto":
+						p.Null = append(p.Null, fancontroldef.AttrPercentSetting)
+						n++
 					case "high":
 						p.PercentSetting = new(uint8(100))
+						p.Null = drop(p.Null, fancontroldef.AttrPercentSetting)
 						n++
 					case "low":
 						p.PercentSetting = new(uint8(33))
+						p.Null = drop(p.Null, fancontroldef.AttrPercentSetting)
 						n++
 					case "medium":
 						p.PercentSetting = new(uint8(66))
+						p.Null = drop(p.Null, fancontroldef.AttrPercentSetting)
 						n++
 					case "off":
 						p.PercentSetting = new(uint8(0))
+						p.Null = drop(p.Null, fancontroldef.AttrPercentSetting)
 						n++
 					}
 					switch b.text(&st, ci, 2) {
@@ -1646,6 +1653,7 @@ var rows = []Row{
 					{Name: "FanMode", Value: Value{From: "state"}},
 					{Name: "FanMode", Value: Value{From: "state.percentage"}},
 					{Name: "FanMode", Value: Value{From: "state.preset_mode"}},
+					{Name: "PercentSetting", Value: Value{From: "state.preset_mode"}},
 					{Name: "PercentCurrent", Value: Value{From: "state"}},
 					{Name: "PercentSetting", Value: Value{From: "state"}},
 					{Name: "FanMode", Value: Value{From: "state"}},
@@ -1748,6 +1756,7 @@ var rows = []Row{
 					}
 					if v, ok := b.number(&st, ci, 1); ok {
 						p.PercentSetting = new(conv[uint8](v))
+						p.Null = drop(p.Null, fancontroldef.AttrPercentSetting)
 						n++
 					} else if b.null(&st, ci, 1) {
 						p.Null = append(p.Null, fancontroldef.AttrPercentSetting)
@@ -2075,22 +2084,28 @@ var rows = []Row{
 						n++
 					}
 					switch b.text(&st, ci, 5) {
-					case "off":
-						p.PercentCurrent = new(uint8(0))
+					case "auto":
+						p.Null = append(p.Null, fancontroldef.AttrPercentSetting)
 						n++
 					}
 					switch b.text(&st, ci, 6) {
 					case "off":
-						p.PercentSetting = new(uint8(0))
+						p.PercentCurrent = new(uint8(0))
 						n++
 					}
 					switch b.text(&st, ci, 7) {
+					case "off":
+						p.PercentSetting = new(uint8(0))
+						p.Null = drop(p.Null, fancontroldef.AttrPercentSetting)
+						n++
+					}
+					switch b.text(&st, ci, 8) {
 					case "off":
 						p.FanMode = new(fancontroldef.FanModeOff)
 						n++
 					}
 					if b.match(&When{Features: &Set{Any: []string{"OSCILLATE"}}}) {
-						switch b.text(&st, ci, 8) {
+						switch b.text(&st, ci, 9) {
 						case "off":
 							p.RockSetting = new(fancontroldef.RockBitmap(0))
 							n++
@@ -2100,7 +2115,7 @@ var rows = []Row{
 						}
 					}
 					if b.match(&When{Features: &Set{Any: []string{"DIRECTION"}}}) {
-						switch b.text(&st, ci, 9) {
+						switch b.text(&st, ci, 10) {
 						case "forward":
 							p.AirflowDirection = new(fancontroldef.AirflowDirectionForward)
 							n++

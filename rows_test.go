@@ -535,6 +535,17 @@ func TestFan(t *testing.T) {
 	expect(t, r.command(), "oscillation", "oscillate_off")
 	r.write("fan", fancontroldef.ClusterID, fancontroldef.AttrAirflowDirection, spec.Uint8(uint8(fancontroldef.AirflowDirectionForward)))
 	expect(t, r.command(), "direction", "forward")
+	// The preset auto sets PercentSetting null; off, a later line, sets 0.
+	r.apply("fan", on(map[string]any{"state": "on", "percentage": 50, "preset_mode": "auto"}))
+	st, _ = fancontroldef.StateFrom(r.values("fan", fancontroldef.ClusterID))
+	if st.FanMode != fancontroldef.FanModeAuto || st.PercentSetting != nil || st.PercentCurrent != 50 {
+		t.Fatalf("preset auto %v %v %d", st.FanMode, st.PercentSetting, st.PercentCurrent)
+	}
+	r.apply("fan", on(map[string]any{"state": "off", "percentage": 50, "preset_mode": "auto"}))
+	st, _ = fancontroldef.StateFrom(r.values("fan", fancontroldef.ClusterID))
+	if st.FanMode != fancontroldef.FanModeOff || st.PercentSetting == nil || *st.PercentSetting != 0 {
+		t.Fatalf("off under preset auto %v %v", st.FanMode, st.PercentSetting)
+	}
 	r.noMore()
 }
 

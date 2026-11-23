@@ -53,25 +53,26 @@ func generate(t *testing.T, src string) error {
 
 func TestGenerateRefuses(t *testing.T) {
 	for name, edit := range map[string][2]string{
-		"device type":          {"type: DoorLock", "type: Toaster"},
-		"cluster not typed":    {"cluster: DoorLock", "cluster: OnOff"},
-		"cluster unknown":      {"cluster: DoorLock", "cluster: Toaster"},
-		"attribute":            {"attribute: LockState, from", "attribute: Lockstate, from"},
-		"initial":              {"attribute: ActuatorEnabled", "attribute: Nope"},
-		"initial type":         {"ActuatorEnabled, const: true", "ActuatorEnabled, const: 3"},
-		"start_null":           {"start_null: [LockState]", "start_null: [Nope]"},
-		"handler":              {"handle: LockDoor", "handle: Explode"},
-		"if field":             {"field: ActuatorEnabled, in", "field: Nope, in"},
-		"if bool constant":     {`in: ["true"]`, `in: ["LockStateLocked"]`},
-		"number to string":     {"attribute: LockState, from: state, enum: {locked: LockStateLocked}", "attribute: Language, from: state"},
-		"command field":        {"raw: {const: LOCK}", "raw: {field: Nope}"},
-		"write veto field":     {"write: [ActuatorEnabled]", "write: [Nope]"},
-		"change attribute":     {"change: [LockState]", "change: [Nope]"},
-		"event":                {"event: DoorLockAlarm", "event: Explosion"},
-		"event field":          {"literal: {AlarmCode: AlarmCodeLockJammed}", "literal: {Nope: 1}"},
-		"no materializer":      {"        events:\n", "        options: {list: desc.options, current: state, method: m}\n        events:\n"},
-		"no port materializer": {"        events:\n", "        ports: host\n        events:\n"},
-		"part type":            {"    clusters:\n      - cluster: DoorLock", "    parts: [{type: Toaster}]\n    clusters:\n      - cluster: DoorLock"},
+		"device type":            {"type: DoorLock", "type: Toaster"},
+		"cluster not typed":      {"cluster: DoorLock", "cluster: OnOff"},
+		"cluster unknown":        {"cluster: DoorLock", "cluster: Toaster"},
+		"attribute":              {"attribute: LockState, from", "attribute: Lockstate, from"},
+		"initial":                {"attribute: ActuatorEnabled", "attribute: Nope"},
+		"initial type":           {"ActuatorEnabled, const: true", "ActuatorEnabled, const: 3"},
+		"start_null":             {"start_null: [LockState]", "start_null: [Nope]"},
+		"handler":                {"handle: LockDoor", "handle: Explode"},
+		"if field":               {"field: ActuatorEnabled, in", "field: Nope, in"},
+		"if bool constant":       {`in: ["true"]`, `in: ["LockStateLocked"]`},
+		"enum null not nullable": {"attribute: LockState, from: state, enum: {locked: LockStateLocked}", "attribute: ActuatorEnabled, from: state, enum: {locked: null}"},
+		"number to string":       {"attribute: LockState, from: state, enum: {locked: LockStateLocked}", "attribute: Language, from: state"},
+		"command field":          {"raw: {const: LOCK}", "raw: {field: Nope}"},
+		"write veto field":       {"write: [ActuatorEnabled]", "write: [Nope]"},
+		"change attribute":       {"change: [LockState]", "change: [Nope]"},
+		"event":                  {"event: DoorLockAlarm", "event: Explosion"},
+		"event field":            {"literal: {AlarmCode: AlarmCodeLockJammed}", "literal: {Nope: 1}"},
+		"no materializer":        {"        events:\n", "        options: {list: desc.options, current: state, method: m}\n        events:\n"},
+		"no port materializer":   {"        events:\n", "        ports: host\n        events:\n"},
+		"part type":              {"    clusters:\n      - cluster: DoorLock", "    parts: [{type: Toaster}]\n    clusters:\n      - cluster: DoorLock"},
 	} {
 		t.Run(name, func(t *testing.T) {
 			src := strings.Replace(base, edit[0], edit[1], 1)
@@ -236,6 +237,23 @@ func TestGenerateStateIf(t *testing.T) {
 	}
 	if err := generate(t, strings.Replace(src, "state: ActuatorEnabled", "state: Nope", 1)); err == nil {
 		t.Error("an if on an unknown state attribute generated")
+	}
+}
+
+func TestGenerateEnumNull(t *testing.T) {
+	src := strings.Replace(base, "enum: {locked: LockStateLocked}}", "enum: {locked: LockStateLocked, jammed: null}}", 1)
+	out, err := GenerateFiles([]rowfile.File{parse(t, src)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := string(out)
+	for _, want := range []string{
+		"case \"jammed\":", "p.Null = append(p.Null, doorlockdef.AttrLockState)",
+		"p.Null = drop(p.Null, doorlockdef.AttrLockState)",
+	} {
+		if !strings.Contains(s, want) {
+			t.Errorf("no %s:\n%s", want, s)
+		}
 	}
 }
 

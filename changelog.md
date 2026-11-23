@@ -23,6 +23,12 @@ All notable changes to this project are documented here. The format follows
 - Read `Patch.Err` on a reachability patch: it carries what
   `Device.SetReachable` returned (an error since go-fabric v0.23.0).
 
+### Added
+
+- Row format: an attribute line's `enum` may map a key to `null`, which sets
+  a nullable attribute null; a later line's value replaces it
+  (`docs/rows.md`).
+
 ### Changed
 
 - go-fabric `v0.25.0` under `thingfabric.dev/go-fabric` (was
@@ -42,15 +48,15 @@ All notable changes to this project are documented here. The format follows
 ### Fixed
 
 - Fan: FanMode follows a running fan's percentage (1–33 Low, 34–66 Medium,
-  67–100 High; High when on without one) and PercentSetting is 0 when the
-  fan is off. Before, a fan on without a preset held FanMode Off; since
+  67–100 High; High when on without one), PercentSetting is null under
+  the preset auto and 0 when the fan is off. Before, a fan on without a preset held FanMode Off; since
   go-fabric v0.23.0 a write of the held value reaches no handler, so a
   controller's FanMode Off on such a fan sent no command.
 - Air conditioner: PercentSetting and PercentCurrent follow the fan mode
   (off 0, low 33, medium 66, high 100, as connectedhomeip's fan control
   sets them), so a controller's write of the speed the fan already holds
-  is no longer dropped unseen. Under fan mode auto they keep the last
-  speed.
+  is no longer dropped unseen. Under fan mode auto PercentSetting is null,
+  as there; PercentCurrent keeps the last speed.
 
 ## [0.4.12] - 2026-11-12
 

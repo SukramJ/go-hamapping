@@ -129,7 +129,7 @@ rows:
         start_null: [PercentSetting]
         attributes:
           - {attribute: FanMode, from: state.fan_mode, enum: {"off": FanModeOff, low: FanModeLow, medium: FanModeMedium, high: FanModeHigh, auto: FanModeAuto}}
-          - {attribute: PercentSetting, from: state.fan_mode, enum: {"off": 0, low: 33, medium: 66, high: 100}}
+          - {attribute: PercentSetting, from: state.fan_mode, enum: {"off": 0, low: 33, medium: 66, high: 100, auto: null}}
           - {attribute: PercentCurrent, from: state.fan_mode, enum: {"off": 0, low: 33, medium: 66, high: 100}}
         commands:
           - write: [FanMode]
