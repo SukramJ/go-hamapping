@@ -98,3 +98,85 @@ func TestCoverTypeByTilt(t *testing.T) {
 		}
 	}
 }
+
+func (r *rig) cover(cmd uint32, fields ...any) {
+	r.t.Helper()
+	switch cmd {
+	case windowcoveringdef.CmdGoToLiftPercentage:
+		r.invoke("cover", windowcoveringdef.ClusterID, cmd, windowcoveringdef.GoToLiftPercentageRequest{LiftPercent100thsValue: fields[0].(uint16)})
+	case windowcoveringdef.CmdGoToTiltPercentage:
+		r.invoke("cover", windowcoveringdef.ClusterID, cmd, windowcoveringdef.GoToTiltPercentageRequest{TiltPercent100thsValue: fields[0].(uint16)})
+	default:
+		r.invoke("cover", windowcoveringdef.ClusterID, cmd, nil)
+	}
+}
+
+// TestCoverTiltOnlyPositional: a tilt-only cover with SET_TILT_POSITION
+// (SwitchBot Blind Tilt, features 240) has no open_cover, close_cover or
+// set_cover_position; its lift commands go to the tilt axis, as
+// matter-hub does (decision 47).
+func TestCoverTiltOnlyPositional(t *testing.T) {
+	r := serve(t, cover("blind", 240))
+	r.cover(windowcoveringdef.CmdUpOrOpen)
+	expect(t, r.command(), hamapping.MethodTilt, "100")
+	r.cover(windowcoveringdef.CmdDownOrClose)
+	expect(t, r.command(), hamapping.MethodTilt, "0")
+	r.cover(windowcoveringdef.CmdGoToLiftPercentage, uint16(2500))
+	expect(t, r.command(), hamapping.MethodTilt, "75")
+	r.cover(windowcoveringdef.CmdGoToTiltPercentage, uint16(2500))
+	expect(t, r.command(), hamapping.MethodTilt, "75")
+	r.noMore()
+}
+
+// TestCoverTiltOnlyBinary: a tilt-only cover without SET_TILT_POSITION
+// (OPEN_TILT|CLOSE_TILT) opens and closes its tilt: fully open opens,
+// anything else closes, as the lift without SET_POSITION.
+func TestCoverTiltOnlyBinary(t *testing.T) {
+	r := serve(t, cover("blind", 48))
+	r.cover(windowcoveringdef.CmdUpOrOpen)
+	expect(t, r.command(), hamapping.MethodOpenTilt, "OPEN")
+	r.cover(windowcoveringdef.CmdDownOrClose)
+	expect(t, r.command(), hamapping.MethodCloseTilt, "CLOSE")
+	r.cover(windowcoveringdef.CmdGoToLiftPercentage, uint16(0))
+	expect(t, r.command(), hamapping.MethodOpenTilt, "OPEN")
+	r.cover(windowcoveringdef.CmdGoToLiftPercentage, uint16(5000))
+	expect(t, r.command(), hamapping.MethodCloseTilt, "CLOSE")
+	r.cover(windowcoveringdef.CmdGoToTiltPercentage, uint16(0))
+	expect(t, r.command(), hamapping.MethodOpenTilt, "OPEN")
+	r.cover(windowcoveringdef.CmdGoToTiltPercentage, uint16(10000))
+	expect(t, r.command(), hamapping.MethodCloseTilt, "CLOSE")
+	r.noMore()
+}
+
+// TestCoverLiftBinaryTilt: lift with OPEN_TILT|CLOSE_TILT but no
+// SET_TILT_POSITION keeps its lift and opens or closes the tilt;
+// set_cover_tilt_position would be refused.
+func TestCoverLiftBinaryTilt(t *testing.T) {
+	r := serve(t, cover("shutter", 51)) // OPEN|CLOSE|OPEN_TILT|CLOSE_TILT
+	r.cover(windowcoveringdef.CmdUpOrOpen)
+	expect(t, r.command(), "", "OPEN")
+	r.cover(windowcoveringdef.CmdGoToLiftPercentage, uint16(10000))
+	expect(t, r.command(), "", "CLOSE")
+	r.cover(windowcoveringdef.CmdGoToTiltPercentage, uint16(0))
+	expect(t, r.command(), hamapping.MethodOpenTilt, "OPEN")
+	r.cover(windowcoveringdef.CmdGoToTiltPercentage, uint16(2500))
+	expect(t, r.command(), hamapping.MethodCloseTilt, "CLOSE")
+	r.noMore()
+}
+
+// TestCoverLiftTilt: lift and tilt with positions keep both axes as they
+// were.
+func TestCoverLiftTilt(t *testing.T) {
+	r := serve(t, cover("blind", 255))
+	r.cover(windowcoveringdef.CmdUpOrOpen)
+	expect(t, r.command(), "", "OPEN")
+	r.cover(windowcoveringdef.CmdDownOrClose)
+	expect(t, r.command(), "", "CLOSE")
+	r.cover(windowcoveringdef.CmdStopMotion)
+	expect(t, r.command(), "", "STOP")
+	r.cover(windowcoveringdef.CmdGoToLiftPercentage, uint16(2500))
+	expect(t, r.command(), hamapping.MethodSetPosition, "75")
+	r.cover(windowcoveringdef.CmdGoToTiltPercentage, uint16(2500))
+	expect(t, r.command(), hamapping.MethodTilt, "75")
+	r.noMore()
+}
