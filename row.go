@@ -101,7 +101,7 @@ type Cluster struct {
 	declare func(b *binding, ci int) device.Declaration
 	apply   func(b *binding, ci int, st model.State) (any, error)
 	watch   func(b *binding, ci int) func()
-	fire    func(b *binding, ei int, endpoint uint16) error
+	fire    func(b *binding, ei int) error
 }
 
 // OptionList is a list of strings of the entity — a select's options, a
@@ -121,7 +121,7 @@ type OptionList struct {
 }
 
 // Event emits events of a cluster, in order, through the cluster's typed
-// server (<cluster>def.Server.Emit<Event>) when the value On names
+// server (<cluster>def.Server.Record<Event>) when the value On names
 // changes from a known value to another non-empty one. The first value —
 // after the plan is built, or after the entity was unavailable or its
 // value unknown — only sets the baseline: a value that was there before

@@ -75,7 +75,7 @@ rows:
             discard: true        # answered with success, handed to Plan.OnDiscard only
         events:                  # events Plan.Apply emits when a value changes
           - on: state            # state, state.<key> or extra.<key>
-            emit:                # in order, through Server.Emit<Event>
+            emit:                # in order, through Server.Record<Event>
               - {event: InitialPress, literal: {NewPosition: 1}}
         options:                 # a list a materializer serves (ModeSelect)
           list: desc.options     # or extra.<key>: a list of strings
@@ -136,7 +136,8 @@ device accepts, handled or discarded, so none falls to the server
 unheard (`TestHandledClustersBindEveryCommand`).
 
 **Events.** `events` emit events of the cluster through its typed server
-(`<cluster>def.Server.Emit<Event>`, on the device's endpoint number) when
+(`<cluster>def.Server.Record<Event>`, on the endpoint the server is
+mounted on, the device's endpoint number) when
 the value `on` names changes from a known value to a different non-empty
 one: Home Assistant's event entity, whose state is the timestamp of its
 last event, becomes a press. The first value after the plan is built, or

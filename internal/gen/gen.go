@@ -745,7 +745,8 @@ func (g *gen) cluster(w *bytes.Buffer, c *rowfile.Cluster, d def) error {
 }
 
 // events emits the cluster's events and the fire closure that emits them
-// through the typed server's Emit<Event>.
+// through the typed server's Record<Event>, on the endpoint the server
+// is mounted on.
 func (g *gen) events(w *bytes.Buffer, c *rowfile.Cluster, d def) error {
 	var body bytes.Buffer
 	w.WriteString("Events: []Event{\n")
@@ -754,25 +755,25 @@ func (g *gen) events(w *bytes.Buffer, c *rowfile.Cluster, d def) error {
 		names := make([]string, 0, len(e.Emit))
 		fmt.Fprintf(&body, "case %d:\n", i)
 		for _, x := range e.Emit {
-			m, ok := d.server.MethodByName("Emit" + x.Event)
-			if !ok || m.Type.NumIn() != 3 || m.Type.NumOut() != 1 {
+			m, ok := d.server.MethodByName("Record" + x.Event)
+			if !ok || m.Type.NumIn() != 2 || m.Type.NumOut() != 1 {
 				return fmt.Errorf("event %q: %s has none", x.Event, d.name)
 			}
 			lit := map[string]any{}
 			for k, v := range x.Literal {
 				lit[k] = v
 			}
-			data, err := g.literal(m.Type.In(2), lit)
+			data, err := g.literal(m.Type.In(1), lit)
 			if err != nil {
 				return fmt.Errorf("event %s: %w", x.Event, err)
 			}
-			fmt.Fprintf(&body, "if err := s.Emit%s(endpoint, %s); err != nil {\nreturn err\n}\n", x.Event, data)
+			fmt.Fprintf(&body, "if err := s.Record%s(%s); err != nil {\nreturn err\n}\n", x.Event, data)
 			names = append(names, x.Event)
 		}
 		fmt.Fprintf(w, "{On: %q, Emit: %s},\n", e.On, strs(names))
 	}
 	w.WriteString("},\n")
-	fmt.Fprintf(w, "fire: func(b *binding, ei int, endpoint uint16) error {\ns := %s.Wrap(b.server(%s.ClusterID))\nswitch ei {\n%s}\nreturn nil\n},\n",
+	fmt.Fprintf(w, "fire: func(b *binding, ei int) error {\ns := %s.Wrap(b.server(%s.ClusterID))\nswitch ei {\n%s}\nreturn nil\n},\n",
 		d.alias, d.alias, body.String())
 	return nil
 }
