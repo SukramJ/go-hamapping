@@ -6,6 +6,19 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-11-24
+
+### Changed
+
+- go-fabric `v0.26.0` (was `v0.25.0`). No API change here; two of its
+  changes reach a plan: `device.Device.AddPart` refuses a duplicate part
+  key with `node.ErrDuplicateKey`, and `node`'s batches judge a key
+  refusal against their end state.
+- The generated row code emits a row's events through the typed server's
+  `Record<Event>`, on the endpoint the server is mounted on, instead of
+  the deprecated `Emit<Event>` with the device's endpoint number; the
+  events and their endpoint are unchanged.
+
 ## [0.7.0] - 2026-11-24
 
 ### What a host must do

@@ -6,7 +6,7 @@ require (
 	github.com/SukramJ/go-ha-catalog v0.3.2-0.20261024093528-d9582e022b8f
 	github.com/SukramJ/go-hamqtt v0.40.0
 	gopkg.in/yaml.v3 v3.0.1
-	thingfabric.dev/go-fabric v0.25.0
+	thingfabric.dev/go-fabric v0.26.0
 )
 
 require (
