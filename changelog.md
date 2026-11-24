@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-24
+
 ### What a host must do
 
 - Serve two new command methods on `cover`: `MethodOpenTilt`
