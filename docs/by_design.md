@@ -130,6 +130,53 @@ jammed is NotFullyLocked, an unknown state is null. Toggle on
 the cluster's current state (`if: {state: OnOff, …}`, #24), so Toggle calls
 `volume_mute` with the inverse of what the controller sees.
 
+## An unclassed cover with tilt is an InteriorBlind
+
+A cover without a device class whose features state tilt (OPEN_TILT,
+CLOSE_TILT or SET_TILT_POSITION) is Type TiltBlindLift with EndProductType
+InteriorBlind, both allowed under Lift and Tilt
+(`cluster/spec/windowcovering/definition_gen.go:104-128, 273-283` at
+v0.25.0). home-assistant-matter-hub gives such a cover its feature-derived
+default, SheerShade (`packages/backend/src/matter/behaviors/window-covering-server.ts:359-376`
+at `664575a`). Tilt is the blind's trait in Home Assistant's model (the
+SwitchBot Blind Tilt is `blind`, `homeassistant/components/switchbot/cover.py:176-181`
+at `2026.10.3`), and InteriorBlind is Matter's generic tilting blind where
+SheerShade names one shade product. Row `cover/window_covering`; fact note
+`notes/reads/fact-2026-11-24-cover-tilt.md` §3.
+
+## A lift-only blind is a RollerShade
+
+A `blind` without tilt is Rollershade / RollerShade (`definition_gen.go:104`,
+LF & !TL, at v0.25.0); home-assistant-matter-hub states Rollershade /
+Unknown for it (`packages/backend/src/matter/endpoints/legacy/cover/behaviors/cover-window-covering-server.ts:104-109`
+at `664575a`). Both build; RollerShade says more about the product than
+Unknown. Row `cover/window_covering`; fact note §3.
+
+## A garage, gate, door, damper or window cover is Unknown
+
+These device classes stay Type and EndProductType Unknown, with or without
+tilt (allowed under any FeatureMap, `definition_gen.go:128, 283` at
+v0.25.0), with the row's caveat; home-assistant-matter-hub gives the classes
+it does not map its default shape, a roller or a sheer shade
+(`packages/backend/src/matter/behaviors/window-covering-server.ts:359-376`
+at `664575a`). A garage door stated as a roller shade claims a product the
+device is not. Row `cover/window_covering`; fact note §3.
+
+## A tilt-only cover keeps Lift
+
+A cover with tilt but no OPEN, CLOSE or SET_POSITION (SwitchBot Blind Tilt,
+features 240) is served with Lift and Tilt, Type TiltBlindLift, and its
+UpOrOpen, DownOrClose and GoToLiftPercentage go to its tilt:
+`set_cover_tilt_position` where it has SET_TILT_POSITION, else
+`open_cover_tilt` / `close_cover_tilt`, which Home Assistant requires the
+features for (`homeassistant/components/cover/services.py:35-45, 72-82,
+93-100` at `2026.10.3`). That is home-assistant-matter-hub's shape
+(`cover-window-covering-server.ts:242-258, 385-395` at `664575a`). A
+tilt-only FeatureMap (TiltBlindTiltOnly / TiltOnlyInteriorBlind) is
+spec-clean too (`definition_gen.go:113, 280`) but used by neither
+bridge, and how controllers render a WindowCovering without Lift is not
+known. Row `cover/window_covering`; fact note §4; decision 47.
+
 ## A select's mode is its option's index
 
 A Home Assistant `select` becomes a ModeSelect whose modes are its options
