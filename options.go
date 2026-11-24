@@ -12,6 +12,7 @@ import (
 
 	"github.com/SukramJ/go-hamqtt/model"
 	modeselectdef "thingfabric.dev/go-fabric/cluster/spec/modeselect"
+	thermostatdef "thingfabric.dev/go-fabric/cluster/spec/thermostat"
 	"thingfabric.dev/go-fabric/contract"
 )
 
@@ -74,11 +75,12 @@ func cut(s string, n int) string {
 	return s[:n]
 }
 
-// The limits a list must fit: a mode is a uint8 (ModeOptionStruct.Mode,
-// cluster/spec/modeselect/definition_gen.go:56 at v0.15.4); a label and
-// the description at most 64 (:55, :229).
+// The limits a list must fit: SupportedModes holds at most 255 entries
+// (cluster/spec/modeselect/definition_gen.go:262 at v0.25.0, "max 255"),
+// so every mode 0..254 is a uint8 (ModeOptionStruct.Mode, :56); a label
+// and the description at most 64 bytes (:55, :245).
 const (
-	maxModes     = 256
+	maxModes     = 255
 	maxLabel     = 64
 	selectNoName = "Select"
 )
@@ -88,12 +90,36 @@ const (
 func unmaterializable(e model.Entity, row *Row) string {
 	for ci := range row.Clusters {
 		c := &row.Clusters[ci]
+		if c.ID == thermostatdef.ClusterID {
+			if why := invertedBounds(e); why != "" {
+				return why
+			}
+		}
 		if c.Options == nil {
 			continue
 		}
 		if why := checkOptions(c.ID, optionList(e, c.Options)); why != "" {
 			return why
 		}
+	}
+	return ""
+}
+
+// invertedBounds names a Thermostat entity that states a min_temp above
+// its max_temp: go-fabric cannot fix such
+// setpoint limits and refuses the device (HR-P2-adpt-43). The bounds are
+// not swapped: which one is wrong is the source's to say.
+func invertedBounds(e model.Entity) string {
+	x := e.Desc().Extra
+	lo, okLo := x["min_temp"]
+	hi, okHi := x["max_temp"]
+	if !okLo || !okHi {
+		return ""
+	}
+	l, okL := toFloat(lo)
+	h, okH := toFloat(hi)
+	if okL && okH && l > h {
+		return fmt.Sprintf("min_temp %v is above max_temp %v", lo, hi)
 	}
 	return ""
 }
@@ -124,9 +150,10 @@ func checkOptions(cluster uint32, l []string) string {
 func (b *binding) optionsModeSelect(d *modeselectdef.Declare, ci int) {
 	o := b.row.Clusters[ci].Options
 	l := slices.Clone(optionList(b.entity, o))
+	labels := modeLabels(l)
 	modes := make([]modeselectdef.ModeOptionStruct, len(l))
-	for i, s := range l {
-		modes[i] = modeselectdef.ModeOptionStruct{Label: cut(s, maxLabel), Mode: uint8(i)} //nolint:gosec // len(l) <= maxModes (unmaterializable)
+	for i := range l {
+		modes[i] = modeselectdef.ModeOptionStruct{Label: labels[i], Mode: uint8(i)} //nolint:gosec // len(l) <= maxModes (unmaterializable)
 	}
 	desc := cut(b.name(), maxLabel)
 	if desc == "" {
@@ -144,6 +171,29 @@ func (b *binding) optionsModeSelect(d *modeselectdef.Declare, ci int) {
 		b.send(o.Method, l[req.NewMode])
 		return struct{}{}, nil
 	}
+}
+
+// modeLabels are the options' labels: each cut to maxLabel bytes, and a
+// label equal to an earlier one numbered " (n)" (n = 2, 3, … until it is
+// new), its base cut so the whole fits. ModeSelect does not require
+// distinct labels, but a controller shows only the label; the option sent
+// is the list's by index either way.
+func modeLabels(l []string) []string {
+	out := make([]string, len(l))
+	seen := make(map[string]bool, len(l))
+	next := map[string]int{}
+	for i, s := range l {
+		base := cut(s, maxLabel)
+		label := base
+		for n := max(next[base], 2); seen[label]; n++ {
+			suffix := fmt.Sprintf(" (%d)", n)
+			label = cut(base, maxLabel-len(suffix)) + suffix
+			next[base] = n + 1
+		}
+		seen[label] = true
+		out[i] = label
+	}
+	return out
 }
 
 // optionsModeSelectApply sets CurrentMode to the index of the current

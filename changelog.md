@@ -6,6 +6,46 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-24
+
+### What a host must do
+
+- Serve two new command methods on `cover`: `MethodOpenTilt`
+  (`open_tilt`) calls `cover.open_cover_tilt`, `MethodCloseTilt`
+  (`close_tilt`) calls `cover.close_cover_tilt`, both without data; the
+  payload is a constant and carries nothing the service needs. A
+  tilt-only cover's UpOrOpen and DownOrClose now arrive as `MethodTilt`
+  with `100` / `0` (`set_cover_tilt_position`) or as these methods, no
+  longer as the command binding's `payload_open` / `payload_close`.
+
+### Added
+
+- `BuildError`: `Plan.Build`'s refusal of one endpoint is a
+  `*BuildError{Key, Row, Part, Riders, Err}`; `Error()` keeps the text
+  of before, `Unwrap()` reaches go-fabric's error. A host can drop the
+  refused entity and build its device's other entities again.
+- Methods `open_tilt` and `close_tilt` (above).
+
+### Fixed
+
+- A cover with tilt builds: Type TiltBlindLift and the EndProductType its
+  device class allows under Lift and Tilt (blind and none InteriorBlind,
+  shade SheerShade, shutter ExteriorVenetianBlind, curtain
+  VerticalBlindStripCurtain, awning Unknown); before, go-fabric refused
+  every cover with tilt but garage, gate, door, damper and window.
+- A tilt-only cover (no OPEN, CLOSE, SET_POSITION) routes its lift
+  commands to its tilt; GoToTiltPercentage without SET_TILT_POSITION
+  opens the tilt at 0 and closes it otherwise. Home Assistant refused
+  the services sent before.
+- A climate or water_heater entity that states a `min_temp` above its
+  `max_temp` is unmappable with a reason (the bounds are not swapped);
+  before it was mappable and refused by go-fabric ("setpoint
+  configuration cannot be fixed").
+- A select with 256 options is unmappable (ModeSelect holds at most 255
+  modes); before it was mappable and refused by go-fabric.
+- ModeSelect labels that repeat after the 64-byte cut, or equal options,
+  are numbered " (n)" within 64 bytes.
+
 ## [0.6.0] - 2026-11-23
 
 ### Added

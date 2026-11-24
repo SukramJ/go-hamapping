@@ -4,6 +4,7 @@
 package hamapping_test
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -97,4 +98,72 @@ func TestClimateFanModesWithoutPower(t *testing.T) {
 	if v[0].Row != "climate/thermostat" || v[0].State != eligibility.StatePartial {
 		t.Fatalf("verdict %+v", v[0])
 	}
+}
+
+// TestSetpointBoundsMappableBuilds is the standing guard of HR-P2-adpt-43:
+// a climate or water_heater entity Map calls mappable builds for every
+// pair of min_temp and max_temp; one whose min_temp is above its max_temp
+// is unmappable with a reason, not swapped.
+//
+// Known gaps, left out of the matrix until a fact note decides them (C8
+// report, questions): one bound stated and the other beyond go-fabric's
+// default for the missing one (min 50 alone, max 5 alone), and heat_cool /
+// auto with a range narrower than go-fabric's deadband (20..20, 20..21).
+func TestSetpointBoundsMappableBuilds(t *testing.T) {
+	bounds := map[string][][2]any{
+		"":   {{nil, nil}, {7, 30}, {30, 7}, {20, 20}, {20, 23}, {20.5, 20}, {40, 65}, {65, 40}, {nil, 25}, {15, nil}, {-10, -20}},
+		"°F": {{nil, nil}, {45, 86}, {86, 45}, {68, 68}, {60, 80}, {68.5, 68}, {110, 140}, {140, 110}, {50, nil}},
+	}
+	shapes := []struct {
+		p     hacatalog.Platform
+		extra map[string]any
+	}{
+		{"water_heater", map[string]any{}},
+		{hacatalog.PlatformClimate, map[string]any{"modes": []string{"heat"}}},
+		{hacatalog.PlatformClimate, map[string]any{"modes": []string{"cool"}}},
+		{hacatalog.PlatformClimate, map[string]any{"modes": []string{"off", "heat", "cool", "heat_cool", "auto"}}},
+		{hacatalog.PlatformClimate, map[string]any{
+			"modes": []string{"off", "cool"}, "supported_features": []string{"TARGET_TEMPERATURE", "TURN_ON", "TURN_OFF"},
+		}},
+	}
+	for _, s := range shapes {
+		for _, unit := range []string{"", "°F"} {
+			for _, b := range bounds[unit] {
+				if m, _ := s.extra["modes"].([]string); (b == [2]any{20, 20} || b == [2]any{68, 68}) && len(m) == 5 {
+					continue // the deadband gap above
+				}
+				x := map[string]any{}
+				for k, v := range s.extra {
+					x[k] = v
+				}
+				if b[0] != nil {
+					x["min_temp"] = b[0]
+				}
+				if b[1] != nil {
+					x["max_temp"] = b[1]
+				}
+				e := entity("e", s.p, model.Description{Unit: model.Unit(unit), Extra: x})
+				p, v := hamapping.Map(testDevice, []model.Entity{e})
+				_, err := p.Build(context.Background())
+				p.Close()
+				inverted := b[0] != nil && b[1] != nil && toF(b[0]) > toF(b[1])
+				switch {
+				case inverted && (v[0].State != eligibility.StateUnmappable || !strings.Contains(v[0].Reason, "min_temp")):
+					t.Errorf("%s %v %s %v: %+v, want unmappable naming min_temp", s.p, s.extra, unit, b, v[0])
+				case v[0].State != eligibility.StateUnmappable && err != nil:
+					t.Errorf("%s %v %s %v: %s, refused: %v", s.p, s.extra, unit, b, v[0].State, err)
+				}
+			}
+		}
+	}
+}
+
+func toF(v any) float64 {
+	switch x := v.(type) {
+	case int:
+		return float64(x)
+	case float64:
+		return x
+	}
+	return 0
 }

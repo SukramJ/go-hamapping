@@ -21,6 +21,32 @@ import (
 // ErrNotBuilt is the error of a [Patch] applied before [Plan.Build].
 var ErrNotBuilt = errors.New("hamapping: plan not built")
 
+// BuildError is [Plan.Build]'s refusal of one endpoint: go-fabric refused
+// the device of entity Key (decided by Row), or its component device Part.
+// Riders are the entities riding on that endpoint, which lose it too. A
+// consumer takes it with errors.As, drops Key and maps the rest again;
+// Unwrap reaches go-fabric's error.
+type BuildError struct {
+	// Key is the entity's key, Row the row that decided.
+	Key, Row string
+	// Part is the device type name of the refused component device; empty
+	// for the endpoint's own device.
+	Part string
+	// Riders are the keys of the entities riding on the endpoint.
+	Riders []string
+	// Err is go-fabric's error.
+	Err error
+}
+
+func (e *BuildError) Error() string {
+	if e.Part != "" {
+		return fmt.Sprintf("hamapping: entity %s (row %s): part %s: %v", e.Key, e.Row, e.Part, e.Err)
+	}
+	return fmt.Sprintf("hamapping: entity %s (row %s): %v", e.Key, e.Row, e.Err)
+}
+
+func (e *BuildError) Unwrap() error { return e.Err }
+
 // RideOnPrimary is [Row].Ride for a row whose clusters ride on the
 // device's primary endpoint.
 const RideOnPrimary = "primary"
@@ -389,7 +415,8 @@ func (p *Plan) options(e model.Entity) device.Options {
 }
 
 // Build constructs the plan's devices, in endpoint order, and installs
-// the command mapping on them. A plan builds once.
+// the command mapping on them. A plan builds once. An endpoint go-fabric
+// refuses ends the build with a [*BuildError].
 func (p *Plan) Build(_ context.Context) ([]*device.Device, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -401,7 +428,7 @@ func (p *Plan) Build(_ context.Context) ([]*device.Device, error) {
 		ep := &p.Endpoints[i]
 		d, err := device.New(ep.Type, ep.Options, ep.Declarations...)
 		if err != nil {
-			return nil, fmt.Errorf("hamapping: entity %s (row %s): %w", ep.Key, ep.Row, err)
+			return nil, &BuildError{Key: ep.Key, Row: ep.Row, Riders: slices.Clone(ep.Riders), Err: err}
 		}
 		if err := p.parts(d, ep); err != nil {
 			return nil, err
@@ -442,7 +469,7 @@ func (p *Plan) parts(d *device.Device, ep *Endpoint) error {
 			err = d.AddPart(pd)
 		}
 		if err != nil {
-			return fmt.Errorf("hamapping: entity %s (row %s): part %s: %w", ep.Key, ep.Row, part.Type.Name, err)
+			return &BuildError{Key: ep.Key, Row: ep.Row, Part: part.Type.Name, Riders: slices.Clone(ep.Riders), Err: err}
 		}
 	}
 	return nil
