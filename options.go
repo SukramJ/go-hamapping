@@ -125,9 +125,10 @@ func checkOptions(cluster uint32, l []string) string {
 func (b *binding) optionsModeSelect(d *modeselectdef.Declare, ci int) {
 	o := b.row.Clusters[ci].Options
 	l := slices.Clone(optionList(b.entity, o))
+	labels := modeLabels(l)
 	modes := make([]modeselectdef.ModeOptionStruct, len(l))
-	for i, s := range l {
-		modes[i] = modeselectdef.ModeOptionStruct{Label: cut(s, maxLabel), Mode: uint8(i)} //nolint:gosec // len(l) <= maxModes (unmaterializable)
+	for i := range l {
+		modes[i] = modeselectdef.ModeOptionStruct{Label: labels[i], Mode: uint8(i)} //nolint:gosec // len(l) <= maxModes (unmaterializable)
 	}
 	desc := cut(b.name(), maxLabel)
 	if desc == "" {
@@ -145,6 +146,29 @@ func (b *binding) optionsModeSelect(d *modeselectdef.Declare, ci int) {
 		b.send(o.Method, l[req.NewMode])
 		return struct{}{}, nil
 	}
+}
+
+// modeLabels are the options' labels: each cut to maxLabel bytes, and a
+// label equal to an earlier one numbered " (n)" (n = 2, 3, … until it is
+// new), its base cut so the whole fits. ModeSelect does not require
+// distinct labels, but a controller shows only the label; the option sent
+// is the list's by index either way.
+func modeLabels(l []string) []string {
+	out := make([]string, len(l))
+	seen := make(map[string]bool, len(l))
+	next := map[string]int{}
+	for i, s := range l {
+		base := cut(s, maxLabel)
+		label := base
+		for n := max(next[base], 2); seen[label]; n++ {
+			suffix := fmt.Sprintf(" (%d)", n)
+			label = cut(base, maxLabel-len(suffix)) + suffix
+			next[base] = n + 1
+		}
+		seen[label] = true
+		out[i] = label
+	}
+	return out
 }
 
 // optionsModeSelectApply sets CurrentMode to the index of the current

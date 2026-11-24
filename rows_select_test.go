@@ -7,7 +7,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
+	"unicode/utf8"
 
 	hacatalog "github.com/SukramJ/go-ha-catalog"
 	"github.com/SukramJ/go-hamqtt/model"
@@ -86,4 +88,43 @@ func TestSelectModeLimit(t *testing.T) {
 			t.Errorf("256 options: %+v (build %v), want unmappable", v[0], err)
 		}
 	}
+}
+
+// TestSelectRepeatedLabels: labels equal after the 64-byte cut, or equal
+// options, are numbered " (n)" within 64 bytes on a character boundary;
+// the option sent stays the list's by index (HR-P2-adpt-36).
+func TestSelectRepeatedLabels(t *testing.T) {
+	long := options(255, strings.Repeat("ä", 40)) // 80 bytes before the number
+	for _, l := range [][]string{long, {"a", "a", "a (2)", "b"}} {
+		e := entity("sel", hacatalog.PlatformSelect, model.Description{Options: &model.Enum{Codes: l}})
+		r := serve(t, e)
+		st, _ := modeselectdef.StateFrom(r.values("sel", modeselectdef.ClusterID))
+		seen := map[string]bool{}
+		for _, m := range st.SupportedModes {
+			if len(m.Label) > 64 || !utf8.ValidString(m.Label) || seen[m.Label] {
+				t.Fatalf("mode %d label %q: over 64 bytes, invalid or repeated", m.Mode, m.Label)
+			}
+			seen[m.Label] = true
+		}
+		if len(seen) != len(l) {
+			t.Fatalf("%d labels, want %d", len(seen), len(l))
+		}
+		if l[1] == "a" && (st.SupportedModes[1].Label != "a (2)" || st.SupportedModes[2].Label != "a (2) (2)" || st.SupportedModes[3].Label != "b") {
+			t.Fatalf("labels %+v", st.SupportedModes)
+		}
+		if l[1] != "a" && st.SupportedModes[1].Label != cutTo(l[1], 60)+" (2)" {
+			t.Fatalf("label 1 %q", st.SupportedModes[1].Label)
+		}
+		r.invoke("sel", modeselectdef.ClusterID, modeselectdef.CmdChangeToMode, modeselectdef.ChangeToModeRequest{NewMode: 2})
+		expect(t, r.command(), hamapping.MethodSelectOption, l[2])
+		r.noMore()
+	}
+}
+
+// cutTo is the longest prefix of s within n bytes on a character boundary.
+func cutTo(s string, n int) string {
+	for n > 0 && n < len(s) && !utf8.RuneStart(s[n]) {
+		n--
+	}
+	return s[:min(n, len(s))]
 }
