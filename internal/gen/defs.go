@@ -59,7 +59,7 @@ type def struct {
 	patch   reflect.Type
 	state   reflect.Type
 	// server is the typed server (*<cluster>def.Server), whose
-	// Emit<Event> methods name the cluster's events and their data.
+	// Record<Event> methods name the cluster's events and their data.
 	server reflect.Type
 }
 

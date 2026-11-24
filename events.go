@@ -11,9 +11,9 @@ import (
 )
 
 // errNoEndpoint is the error of an event on a device the node has not
-// numbered yet: go-fabric emits an event on an endpoint number
-// (<cluster>def.Server.Emit<Event>), which a device has once it is
-// served (device.Device.EndpointNumber).
+// numbered yet: go-fabric records an event on the endpoint its server is
+// mounted on (<cluster>def.Server.Record<Event>), which a device has
+// once it is served (device.Device.EndpointNumber).
 var errNoEndpoint = errors.New("hamapping: the device has no endpoint number yet")
 
 // Home Assistant's states that carry no value: STATE_UNKNOWN and
@@ -54,11 +54,10 @@ func (b *binding) event(ci, ei int, st *model.State) ([]string, error) {
 	if !known || !had || prev == s {
 		return nil, nil
 	}
-	endpoint, numbered := b.target.EndpointNumber()
-	if !numbered {
+	if _, numbered := b.target.EndpointNumber(); !numbered {
 		return ev.Emit, errNoEndpoint
 	}
-	return ev.Emit, c.fire(b, ei, endpoint)
+	return ev.Emit, c.fire(b, ei)
 }
 
 // forget clears every event's baseline: the entity became unavailable.

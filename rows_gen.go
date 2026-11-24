@@ -1734,14 +1734,14 @@ var rows = []Row{
 				Events: []Event{
 					{On: "state", Emit: []string{"InitialPress", "ShortRelease"}},
 				},
-				fire: func(b *binding, ei int, endpoint uint16) error {
+				fire: func(b *binding, ei int) error {
 					s := switchclusterdef.Wrap(b.server(switchclusterdef.ClusterID))
 					switch ei {
 					case 0:
-						if err := s.EmitInitialPress(endpoint, switchclusterdef.InitialPressEvent{NewPosition: uint8(1)}); err != nil {
+						if err := s.RecordInitialPress(switchclusterdef.InitialPressEvent{NewPosition: uint8(1)}); err != nil {
 							return err
 						}
-						if err := s.EmitShortRelease(endpoint, switchclusterdef.ShortReleaseEvent{PreviousPosition: uint8(1)}); err != nil {
+						if err := s.RecordShortRelease(switchclusterdef.ShortReleaseEvent{PreviousPosition: uint8(1)}); err != nil {
 							return err
 						}
 					}
