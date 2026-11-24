@@ -1394,7 +1394,7 @@ var rows = []Row{
 		ID: "cover/window_covering", Platform: "cover",
 		When:  When{},
 		State: eligibility.StateMappable,
-		Cites: []string{"matter.js packages/model/src/standard/elements/window-covering-device.element.ts:24 @862ad75f (WindowCovering mandatory)", "matter.js packages/model/src/standard/resources/window-covering-cluster.resource.ts:39,98,116-118,180-199 @862ad75f (Type, EndProductType, CurrentPositionLiftPercent100ths; DownOrClose ends at 100.00%)", "home-assistant/core homeassistant/components/cover/services.py:49-62 @2026.10.3 (set_cover_position requires SET_POSITION, stop_cover requires STOP)", "home-assistant/core homeassistant/components/cover/const.py:44-54 @2026.10.3 (CoverEntityFeature OPEN 1, CLOSE 2, SET_POSITION 4, STOP 8)", "home-assistant/core homeassistant/helpers/service.py:750-760 @2026.10.3 (a call on a referenced entity without the feature raises ServiceNotSupported)", "go-fabric cluster/cover/windowcovering_server.go:144-158,624-634 @v0.18.0 (GoToLiftPercentage served on Lift without PositionAwareLift; openOrClose maps the percentage to open or close)", "matter.js packages/node/src/behaviors/window-covering/WindowCoveringServer.ts:576-590 @db021da0 (without positionAwareLift: LiftPercent100thsValue 0 opens, else closes)", "go-ha-catalog data/mqtt.json:1648-1912 (cover schema; payload_open/close/stop at 1756-1775, set_position_topic at 1816, tilt_command_topic at 1861)", "go-ha-catalog data/features.json:25-35 (cover feature flags)", "go-ha-catalog data/device_classes.json:38-49 (cover device classes)"},
+		Cites: []string{"matter.js packages/model/src/standard/elements/window-covering-device.element.ts:24 @862ad75f (WindowCovering mandatory)", "matter.js packages/model/src/standard/resources/window-covering-cluster.resource.ts:39,98,116-118,180-199 @862ad75f (Type, EndProductType, CurrentPositionLiftPercent100ths; DownOrClose ends at 100.00%)", "go-fabric cluster/spec/windowcovering/definition_gen.go:104-128,273-283 @v0.25.0 (EndProductType and Type conformance: under LF & TL only TiltBlindLift, SheerShade, InteriorBlind, VerticalBlindStripCurtain, InteriorVenetianBlind, ExteriorVenetianBlind and Unknown)", "go-fabric cluster/cover/windowcovering_server.go:375-378,391-399 @v0.25.0 (Lift or Tilt required; Type and EndProductType checked against the FeatureMap)", "home-assistant/core homeassistant/components/cover/services.py:49-62 @2026.10.3 (set_cover_position requires SET_POSITION, stop_cover requires STOP)", "home-assistant/core homeassistant/components/cover/const.py:44-54 @2026.10.3 (CoverEntityFeature OPEN 1, CLOSE 2, SET_POSITION 4, STOP 8)", "home-assistant/core homeassistant/helpers/service.py:750-760 @2026.10.3 (a call on a referenced entity without the feature raises ServiceNotSupported)", "go-fabric cluster/cover/windowcovering_server.go:144-158,624-634 @v0.18.0 (GoToLiftPercentage served on Lift without PositionAwareLift; openOrClose maps the percentage to open or close)", "matter.js packages/node/src/behaviors/window-covering/WindowCoveringServer.ts:576-590 @db021da0 (without positionAwareLift: LiftPercent100thsValue 0 opens, else closes)", "go-ha-catalog data/mqtt.json:1648-1912 (cover schema; payload_open/close/stop at 1756-1775, set_position_topic at 1816, tilt_command_topic at 1861)", "go-ha-catalog data/features.json:25-35 (cover feature flags)", "go-ha-catalog data/device_classes.json:38-49 (cover device classes)"},
 		Type:  device.WindowCoveringType(),
 		Caveats: []Caveat{
 			{When: When{DeviceClass: []string{"garage", "gate", "door", "damper", "window"}}, Reason: "WindowCovering has no type for a {device_class}: Type and EndProductType are Unknown"},
@@ -1410,8 +1410,10 @@ var rows = []Row{
 					{Name: "TargetPositionTiltPercent100ths", Value: Value{From: "state.current_tilt_position", Linear: Linear{Offset: -100, Scale: -100, Add: 0}, Min: new(float64(0)), Max: new(float64(10000))}, When: &When{Features: &Set{Any: []string{"SET_TILT_POSITION"}}}},
 				},
 				Initial: []Attr{
-					{Name: "Type", Value: Value{From: "device_class"}},
-					{Name: "EndProductType", Value: Value{From: "device_class"}},
+					{Name: "Type", Value: Value{From: "device_class"}, When: &When{Features: &Set{None: []string{"OPEN_TILT", "CLOSE_TILT", "SET_TILT_POSITION"}}}},
+					{Name: "EndProductType", Value: Value{From: "device_class"}, When: &When{Features: &Set{None: []string{"OPEN_TILT", "CLOSE_TILT", "SET_TILT_POSITION"}}}},
+					{Name: "Type", Value: Value{From: "device_class"}, When: &When{Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT", "SET_TILT_POSITION"}}}},
+					{Name: "EndProductType", Value: Value{From: "device_class"}, When: &When{Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT", "SET_TILT_POSITION"}}}},
 				},
 				Commands: []Command{
 					{Kind: "handle", On: []string{"UpOrOpen"}, Raw: &Value{From: "extra.payload_open", Catalog: true}},
@@ -1434,53 +1436,109 @@ var rows = []Row{
 					if b.match(&When{Features: &Set{Any: []string{"SET_TILT_POSITION"}}}) {
 						d.Features |= windowcoveringdef.FeaturePositionAwareTilt
 					}
-					switch b.text(nil, ci, 0) {
-					case "":
-						d.Initial.Type = new(windowcoveringdef.TypeRollershade)
-					case "awning":
-						d.Initial.Type = new(windowcoveringdef.TypeAwning)
-					case "blind":
-						d.Initial.Type = new(windowcoveringdef.TypeRollershade)
-					case "curtain":
-						d.Initial.Type = new(windowcoveringdef.TypeDrapery)
-					case "damper":
-						d.Initial.Type = new(windowcoveringdef.TypeUnknown)
-					case "door":
-						d.Initial.Type = new(windowcoveringdef.TypeUnknown)
-					case "garage":
-						d.Initial.Type = new(windowcoveringdef.TypeUnknown)
-					case "gate":
-						d.Initial.Type = new(windowcoveringdef.TypeUnknown)
-					case "shade":
-						d.Initial.Type = new(windowcoveringdef.TypeRollershade)
-					case "shutter":
-						d.Initial.Type = new(windowcoveringdef.TypeShutter)
-					case "window":
-						d.Initial.Type = new(windowcoveringdef.TypeUnknown)
+					if b.match(&When{Features: &Set{None: []string{"OPEN_TILT", "CLOSE_TILT", "SET_TILT_POSITION"}}}) {
+						switch b.text(nil, ci, 0) {
+						case "":
+							d.Initial.Type = new(windowcoveringdef.TypeRollershade)
+						case "awning":
+							d.Initial.Type = new(windowcoveringdef.TypeAwning)
+						case "blind":
+							d.Initial.Type = new(windowcoveringdef.TypeRollershade)
+						case "curtain":
+							d.Initial.Type = new(windowcoveringdef.TypeDrapery)
+						case "damper":
+							d.Initial.Type = new(windowcoveringdef.TypeUnknown)
+						case "door":
+							d.Initial.Type = new(windowcoveringdef.TypeUnknown)
+						case "garage":
+							d.Initial.Type = new(windowcoveringdef.TypeUnknown)
+						case "gate":
+							d.Initial.Type = new(windowcoveringdef.TypeUnknown)
+						case "shade":
+							d.Initial.Type = new(windowcoveringdef.TypeRollershade)
+						case "shutter":
+							d.Initial.Type = new(windowcoveringdef.TypeShutter)
+						case "window":
+							d.Initial.Type = new(windowcoveringdef.TypeUnknown)
+						}
 					}
-					switch b.text(nil, ci, 1) {
-					case "":
-						d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeRollerShade)
-					case "awning":
-						d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeAwningTerracePatio)
-					case "blind":
-						d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeRollerShade)
-					case "curtain":
-						d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeCentralCurtain)
-					case "damper":
-						d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeUnknown)
-					case "door":
-						d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeUnknown)
-					case "garage":
-						d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeUnknown)
-					case "gate":
-						d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeUnknown)
-					case "shade":
-						d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeRollerShade)
-					case "shutter":
-						d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeRollerShutter)
-					case "window":
-						d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeUnknown)
+					if b.match(&When{Features: &Set{None: []string{"OPEN_TILT", "CLOSE_TILT", "SET_TILT_POSITION"}}}) {
+						switch b.text(nil, ci, 1) {
+						case "":
+							d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeRollerShade)
+						case "awning":
+							d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeAwningTerracePatio)
+						case "blind":
+							d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeRollerShade)
+						case "curtain":
+							d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeCentralCurtain)
+						case "damper":
+							d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeUnknown)
+						case "door":
+							d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeUnknown)
+						case "garage":
+							d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeUnknown)
+						case "gate":
+							d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeUnknown)
+						case "shade":
+							d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeRollerShade)
+						case "shutter":
+							d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeRollerShutter)
+						case "window":
+							d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeUnknown)
+						}
+					}
+					if b.match(&When{Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT", "SET_TILT_POSITION"}}}) {
+						switch b.text(nil, ci, 2) {
+						case "":
+							d.Initial.Type = new(windowcoveringdef.TypeTiltBlindLift)
+						case "awning":
+							d.Initial.Type = new(windowcoveringdef.TypeTiltBlindLift)
+						case "blind":
+							d.Initial.Type = new(windowcoveringdef.TypeTiltBlindLift)
+						case "curtain":
+							d.Initial.Type = new(windowcoveringdef.TypeTiltBlindLift)
+						case "damper":
+							d.Initial.Type = new(windowcoveringdef.TypeUnknown)
+						case "door":
+							d.Initial.Type = new(windowcoveringdef.TypeUnknown)
+						case "garage":
+							d.Initial.Type = new(windowcoveringdef.TypeUnknown)
+						case "gate":
+							d.Initial.Type = new(windowcoveringdef.TypeUnknown)
+						case "shade":
+							d.Initial.Type = new(windowcoveringdef.TypeTiltBlindLift)
+						case "shutter":
+							d.Initial.Type = new(windowcoveringdef.TypeTiltBlindLift)
+						case "window":
+							d.Initial.Type = new(windowcoveringdef.TypeUnknown)
+						}
+					}
+					if b.match(&When{Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT", "SET_TILT_POSITION"}}}) {
+						switch b.text(nil, ci, 3) {
+						case "":
+							d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeInteriorBlind)
+						case "awning":
+							d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeUnknown)
+						case "blind":
+							d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeInteriorBlind)
+						case "curtain":
+							d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeVerticalBlindStripCurtain)
+						case "damper":
+							d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeUnknown)
+						case "door":
+							d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeUnknown)
+						case "garage":
+							d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeUnknown)
+						case "gate":
+							d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeUnknown)
+						case "shade":
+							d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeSheerShade)
+						case "shutter":
+							d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeExteriorVenetianBlind)
+						case "window":
+							d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeUnknown)
+						}
 					}
 					d.HandleUpOrOpen = func(_ context.Context, req windowcoveringdef.UpOrOpenRequest) (resp struct{}, err error) {
 						f := func(string) (any, bool) { return nil, false }

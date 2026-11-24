@@ -16,6 +16,8 @@ rows:
     cites:
       - matter.js packages/model/src/standard/elements/window-covering-device.element.ts:24 @862ad75f (WindowCovering mandatory)
       - matter.js packages/model/src/standard/resources/window-covering-cluster.resource.ts:39,98,116-118,180-199 @862ad75f (Type, EndProductType, CurrentPositionLiftPercent100ths; DownOrClose ends at 100.00%)
+      - "go-fabric cluster/spec/windowcovering/definition_gen.go:104-128,273-283 @v0.25.0 (EndProductType and Type conformance: under LF & TL only TiltBlindLift, SheerShade, InteriorBlind, VerticalBlindStripCurtain, InteriorVenetianBlind, ExteriorVenetianBlind and Unknown)"
+      - go-fabric cluster/cover/windowcovering_server.go:375-378,391-399 @v0.25.0 (Lift or Tilt required; Type and EndProductType checked against the FeatureMap)
       - "home-assistant/core homeassistant/components/cover/services.py:49-62 @2026.10.3 (set_cover_position requires SET_POSITION, stop_cover requires STOP)"
       - home-assistant/core homeassistant/components/cover/const.py:44-54 @2026.10.3 (CoverEntityFeature OPEN 1, CLOSE 2, SET_POSITION 4, STOP 8)
       - home-assistant/core homeassistant/helpers/service.py:750-760 @2026.10.3 (a call on a referenced entity without the feature raises ServiceNotSupported)
@@ -28,13 +30,23 @@ rows:
           - {name: PositionAwareLift, when: {features: {any: [SET_POSITION]}}}
           - {name: Tilt, when: {features: {any: [OPEN_TILT, CLOSE_TILT, SET_TILT_POSITION]}}}
           - {name: PositionAwareTilt, when: {features: {any: [SET_TILT_POSITION]}}}
-        initial:
+        initial:   # Lift only: the LF & !TL members; with Tilt (the feature's predicate): TiltBlindLift and the LF & TL members
           - attribute: Type
             from: device_class
+            when: {features: {none: [OPEN_TILT, CLOSE_TILT, SET_TILT_POSITION]}}
             enum: {shutter: TypeShutter, blind: TypeRollershade, shade: TypeRollershade, curtain: TypeDrapery, awning: TypeAwning, garage: TypeUnknown, gate: TypeUnknown, door: TypeUnknown, damper: TypeUnknown, window: TypeUnknown, "": TypeRollershade}
           - attribute: EndProductType
             from: device_class
+            when: {features: {none: [OPEN_TILT, CLOSE_TILT, SET_TILT_POSITION]}}
             enum: {shutter: EndProductTypeRollerShutter, blind: EndProductTypeRollerShade, shade: EndProductTypeRollerShade, curtain: EndProductTypeCentralCurtain, awning: EndProductTypeAwningTerracePatio, garage: EndProductTypeUnknown, gate: EndProductTypeUnknown, door: EndProductTypeUnknown, damper: EndProductTypeUnknown, window: EndProductTypeUnknown, "": EndProductTypeRollerShade}
+          - attribute: Type
+            from: device_class
+            when: {features: {any: [OPEN_TILT, CLOSE_TILT, SET_TILT_POSITION]}}
+            enum: {shutter: TypeTiltBlindLift, blind: TypeTiltBlindLift, shade: TypeTiltBlindLift, curtain: TypeTiltBlindLift, awning: TypeTiltBlindLift, garage: TypeUnknown, gate: TypeUnknown, door: TypeUnknown, damper: TypeUnknown, window: TypeUnknown, "": TypeTiltBlindLift}
+          - attribute: EndProductType
+            from: device_class
+            when: {features: {any: [OPEN_TILT, CLOSE_TILT, SET_TILT_POSITION]}}
+            enum: {shutter: EndProductTypeExteriorVenetianBlind, blind: EndProductTypeInteriorBlind, shade: EndProductTypeSheerShade, curtain: EndProductTypeVerticalBlindStripCurtain, awning: EndProductTypeUnknown, garage: EndProductTypeUnknown, gate: EndProductTypeUnknown, door: EndProductTypeUnknown, damper: EndProductTypeUnknown, window: EndProductTypeUnknown, "": EndProductTypeInteriorBlind}
         attributes:
           - {attribute: CurrentPositionLiftPercent100ths, from: state.current_position, offset: -100, scale: -100, min: 0, max: 10000, when: {features: {any: [SET_POSITION]}}}
           - {attribute: TargetPositionLiftPercent100ths, from: state.current_position, offset: -100, scale: -100, min: 0, max: 10000, when: {features: {any: [SET_POSITION]}}}
