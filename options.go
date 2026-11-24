@@ -12,6 +12,7 @@ import (
 
 	"github.com/SukramJ/go-hamqtt/model"
 	modeselectdef "thingfabric.dev/go-fabric/cluster/spec/modeselect"
+	thermostatdef "thingfabric.dev/go-fabric/cluster/spec/thermostat"
 	"thingfabric.dev/go-fabric/contract"
 )
 
@@ -89,12 +90,36 @@ const (
 func unmaterializable(e model.Entity, row *Row) string {
 	for ci := range row.Clusters {
 		c := &row.Clusters[ci]
+		if c.ID == thermostatdef.ClusterID {
+			if why := invertedBounds(e); why != "" {
+				return why
+			}
+		}
 		if c.Options == nil {
 			continue
 		}
 		if why := checkOptions(c.ID, optionList(e, c.Options)); why != "" {
 			return why
 		}
+	}
+	return ""
+}
+
+// invertedBounds names a Thermostat entity that states a min_temp above
+// its max_temp: go-fabric cannot fix such
+// setpoint limits and refuses the device (HR-P2-adpt-43). The bounds are
+// not swapped: which one is wrong is the source's to say.
+func invertedBounds(e model.Entity) string {
+	x := e.Desc().Extra
+	lo, okLo := x["min_temp"]
+	hi, okHi := x["max_temp"]
+	if !okLo || !okHi {
+		return ""
+	}
+	l, okL := toFloat(lo)
+	h, okH := toFloat(hi)
+	if okL && okH && l > h {
+		return fmt.Sprintf("min_temp %v is above max_temp %v", lo, hi)
 	}
 	return ""
 }

@@ -35,6 +35,10 @@ All notable changes to this project are documented here. The format follows
   commands to its tilt; GoToTiltPercentage without SET_TILT_POSITION
   opens the tilt at 0 and closes it otherwise. Home Assistant refused
   the services sent before.
+- A climate or water_heater entity that states a `min_temp` above its
+  `max_temp` is unmappable with a reason (the bounds are not swapped);
+  before it was mappable and refused by go-fabric ("setpoint
+  configuration cannot be fixed").
 - A select with 256 options is unmappable (ModeSelect holds at most 255
   modes); before it was mappable and refused by go-fabric.
 - ModeSelect labels that repeat after the 64-byte cut, or equal options,
