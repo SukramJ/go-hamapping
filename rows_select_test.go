@@ -4,7 +4,9 @@
 package hamapping_test
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	hacatalog "github.com/SukramJ/go-ha-catalog"
@@ -57,5 +59,31 @@ func TestSelectWithoutOptions(t *testing.T) {
 	_, v := hamapping.Map(testDevice, []model.Entity{entity("sel", hacatalog.PlatformSelect, model.Description{})})
 	if v[0].State != eligibility.StateUnmappable || v[0].Reason != "a select without options has no modes" {
 		t.Fatalf("verdict %+v", v[0])
+	}
+}
+
+func options(n int, prefix string) []string {
+	l := make([]string, n)
+	for i := range l {
+		l[i] = fmt.Sprintf("%s%03d", prefix, i)
+	}
+	return l
+}
+
+// TestSelectModeLimit: SupportedModes holds at most 255 entries
+// (modeselect definition_gen.go:262): 255 options build, 256 are
+// unmappable with a reason (HR-P2-adpt-34). What Map calls mappable builds.
+func TestSelectModeLimit(t *testing.T) {
+	for _, n := range []int{255, 256} {
+		e := entity("sel", hacatalog.PlatformSelect, model.Description{Options: &model.Enum{Codes: options(n, "o")}})
+		p, v := hamapping.Map(testDevice, []model.Entity{e})
+		_, err := p.Build(context.Background())
+		p.Close()
+		switch {
+		case n == 255 && (v[0].State != eligibility.StateMappable || err != nil):
+			t.Errorf("255 options: %+v, build %v", v[0], err)
+		case n == 256 && (v[0].State != eligibility.StateUnmappable || v[0].Reason != "a select with 256 options has more than ModeSelect's 255 modes"):
+			t.Errorf("256 options: %+v (build %v), want unmappable", v[0], err)
+		}
 	}
 }

@@ -74,11 +74,12 @@ func cut(s string, n int) string {
 	return s[:n]
 }
 
-// The limits a list must fit: a mode is a uint8 (ModeOptionStruct.Mode,
-// cluster/spec/modeselect/definition_gen.go:56 at v0.15.4); a label and
-// the description at most 64 (:55, :229).
+// The limits a list must fit: SupportedModes holds at most 255 entries
+// (cluster/spec/modeselect/definition_gen.go:262 at v0.25.0, "max 255"),
+// so every mode 0..254 is a uint8 (ModeOptionStruct.Mode, :56); a label
+// and the description at most 64 bytes (:55, :245).
 const (
-	maxModes     = 256
+	maxModes     = 255
 	maxLabel     = 64
 	selectNoName = "Select"
 )
