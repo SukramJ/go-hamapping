@@ -4,6 +4,7 @@
 package hamapping
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -23,8 +24,9 @@ var ErrNotBuilt = errors.New("hamapping: plan not built")
 
 // BuildError is [Plan.Build]'s refusal of one endpoint: go-fabric refused
 // the device of entity Key (decided by Row), or its component device Part.
-// Riders are the entities riding on that endpoint, which lose it too. A
-// consumer takes it with errors.As, drops Key and maps the rest again;
+// Riders are the entities riding on that endpoint, which lose it too;
+// Owner names the one whose declarations were refused. A consumer takes it
+// with errors.As, drops Owner and maps the rest again;
 // Unwrap reaches go-fabric's error.
 type BuildError struct {
 	// Key is the entity's key, Row the row that decided.
@@ -34,6 +36,15 @@ type BuildError struct {
 	Part string
 	// Riders are the keys of the entities riding on the endpoint.
 	Riders []string
+	// Owner is the key of the entity whose declarations go-fabric
+	// refused: Key or one of Riders. It is measured, not read from Err:
+	// the endpoint is built again from the primary's own declarations
+	// alone — refused, Owner is Key — and then with each rider's added in
+	// Riders order; Owner is the first rider whose addition is refused.
+	// When no rider isolates the refusal (only the endpoint as a whole,
+	// or a change made to Endpoint.Declarations after Map, is refused)
+	// and for a refused Part, Owner is Key.
+	Owner string
 	// Err is go-fabric's error.
 	Err error
 }
@@ -170,23 +181,15 @@ type Options struct {
 
 // Map plans dev's entities: every entity gets a verdict, every mapped one
 // an endpoint — but a row that rides ([RideOnPrimary]) puts its clusters
-// on the device's primary endpoint when there is one. The entities are
-// taken in order; the primary endpoint is the first mapped entity whose
-// row does not ride. opts is at most one [Options]; a later one's
-// non-nil fields override an earlier one's.
+// on the device's primary endpoint when there is one. The order of
+// entities does not matter: the verdicts follow it, but the endpoints are
+// ordered by their stable key ([StableKey], compared byte-wise; the Key
+// breaks a tie), so the primary endpoint, Endpoints[0], is the mapped
+// entity with the smallest stable key among those whose row does not
+// ride, and a primary's Riders are in the same order. opts is at most one
+// [Options]; a later one's non-nil fields override an earlier one's.
 func Map(dev *model.Device, entities []model.Entity, opts ...Options) (*Plan, []Verdict) {
-	p := &Plan{Device: dev, bindings: map[string]*binding{}, devices: map[string]*device.Device{}}
-	for _, o := range opts {
-		if o.StableKey != nil {
-			p.opts.StableKey = o.StableKey
-		}
-		if o.Name != nil {
-			p.opts.Name = o.Name
-		}
-		if o.Ports != nil {
-			p.opts.Ports = o.Ports
-		}
-	}
+	p := &Plan{Device: dev, opts: mergeOptions(opts), bindings: map[string]*binding{}, devices: map[string]*device.Device{}}
 	verdicts := make([]Verdict, 0, len(entities))
 	type pending struct {
 		b *binding
@@ -203,7 +206,7 @@ func Map(dev *model.Device, entities []model.Entity, opts ...Options) (*Plan, []
 		if v.State == eligibility.StateUnmappable {
 			continue
 		}
-		b := &binding{plan: p, row: row, entity: e, key: e.Key()}
+		b := &binding{plan: p, row: row, entity: e, key: e.Key(), stable: stableKey(dev, e, p.opts)}
 		if row.Ride == RideOnPrimary {
 			p.bindings[b.key] = b
 			riders = append(riders, pending{b, len(verdicts) - 1})
@@ -217,6 +220,11 @@ func Map(dev *model.Device, entities []model.Entity, opts ...Options) (*Plan, []
 		p.bindings[b.key] = b
 		p.Endpoints = append(p.Endpoints, ep)
 	}
+	byStable := func(x, y *binding) int {
+		return cmp.Or(strings.Compare(x.stable, y.stable), strings.Compare(x.key, y.key))
+	}
+	slices.SortStableFunc(p.Endpoints, func(x, y Endpoint) int { return byStable(p.bindings[x.Key], p.bindings[y.Key]) })
+	slices.SortStableFunc(riders, func(x, y pending) int { return byStable(x.b, y.b) })
 	primaries := len(p.Endpoints)
 	for _, r := range riders {
 		if primaries == 0 {
@@ -232,7 +240,8 @@ func Map(dev *model.Device, entities []model.Entity, opts ...Options) (*Plan, []
 		primary := &p.Endpoints[0]
 		if m := r.b.row.RideMeasurement; m != nil {
 			r.b.measure = &measure{class: m.Class}
-			primary.Declarations = append(primary.Declarations, device.Measurement(r.b.measure))
+			r.b.decls = []device.Declaration{device.Measurement(r.b.measure)}
+			primary.Declarations = append(primary.Declarations, r.b.decls...)
 		} else {
 			decls := declarations(r.b)
 			if r.b.noPorts != "" {
@@ -240,12 +249,56 @@ func Map(dev *model.Device, entities []model.Entity, opts ...Options) (*Plan, []
 				verdicts[r.v] = unservedVerdict(r.b)
 				continue
 			}
+			r.b.decls = decls
 			primary.Declarations = append(primary.Declarations, decls...)
 		}
 		primary.Riders = append(primary.Riders, r.b.key)
 		verdicts[r.v].DeviceType = uint16(primary.Type.ID)
 	}
 	return p, verdicts
+}
+
+// mergeOptions is the [Options] Map and [StableKey] take from opts: a
+// later one's non-nil fields override an earlier one's.
+func mergeOptions(opts []Options) Options {
+	var m Options
+	for _, o := range opts {
+		if o.StableKey != nil {
+			m.StableKey = o.StableKey
+		}
+		if o.Name != nil {
+			m.Name = o.Name
+		}
+		if o.Ports != nil {
+			m.Ports = o.Ports
+		}
+	}
+	return m
+}
+
+// StableKey is the stable key [Map] gives the endpoint of entity e of
+// dev (its Endpoint.Options.StableKey), with the same opts: dev's UID,
+// "/" and the entity's identity — [Options].StableKey's result, or the
+// entity's Key when the option is nil or returns "". Without a device, or
+// with a device without a UID, it is the identity alone. A consumer keys
+// what it keeps about an endpoint by it before or without a [Plan]. e is
+// not nil.
+func StableKey(dev *model.Device, e model.Entity, opts ...Options) device.StringKey {
+	return device.StringKey(stableKey(dev, e, mergeOptions(opts)))
+}
+
+// stableKey is [StableKey] with merged options.
+func stableKey(dev *model.Device, e model.Entity, o Options) string {
+	stable := e.Key()
+	if o.StableKey != nil {
+		if id := o.StableKey(e); id != "" {
+			stable = id
+		}
+	}
+	if uid := dev.UID(); uid != "" { // UID is "" for a nil device
+		return uid + "/" + stable
+	}
+	return stable
 }
 
 // find returns the first row of the entity's platform that matches it,
@@ -326,10 +379,13 @@ func unconvertible(e model.Entity, row *Row) string {
 // endpoint is the endpoint of b's entity on its own device.
 func (p *Plan) endpoint(b *binding) Endpoint {
 	e := b.entity
+	// Clipped: a rider's declarations appended to the endpoint's list
+	// leave the binding's own untouched.
+	b.decls = slices.Clip(append(declarations(b), p.serial()...))
 	return Endpoint{
 		Key: b.key, Row: b.row.ID, Type: b.row.Type,
 		Options:      p.options(e),
-		Declarations: append(declarations(b), p.serial()...),
+		Declarations: b.decls,
 		Features:     features(e),
 		Bindings:     slices.Clone(e.Bindings()),
 	}
@@ -383,15 +439,7 @@ func (p *Plan) options(e model.Entity) device.Options {
 		devName, vendor, uid = p.Device.Name.Default, p.Device.Manufacturer, p.Device.UID()
 	}
 	key := e.Key()
-	stable := key
-	if p.opts.StableKey != nil {
-		if id := p.opts.StableKey(e); id != "" {
-			stable = id
-		}
-	}
-	if uid != "" {
-		stable = uid + "/" + stable
-	}
+	stable := stableKey(p.Device, e, p.opts)
 	name := e.Desc().Name.Default
 	verbatim := false
 	if p.opts.Name != nil {
@@ -428,7 +476,7 @@ func (p *Plan) Build(_ context.Context) ([]*device.Device, error) {
 		ep := &p.Endpoints[i]
 		d, err := device.New(ep.Type, ep.Options, ep.Declarations...)
 		if err != nil {
-			return nil, &BuildError{Key: ep.Key, Row: ep.Row, Riders: slices.Clone(ep.Riders), Err: err}
+			return nil, &BuildError{Key: ep.Key, Row: ep.Row, Riders: slices.Clone(ep.Riders), Owner: p.owner(ep), Err: err}
 		}
 		if err := p.parts(d, ep); err != nil {
 			return nil, err
@@ -451,6 +499,35 @@ func (p *Plan) Build(_ context.Context) ([]*device.Device, error) {
 	return out, nil
 }
 
+// owner is BuildError.Owner of the refused endpoint ep. The probe builds
+// are safe to discard: device.New starts no goroutine — the device's
+// queue starts when a node runs it — and subscribes only the host ports
+// a declared CommodityTariff TimeSource holds, which no row declares
+// (go-fabric device/device.go:171-203, 206-288; device/lifecycle.go:141-155;
+// device/defaults_declared.go:351 at v0.27.0).
+func (p *Plan) owner(ep *Endpoint) string {
+	if len(ep.Riders) == 0 {
+		return ep.Key
+	}
+	decls := slices.Clone(p.bindings[ep.Key].decls)
+	if !builds(ep, decls) {
+		return ep.Key
+	}
+	for _, key := range ep.Riders {
+		decls = append(decls, p.bindings[key].decls...)
+		if !builds(ep, decls) {
+			return key
+		}
+	}
+	return ep.Key
+}
+
+// builds reports whether go-fabric builds ep's device from decls.
+func builds(ep *Endpoint, decls []device.Declaration) bool {
+	_, err := device.New(ep.Type, ep.Options, decls...)
+	return err == nil
+}
+
 // parts builds the component devices the endpoint's row requires and
 // adds them to d.
 func (p *Plan) parts(d *device.Device, ep *Endpoint) error {
@@ -469,7 +546,7 @@ func (p *Plan) parts(d *device.Device, ep *Endpoint) error {
 			err = d.AddPart(pd)
 		}
 		if err != nil {
-			return &BuildError{Key: ep.Key, Row: ep.Row, Part: part.Type.Name, Riders: slices.Clone(ep.Riders), Err: err}
+			return &BuildError{Key: ep.Key, Row: ep.Row, Part: part.Type.Name, Riders: slices.Clone(ep.Riders), Owner: ep.Key, Err: err}
 		}
 	}
 	return nil

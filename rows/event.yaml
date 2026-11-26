@@ -12,7 +12,7 @@ rows:
     cites:
       - matter.js packages/model/src/standard/elements/generic-switch.element.ts:19 @862ad75f (Switch mandatory)
       - go-fabric cluster/spec/switchcluster/definition_gen.go:30-31,38,40,54-55 @v0.15.4 (NumberOfPositions, CurrentPosition; InitialPress (MS), ShortRelease (MSR))
-      - go-fabric cluster/spec/switchcluster/server_gen.go:156-171 @v0.15.4 (EmitInitialPress, EmitShortRelease)
+      - "go-fabric cluster/spec/switchcluster/server_gen.go:181-193,227-239 @v0.27.0 (RecordInitialPress, RecordShortRelease: emitted on the endpoint the server is mounted on)"
       - home-assistant/core homeassistant/components/event/__init__.py:187-194 @2026.10.3 (the state is the last event's timestamp)
       - home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/event/index.ts:12-24,191-195 @664575a (GenericSwitch; a short press is InitialPress then ShortRelease at position 1)
     clusters:

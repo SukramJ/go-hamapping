@@ -11,8 +11,10 @@ import (
 	hacatalog "sukramj.dev/go-ha-catalog"
 	"sukramj.dev/go-hamqtt/model"
 	windowcoveringdef "thingfabric.dev/go-fabric/cluster/spec/windowcovering"
+	"thingfabric.dev/go-fabric/controller/client"
 	"thingfabric.dev/go-fabric/device"
 	"thingfabric.dev/go-fabric/eligibility"
+	"thingfabric.dev/go-fabric/fabrictest"
 
 	"sukramj.dev/go-hamapping"
 )
@@ -54,7 +56,9 @@ func TestCoverMappableBuilds(t *testing.T) {
 }
 
 // TestCoverTypeByTilt: Type and EndProductType follow the device class and,
-// with tilt, take the LF&TL members (fact note 2026-11-24 §3).
+// with tilt, take the LF&TL members (fact note 2026-11-24 §3); a window is
+// Rollershade / RollerShade with Lift alone, TiltBlindLift / Unknown with
+// Tilt (fact note 2026-11-26 Q4a).
 func TestCoverTypeByTilt(t *testing.T) {
 	type te struct {
 		typ windowcoveringdef.TypeEnum
@@ -68,7 +72,8 @@ func TestCoverTypeByTilt(t *testing.T) {
 		"shutter": {windowcoveringdef.TypeShutter, windowcoveringdef.EndProductTypeRollerShutter},
 		"curtain": {windowcoveringdef.TypeDrapery, windowcoveringdef.EndProductTypeCentralCurtain},
 		"awning":  {windowcoveringdef.TypeAwning, windowcoveringdef.EndProductTypeAwningTerracePatio},
-		"garage":  unknown, "gate": unknown, "door": unknown, "damper": unknown, "window": unknown,
+		"window":  {windowcoveringdef.TypeRollershade, windowcoveringdef.EndProductTypeRollerShade},
+		"garage":  unknown, "gate": unknown, "door": unknown, "damper": unknown,
 	}
 	tilt := map[string]te{
 		"":        {windowcoveringdef.TypeTiltBlindLift, windowcoveringdef.EndProductTypeInteriorBlind},
@@ -77,7 +82,8 @@ func TestCoverTypeByTilt(t *testing.T) {
 		"shutter": {windowcoveringdef.TypeTiltBlindLift, windowcoveringdef.EndProductTypeExteriorVenetianBlind},
 		"curtain": {windowcoveringdef.TypeTiltBlindLift, windowcoveringdef.EndProductTypeVerticalBlindStripCurtain},
 		"awning":  {windowcoveringdef.TypeTiltBlindLift, windowcoveringdef.EndProductTypeUnknown},
-		"garage":  unknown, "gate": unknown, "door": unknown, "damper": unknown, "window": unknown,
+		"window":  {windowcoveringdef.TypeTiltBlindLift, windowcoveringdef.EndProductTypeUnknown},
+		"garage":  unknown, "gate": unknown, "door": unknown, "damper": unknown,
 	}
 	// 15: lift only; 0: neither; 255: lift+tilt; 240: tilt only (SwitchBot
 	// Blind Tilt); 48: binary tilt only.
@@ -129,8 +135,9 @@ func TestCoverTiltOnlyPositional(t *testing.T) {
 }
 
 // TestCoverTiltOnlyBinary: a tilt-only cover without SET_TILT_POSITION
-// (OPEN_TILT|CLOSE_TILT) opens and closes its tilt: fully open opens,
-// anything else closes, as the lift without SET_POSITION.
+// (OPEN_TILT|CLOSE_TILT) opens and closes its tilt: a lift fully open
+// opens, fully closed closes, a position between is refused, and so does
+// its own tilt percentage.
 func TestCoverTiltOnlyBinary(t *testing.T) {
 	r := serve(t, cover("blind", 48))
 	r.cover(windowcoveringdef.CmdUpOrOpen)
@@ -139,12 +146,14 @@ func TestCoverTiltOnlyBinary(t *testing.T) {
 	expect(t, r.command(), hamapping.MethodCloseTilt, "CLOSE")
 	r.cover(windowcoveringdef.CmdGoToLiftPercentage, uint16(0))
 	expect(t, r.command(), hamapping.MethodOpenTilt, "OPEN")
-	r.cover(windowcoveringdef.CmdGoToLiftPercentage, uint16(5000))
+	r.cover(windowcoveringdef.CmdGoToLiftPercentage, uint16(10000))
 	expect(t, r.command(), hamapping.MethodCloseTilt, "CLOSE")
+	r.refusedLift(5000)
 	r.cover(windowcoveringdef.CmdGoToTiltPercentage, uint16(0))
 	expect(t, r.command(), hamapping.MethodOpenTilt, "OPEN")
 	r.cover(windowcoveringdef.CmdGoToTiltPercentage, uint16(10000))
 	expect(t, r.command(), hamapping.MethodCloseTilt, "CLOSE")
+	r.refusedTilt(5000)
 	r.noMore()
 }
 
@@ -159,8 +168,9 @@ func TestCoverLiftBinaryTilt(t *testing.T) {
 	expect(t, r.command(), "", "CLOSE")
 	r.cover(windowcoveringdef.CmdGoToTiltPercentage, uint16(0))
 	expect(t, r.command(), hamapping.MethodOpenTilt, "OPEN")
-	r.cover(windowcoveringdef.CmdGoToTiltPercentage, uint16(2500))
+	r.cover(windowcoveringdef.CmdGoToTiltPercentage, uint16(10000))
 	expect(t, r.command(), hamapping.MethodCloseTilt, "CLOSE")
+	r.refusedTilt(2500)
 	r.noMore()
 }
 
@@ -178,5 +188,150 @@ func TestCoverLiftTilt(t *testing.T) {
 	expect(t, r.command(), hamapping.MethodSetPosition, "75")
 	r.cover(windowcoveringdef.CmdGoToTiltPercentage, uint16(2500))
 	expect(t, r.command(), hamapping.MethodTilt, "75")
+	r.noMore()
+}
+
+// TestCoverStopTilt: StopMotion of a cover with STOP_TILT and no STOP is
+// stop_cover_tilt (MethodStopTilt); with STOP and STOP_TILT it stays
+// stop_cover (the command binding's payload_stop).
+func TestCoverStopTilt(t *testing.T) {
+	// 112: tilt open, close and stop; 67: lift open and close, tilt stop.
+	for _, f := range []int{112, 67} {
+		t.Run(fmt.Sprint(f), func(t *testing.T) {
+			r := serve(t, cover("blind", f))
+			r.cover(windowcoveringdef.CmdStopMotion)
+			expect(t, r.command(), hamapping.MethodStopTilt, "STOP")
+			r.noMore()
+		})
+	}
+	r := serve(t, cover("blind", 1|2|8|64)) // STOP and STOP_TILT
+	r.cover(windowcoveringdef.CmdStopMotion)
+	expect(t, r.command(), "", "STOP")
+	r.noMore()
+}
+
+// refusedLift invokes GoToLiftPercentage and wants it refused with FAILURE.
+func (r *rig) refusedLift(pct uint16) {
+	r.t.Helper()
+	_, err := fabrictest.Invoke(r.ctx, r.pair, client.CommandAt(r.ep("cover"), windowcoveringdef.ClusterID, windowcoveringdef.CmdGoToLiftPercentage),
+		windowcoveringdef.GoToLiftPercentageRequest{LiftPercent100thsValue: pct})
+	if s := statusOf(err); s != 0x01 {
+		r.t.Fatalf("GoToLiftPercentage %d: status 0x%02X (%v), want FAILURE", pct, s, err)
+	}
+}
+
+// TestCoverPositionAwareLiftAlways: every cover serves PositionAwareLift,
+// with or without SET_POSITION (fact note 2026-11-26 Q4b).
+func TestCoverPositionAwareLiftAlways(t *testing.T) {
+	for _, f := range []int{0, 3, 4, 15, 48, 240, 255} {
+		p, _ := hamapping.Map(testDevice, []model.Entity{cover("shutter", f)})
+		found := false
+		for _, d := range p.Endpoints[0].Declarations {
+			if wd, ok := d.(windowcoveringdef.Declare); ok {
+				found = true
+				if wd.Features&windowcoveringdef.FeaturePositionAwareLift == 0 {
+					t.Errorf("features %d: Features 0x%X without PositionAwareLift", f, uint32(wd.Features))
+				}
+			}
+		}
+		if !found {
+			t.Fatalf("features %d: no WindowCovering declaration", f)
+		}
+	}
+}
+
+// TestCoverLiftPositionFromState: without SET_POSITION the lift position
+// is the state's — closed 10000, open 0, moving null — unless the state
+// carries current_position, which wins.
+func TestCoverLiftPositionFromState(t *testing.T) {
+	r := serve(t, cover("shutter", 3)) // OPEN|CLOSE
+	lift := func() (*uint16, *uint16) {
+		st, _ := windowcoveringdef.StateFrom(r.values("cover", windowcoveringdef.ClusterID))
+		return st.CurrentPositionLiftPercent100ths, st.TargetPositionLiftPercent100ths
+	}
+	for _, c := range []struct {
+		state map[string]any
+		want  *uint16
+	}{
+		{map[string]any{"state": "closed"}, new(uint16(10000))},
+		{map[string]any{"state": "opening"}, nil},
+		{map[string]any{"state": "open"}, new(uint16(0))},
+		{map[string]any{"state": "closing"}, nil},
+		{map[string]any{"state": "open", "current_position": 30}, new(uint16(7000))},
+	} {
+		r.apply("cover", on(c.state))
+		cur, tgt := lift()
+		if !equalPtr(cur, c.want) || !equalPtr(tgt, c.want) {
+			t.Errorf("state %v: current %v target %v, want %v", c.state, deref(cur), deref(tgt), deref(c.want))
+		}
+	}
+}
+
+func equalPtr(a, b *uint16) bool { return a == nil && b == nil || a != nil && b != nil && *a == *b }
+
+func deref(p *uint16) any {
+	if p == nil {
+		return nil
+	}
+	return *p
+}
+
+// TestCoverGoToLiftWithoutSetPosition: without SET_POSITION a
+// GoToLiftPercentage of 0 opens, of 10000 closes, and any position between
+// is refused with FAILURE and hands out nothing — no threshold turns 40 %
+// into "close fully" (docs/by_design.md). With SET_TILT_POSITION a
+// tilt-only cover's lift percentage stays exact.
+func TestCoverGoToLiftWithoutSetPosition(t *testing.T) {
+	for _, f := range []int{3, 0} { // OPEN|CLOSE; neither axis
+		t.Run(fmt.Sprint(f), func(t *testing.T) {
+			r := serve(t, cover("shutter", f))
+			r.cover(windowcoveringdef.CmdGoToLiftPercentage, uint16(0))
+			expect(t, r.command(), "", "OPEN")
+			r.cover(windowcoveringdef.CmdGoToLiftPercentage, uint16(10000))
+			expect(t, r.command(), "", "CLOSE")
+			for _, pct := range []uint16{1, 4000, 5000, 9999} {
+				r.refusedLift(pct)
+			}
+			r.noMore()
+		})
+	}
+	r := serve(t, cover("blind", 240))
+	r.cover(windowcoveringdef.CmdGoToLiftPercentage, uint16(4000))
+	expect(t, r.command(), hamapping.MethodTilt, "60")
+	r.noMore()
+}
+
+// refusedTilt invokes GoToTiltPercentage and wants it refused with FAILURE.
+func (r *rig) refusedTilt(pct uint16) {
+	r.t.Helper()
+	_, err := fabrictest.Invoke(r.ctx, r.pair, client.CommandAt(r.ep("cover"), windowcoveringdef.ClusterID, windowcoveringdef.CmdGoToTiltPercentage),
+		windowcoveringdef.GoToTiltPercentageRequest{TiltPercent100thsValue: pct})
+	if s := statusOf(err); s != 0x01 {
+		r.t.Fatalf("GoToTiltPercentage %d: status 0x%02X (%v), want FAILURE", pct, s, err)
+	}
+}
+
+// TestCoverPositionAwareTiltWithTilt: a cover with any tilt feature serves
+// PositionAwareTilt; without SET_TILT_POSITION its tilt position stays
+// unknown (null), GoToTiltPercentage 0 opens, 10000 closes, a tilt between
+// is refused with FAILURE and hands out nothing.
+func TestCoverPositionAwareTiltWithTilt(t *testing.T) {
+	for f, want := range map[int]bool{0: false, 15: false, 16: true, 32: true, 48: true, 51: true, 128: true, 240: true, 255: true} {
+		p, _ := hamapping.Map(testDevice, []model.Entity{cover("blind", f)})
+		for _, d := range p.Endpoints[0].Declarations {
+			if wd, ok := d.(windowcoveringdef.Declare); ok && (wd.Features&windowcoveringdef.FeaturePositionAwareTilt != 0) != want {
+				t.Errorf("features %d: Features 0x%X, PositionAwareTilt want %v", f, uint32(wd.Features), want)
+			}
+		}
+	}
+	r := serve(t, cover("blind", 51)) // OPEN|CLOSE|OPEN_TILT|CLOSE_TILT
+	r.apply("cover", on(map[string]any{"state": "open", "current_position": 100}))
+	st, _ := windowcoveringdef.StateFrom(r.values("cover", windowcoveringdef.ClusterID))
+	if st.CurrentPositionTiltPercent100ths != nil || st.TargetPositionTiltPercent100ths != nil {
+		t.Fatalf("tilt position %v %v, want unknown", deref(st.CurrentPositionTiltPercent100ths), deref(st.TargetPositionTiltPercent100ths))
+	}
+	for _, pct := range []uint16{1, 4000, 9999} {
+		r.refusedTilt(pct)
+	}
 	r.noMore()
 }

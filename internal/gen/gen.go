@@ -208,7 +208,11 @@ func GenerateFiles(files []rowfile.File) ([]byte, error) {
 		fmt.Fprintf(&out, "\t%q\n", p)
 	}
 	out.WriteString(")\n\n")
-	out.WriteString(methodsSource(files))
+	docs, err := methodDocs(files)
+	if err != nil {
+		return nil, err
+	}
+	out.WriteString(methodsSource(files, docs))
 	out.WriteString("// rows is the table, in the order [Map] tries it.\n")
 	out.Write(body.Bytes())
 	src, err := format.Source(out.Bytes())
@@ -546,6 +550,9 @@ func (g *gen) value(v *rowfile.Value, enumExpr func(string) string) string {
 	}
 	if v.Catalog {
 		parts = append(parts, "Catalog: true")
+	}
+	if v.Absent != nil {
+		parts = append(parts, fmt.Sprintf("Absent: &Quantity{Value: %s, Unit: %q}", float(*v.Absent.Value), v.Absent.Unit))
 	}
 	return "Value{" + strings.Join(parts, ", ") + "}"
 }
@@ -888,6 +895,10 @@ func (g *gen) commands(w *bytes.Buffer, c *rowfile.Cluster, d def) error {
 		if cmd.Discard {
 			w.WriteString(", Discard: true")
 		}
+		if cmd.Refuse != "" {
+			g.contract = true
+			fmt.Fprintf(w, ", Refuse: contract.%s", rowfile.Refusals[cmd.Refuse])
+		}
 		w.WriteString("},\n")
 	}
 	w.WriteString("},\n")
@@ -1046,8 +1057,8 @@ func (g *gen) declare(w *bytes.Buffer, c *rowfile.Cluster, d def) error {
 			return fmt.Errorf("ports: %s has no row port", d.name)
 		}
 		for i := range c.Commands {
-			if cmd := &c.Commands[i]; cmd.Handle != "" && (cmd.If != nil || cmd.Otherwise != nil || cmd.Discard) {
-				return fmt.Errorf("ports: row: handle %s is the port's action and takes no if, otherwise or discard", cmd.Handle)
+			if cmd := &c.Commands[i]; cmd.Handle != "" && (cmd.If != nil || cmd.Otherwise != nil || cmd.Discard || cmd.Refuse != "") {
+				return fmt.Errorf("ports: row: handle %s is the port's action and takes no if, otherwise, discard or refuse", cmd.Handle)
 			}
 		}
 		fmt.Fprintf(&body, "b.rowPorts%s(&d, ci)\n", m)
@@ -1230,7 +1241,11 @@ func (g *gen) handlers(w *bytes.Buffer, c *rowfile.Cluster, d def) error {
 			}
 			conds = append(conds, cond)
 		}
-		fmt.Fprintf(w, "d.Handle%s = func(_ context.Context, req %s) (resp %s, err error) {\n%sf := %s\n", h, req, resp, get, fn)
+		fdecl := ""
+		if !allRefuse(cmds) {
+			fdecl = "f := " + fn + "\n"
+		}
+		fmt.Fprintf(w, "d.Handle%s = func(_ context.Context, req %s) (resp %s, err error) {\n%s%s", h, req, resp, get, fdecl)
 		if otherwise != "" {
 			w.WriteString("handled := false\n")
 		}
@@ -1238,6 +1253,10 @@ func (g *gen) handlers(w *bytes.Buffer, c *rowfile.Cluster, d def) error {
 			mark := ""
 			if otherwise != "" {
 				mark = "\nhandled = true"
+			}
+			if c.Commands[i].Refuse != "" {
+				fmt.Fprintf(w, "if %s {\nif e := b.refuse(ci, %d); e != nil {\nerr = e\n}%s\n}\n", conds[j], i, mark)
+				continue
 			}
 			fmt.Fprintf(w, "if %s {\nb.emit(ci, %d, f)%s\n}\n", conds[j], i, mark)
 		}
@@ -1250,6 +1269,17 @@ func (g *gen) handlers(w *bytes.Buffer, c *rowfile.Cluster, d def) error {
 		}
 	}
 	return nil
+}
+
+// allRefuse reports whether every command of a handler is a refusal: its
+// handler reads no field for a payload.
+func allRefuse(cmds []*rowfile.Command) bool {
+	for _, c := range cmds {
+		if c.Refuse == "" {
+			return false
+		}
+	}
+	return true
 }
 
 // otherwise is the response literal of a handler's commands' otherwise
@@ -1368,7 +1398,11 @@ func (g *gen) watch(w *bytes.Buffer, c *rowfile.Cluster, d def) error {
 			cond += " && !slices.Contains(c.Attributes, " + d.alias + ".Attr" + a + ")"
 			g.useStd("slices")
 		}
-		fmt.Fprintf(&body, "if changed(c, %s) && %s {\nb.emit(ci, %d, f)\n}\n", strings.Join(ids, ", "), cond, idx[j])
+		hook := "changed"
+		if cmd.Writes {
+			hook = "changedOrWritten"
+		}
+		fmt.Fprintf(&body, "if %s(c, %s) && %s {\nb.emit(ci, %d, f)\n}\n", hook, strings.Join(ids, ", "), cond, idx[j])
 	}
 	get := ""
 	if strings.Contains(fn, "st.") || strings.Contains(body.String(), "st.") {

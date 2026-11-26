@@ -5,6 +5,7 @@ package hamapping
 
 import (
 	"encoding/json"
+	"fmt"
 	"math"
 	"reflect"
 	"slices"
@@ -25,6 +26,14 @@ type binding struct {
 	row    *Row
 	entity model.Entity
 	key    string
+	// stable is the entity's stable key ([StableKey]), the order of the
+	// plan's endpoints and riders.
+	stable string
+	// decls are the declarations the binding contributed to its
+	// endpoint: a primary's own (its row's and the serial), a rider's
+	// added to its primary's. [Plan.Build] rebuilds from them to find
+	// the owner of a refused endpoint (BuildError.Owner).
+	decls []device.Declaration
 	// target is the device the row's clusters live on: the entity's own,
 	// or for a row that rides, its primary's.
 	target *device.Device
@@ -142,18 +151,8 @@ func features(e model.Entity) []string {
 // value). ok is false when the mapping does not apply or the value is
 // absent.
 func (b *binding) attr(st *model.State, a *Attr) (any, bool) {
-	if a.When != nil && !b.match(a.When) {
+	if !b.applies(st, a) {
 		return nil, false
-	}
-	if len(a.StateIn) > 0 {
-		if st == nil {
-			return nil, false
-		}
-		v, _ := lookupState(*st, fromState)
-		s, _ := toText(v)
-		if !slices.Contains(a.StateIn, s) {
-			return nil, false
-		}
 	}
 	if a.Value.HasConst {
 		return a.Value.Const, true
@@ -165,6 +164,25 @@ func (b *binding) attr(st *model.State, a *Attr) (any, bool) {
 		return lookupState(*st, a.Value.From)
 	}
 	return describe(b.entity, a.Value.From)
+}
+
+// applies reports whether attribute mapping a applies to the entity and,
+// with a StateIn, to the state.
+func (b *binding) applies(st *model.State, a *Attr) bool {
+	if a.When != nil && !b.match(a.When) {
+		return false
+	}
+	if len(a.StateIn) > 0 {
+		if st == nil {
+			return false
+		}
+		v, _ := lookupState(*st, fromState)
+		s, _ := toText(v)
+		if !slices.Contains(a.StateIn, s) {
+			return false
+		}
+	}
+	return true
 }
 
 func (b *binding) pick(ci, ai int, initial bool) *Attr {
@@ -180,9 +198,18 @@ func (b *binding) pick(ci, ai int, initial bool) *Attr {
 
 // number is the converted value of attribute mapping ai of cluster ci.
 func (b *binding) number(st *model.State, ci, ai int) (float64, bool) {
-	a := b.pick(ci, ai, st == nil)
+	return b.attrNumber(st, b.pick(ci, ai, st == nil))
+}
+
+// attrNumber is the converted value of attribute mapping a; an
+// extra.<key> the entity does not state reads the mapping's Absent value,
+// converted from its own unit.
+func (b *binding) attrNumber(st *model.State, a *Attr) (float64, bool) {
 	raw, ok := b.attr(st, a)
 	if !ok {
+		if q := a.Value.Absent; q != nil && b.applies(st, a) {
+			return convertIn(b.entity, &a.Value, q.Value, q.Unit)
+		}
 		return 0, false
 	}
 	x, ok := toFloat(raw)
@@ -235,6 +262,24 @@ func changed(c contract.Change, ids ...uint32) bool {
 	if c.Origin != contract.OriginCommand {
 		return false
 	}
+	return touched(c, ids)
+}
+
+// changedOrWritten reports whether a change from a command, or a
+// controller's write the server admitted, touched one of ids: the server's
+// change notification after the write is stored, so its state is the one
+// the server holds after its own adjustments (go-fabric
+// cluster/thermo/thermostat_server.go:1165-1184 and setpoints.go:180-197
+// at v0.27.0: a setpoint write notifies every setpoint that moved, the
+// companion included).
+func changedOrWritten(c contract.Change, ids ...uint32) bool {
+	if c.Origin != contract.OriginCommand && c.Origin != contract.OriginControllerWrite {
+		return false
+	}
+	return touched(c, ids)
+}
+
+func touched(c contract.Change, ids []uint32) bool {
 	return slices.ContainsFunc(ids, func(id uint32) bool { return slices.Contains(c.Attributes, id) })
 }
 
@@ -264,6 +309,22 @@ func (b *binding) emit(ci, k int, f func(name string) (any, bool)) {
 func (b *binding) discard(ci, k int) {
 	c := &b.row.Clusters[ci]
 	b.plan.deliverDiscard(Discard{Entity: b.entity, Cluster: c.Name, Command: c.Commands[k].On[0]})
+}
+
+// refuse is the refusal of command k of cluster ci, a
+// contract.StatusError with the command's status, or nil when the command
+// does not apply to the entity. Nothing is handed out: the entity has no
+// action for the value.
+func (b *binding) refuse(ci, k int) error {
+	c := &b.row.Clusters[ci]
+	cmd := &c.Commands[k]
+	if cmd.When != nil && !b.match(cmd.When) {
+		return nil
+	}
+	return contract.StatusError{
+		Status:  cmd.Refuse,
+		Message: fmt.Sprintf("%s: %s %s: %s has no action for the value", b.row.ID, c.Name, cmd.On[0], b.key),
+	}
 }
 
 // render is a command's payload: one value, or a JSON object.

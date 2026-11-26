@@ -70,8 +70,9 @@ each with its predicate, clusters, verdict and citations):
   motion, occupancy, presence → OccupancySensor; moisture →
   WaterLeakDetector; smoke and carbon monoxide → SmokeCoAlarm; no class →
   ContactSensor ([by design](docs/by_design.md)).
-- **cover** → WindowCovering (lift, tilt, position-aware by the entity's
-  feature flags; the device class sets Type and EndProductType).
+- **cover** → WindowCovering (lift, always position-aware; tilt,
+  position-aware by the entity's feature flags; the device class sets Type
+  and EndProductType).
 - **climate** → Thermostat (heating, cooling, auto from the hvac modes).
 - **lock** → DoorLock. **fan** → Fan (percentage, presets, oscillation,
   direction).

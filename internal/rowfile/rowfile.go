@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"path/filepath"
 	"slices"
@@ -207,6 +208,16 @@ type Value struct {
 	// for a command value.
 	Enum    map[string]any `yaml:"enum"`
 	Catalog bool           `yaml:"catalog"`
+	// Absent is the value an attribute mapping reads when the entity
+	// states no extra.<key>: the source's own default, in the unit the
+	// source states it in (a key of Units), cited by the row.
+	Absent *Quantity `yaml:"absent"`
+}
+
+// Quantity is a number in a unit.
+type Quantity struct {
+	Value *float64 `yaml:"value"`
+	Unit  string   `yaml:"unit"`
 }
 
 // Linear is a linear conversion.
@@ -225,12 +236,18 @@ type Command struct {
 	Change []string `yaml:"change"`
 	// Unless skips a change that also touches one of these attributes.
 	Unless []string `yaml:"unless"`
+	// Writes makes a change also catch a controller's write of these
+	// attributes the server admitted, besides a command's change.
+	Writes bool `yaml:"writes"`
 	// If restricts the command to a field value.
-	If     *Cond            `yaml:"if"`
-	When   *When            `yaml:"when"`
-	Method string           `yaml:"method"`
-	Raw    *Value           `yaml:"raw"`
-	JSON   map[string]Value `yaml:"json"`
+	If     *Cond  `yaml:"if"`
+	When   *When  `yaml:"when"`
+	Method string `yaml:"method"`
+	// Doc documents the method: the comment of its generated constant (a
+	// method's commands state at most one).
+	Doc  string           `yaml:"doc"`
+	Raw  *Value           `yaml:"raw"`
+	JSON map[string]Value `yaml:"json"`
 	// Derive adds keys a conversion of several fields computes (Derives).
 	Derive string `yaml:"derive"`
 	// Otherwise is a handler's response, by field name of its response
@@ -242,6 +259,19 @@ type Command struct {
 	// hands it to no one but Plan.OnDiscard: the entity has no action for
 	// it (a handle alone).
 	Discard bool `yaml:"discard"`
+	// Refuse answers the handled command with this Interaction Model
+	// status (a key of Refusals) when its if holds, and hands out
+	// nothing: the entity has no action for the value (a handle's, with
+	// neither a payload nor a method).
+	Refuse string `yaml:"refuse"`
+}
+
+// Refusals are the statuses a refuse may name, each with the
+// go-fabric contract constant the generated row carries: FAILURE, the
+// answer to a command the device accepts but cannot carry out for the
+// value it was given.
+var Refusals = map[string]string{
+	"FAILURE": "StatusFailure",
 }
 
 // Derives are the derived payloads a command may add, with the fields
@@ -551,6 +581,22 @@ func valueFrom(s string) bool {
 	return false
 }
 
+// check validates a command's if; nil holds.
+func (c *Cond) check() error {
+	if c == nil {
+		return nil
+	}
+	if (c.Field == "") == (c.State == "") || !ident(c.Name()) || (len(c.In) == 0) == (len(c.NotIn) == 0) {
+		return errors.New("if: one of field and state, and one of in and not_in")
+	}
+	for _, n := range slices.Concat(c.In, c.NotIn) {
+		if !ident(n) && !number(n) {
+			return fmt.Errorf("if: constant %q", n)
+		}
+	}
+	return nil
+}
+
 func (cmd *Command) check() error {
 	kinds := 0
 	if cmd.Handle != "" {
@@ -570,28 +616,37 @@ func (cmd *Command) check() error {
 	}
 	if cmd.Discard {
 		if cmd.Handle == "" || cmd.Method != "" || cmd.Raw != nil || len(cmd.JSON) > 0 || cmd.Derive != "" ||
-			cmd.If != nil || cmd.When != nil || cmd.Otherwise != nil {
+			cmd.If != nil || cmd.When != nil || cmd.Otherwise != nil || cmd.Refuse != "" || cmd.Writes || cmd.Doc != "" {
 			return errors.New("discard: a handle's alone")
 		}
 		return nil
 	}
+	if cmd.Refuse != "" {
+		if _, ok := Refusals[cmd.Refuse]; !ok {
+			return fmt.Errorf("refuse %q", cmd.Refuse)
+		}
+		if cmd.Handle == "" || cmd.Method != "" || cmd.Raw != nil || len(cmd.JSON) > 0 || cmd.Derive != "" || cmd.Otherwise != nil ||
+			cmd.Writes || cmd.Doc != "" {
+			return errors.New("refuse: a handle's, without method, payload, otherwise, writes or doc")
+		}
+		return cmd.If.check()
+	}
 	if len(cmd.Unless) > 0 && len(cmd.Change) == 0 {
 		return errors.New("unless is a change's")
+	}
+	if cmd.Writes && len(cmd.Change) == 0 {
+		return errors.New("writes is a change's")
+	}
+	if cmd.Doc != "" && cmd.Method == "" {
+		return errors.New("doc documents a method")
 	}
 	for _, n := range slices.Concat(cmd.Write, cmd.Change, cmd.Unless) {
 		if !ident(n) {
 			return fmt.Errorf("attribute %q", n)
 		}
 	}
-	if cmd.If != nil && ((cmd.If.Field == "") == (cmd.If.State == "") || !ident(cmd.If.Name()) || (len(cmd.If.In) == 0) == (len(cmd.If.NotIn) == 0)) {
-		return errors.New("if: one of field and state, and one of in and not_in")
-	}
-	if cmd.If != nil {
-		for _, n := range slices.Concat(cmd.If.In, cmd.If.NotIn) {
-			if !ident(n) && !number(n) {
-				return fmt.Errorf("if: constant %q", n)
-			}
-		}
+	if err := cmd.If.check(); err != nil {
+		return err
 	}
 	if cmd.Otherwise != nil {
 		if cmd.Handle == "" || cmd.If == nil {
@@ -681,6 +736,14 @@ func (v *Value) check(command bool) error {
 	}
 	if v.Digits < 0 || v.Digits > 9 {
 		return fmt.Errorf("digits %d", v.Digits)
+	}
+	if a := v.Absent; a != nil {
+		if command || !strings.HasPrefix(v.From, "extra.") || v.Catalog {
+			return errors.New("absent: an attribute mapping's from extra.<key>, without catalog")
+		}
+		if _, ok := v.Units[a.Unit]; !ok || a.Value == nil || math.IsNaN(*a.Value) || math.IsInf(*a.Value, 0) {
+			return fmt.Errorf("absent: a value in one of the units, not %q", a.Unit)
+		}
 	}
 	return nil
 }

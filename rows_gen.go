@@ -57,42 +57,50 @@ import (
 // The methods the rows' commands deliver as model.Command.Method: a
 // consumer's command handler compares against these, not against literals.
 const (
-	MethodCloseTilt       = "close_tilt"
-	MethodCloseValve      = "close_valve"
-	MethodDirection       = "direction"
-	MethodFanMode         = "fan_mode"
-	MethodGoHome          = "go_home"
-	MethodKey             = "key"
-	MethodMediaPause      = "media_pause"
-	MethodMediaPlay       = "media_play"
-	MethodMediaStop       = "media_stop"
-	MethodMode            = "mode"
-	MethodOpenTilt        = "open_tilt"
-	MethodOpenValve       = "open_valve"
-	MethodOperationMode   = "operation_mode"
-	MethodOscillation     = "oscillation"
-	MethodPause           = "pause"
-	MethodPercentage      = "percentage"
-	MethodPresetMode      = "preset_mode"
-	MethodPress           = "press"
-	MethodResume          = "resume"
-	MethodRunMode         = "run_mode"
-	MethodSelectOption    = "select_option"
-	MethodSetPosition     = "set_position"
-	MethodTemperature     = "temperature"
-	MethodTemperatureHigh = "temperature_high"
-	MethodTemperatureLow  = "temperature_low"
-	MethodTilt            = "tilt"
-	MethodToggle          = "toggle"
-	MethodTrigger         = "trigger"
-	MethodTurnOff         = "turn_off"
-	MethodTurnOn          = "turn_on"
-	MethodVolumeLevel     = "volume_level"
-	MethodVolumeMute      = "volume_mute"
+	MethodCloseTilt     = "close_tilt"
+	MethodCloseValve    = "close_valve"
+	MethodDirection     = "direction"
+	MethodFanMode       = "fan_mode"
+	MethodGoHome        = "go_home"
+	MethodKey           = "key"
+	MethodMediaPause    = "media_pause"
+	MethodMediaPlay     = "media_play"
+	MethodMediaStop     = "media_stop"
+	MethodMode          = "mode"
+	MethodOpenTilt      = "open_tilt"
+	MethodOpenValve     = "open_valve"
+	MethodOperationMode = "operation_mode"
+	MethodOscillation   = "oscillation"
+	MethodPause         = "pause"
+	MethodPercentage    = "percentage"
+	MethodPresetMode    = "preset_mode"
+	MethodPress         = "press"
+	MethodResume        = "resume"
+	MethodRunMode       = "run_mode"
+	MethodSelectOption  = "select_option"
+	MethodSetPosition   = "set_position"
+	MethodStopTilt      = "stop_tilt"
+	MethodTemperature   = "temperature"
+	// MethodTemperatureRange is a climate's setpoint change in heat_cool
+	// (SystemMode Auto): a JSON object with target_temp_low and
+	// target_temp_high, the heating and cooling setpoints the thermostat holds
+	// after its deadband adjustment, for one climate.set_temperature with
+	// both. It follows every admitted write that moved a setpoint (a setpoint
+	// limit write included) and every SetpointRaiseLower, so a write request
+	// with both setpoints yields two, the last carrying both written values:
+	// go-fabric has no hook per write request.
+	MethodTemperatureRange = "temperature_range"
+	MethodTilt             = "tilt"
+	MethodToggle           = "toggle"
+	MethodTrigger          = "trigger"
+	MethodTurnOff          = "turn_off"
+	MethodTurnOn           = "turn_on"
+	MethodVolumeLevel      = "volume_level"
+	MethodVolumeMute       = "volume_mute"
 )
 
 // methods are the method constants, sorted.
-var methods = []string{MethodCloseTilt, MethodCloseValve, MethodDirection, MethodFanMode, MethodGoHome, MethodKey, MethodMediaPause, MethodMediaPlay, MethodMediaStop, MethodMode, MethodOpenTilt, MethodOpenValve, MethodOperationMode, MethodOscillation, MethodPause, MethodPercentage, MethodPresetMode, MethodPress, MethodResume, MethodRunMode, MethodSelectOption, MethodSetPosition, MethodTemperature, MethodTemperatureHigh, MethodTemperatureLow, MethodTilt, MethodToggle, MethodTrigger, MethodTurnOff, MethodTurnOn, MethodVolumeLevel, MethodVolumeMute}
+var methods = []string{MethodCloseTilt, MethodCloseValve, MethodDirection, MethodFanMode, MethodGoHome, MethodKey, MethodMediaPause, MethodMediaPlay, MethodMediaStop, MethodMode, MethodOpenTilt, MethodOpenValve, MethodOperationMode, MethodOscillation, MethodPause, MethodPercentage, MethodPresetMode, MethodPress, MethodResume, MethodRunMode, MethodSelectOption, MethodSetPosition, MethodStopTilt, MethodTemperature, MethodTemperatureRange, MethodTilt, MethodToggle, MethodTrigger, MethodTurnOff, MethodTurnOn, MethodVolumeLevel, MethodVolumeMute}
 
 // rows is the table, in the order [Map] tries it.
 var rows = []Row{
@@ -643,7 +651,7 @@ var rows = []Row{
 		ID: "camera/camera", Platform: "camera",
 		When:  When{Features: &Set{Any: []string{"STREAM"}}},
 		State: eligibility.StateMappable,
-		Cites: []string{"home-assistant/core homeassistant/components/camera/__init__.py:742-755 @2026.10.3 (camera_capabilities: the stream types WEB_RTC and HLS under STREAM; no codec, resolution or frame rate)", "go-fabric device/camera_gen.go:34-71 @v0.15.5 (Camera: CameraAvStreamManagement with VDO, ADO, SNP and WebRtcTransportProvider mandatory; no OnOff)", "go-fabric device/device.go:431-439 @v0.15.5 (a selection that leaves out a mandated feature is ErrConfiguration)", "go-fabric device/defaults_camera.go:110-125,147-157 @v0.15.5 (the kit's AvStream and Provider servers run on the Declare's ports)", "go-fabric cluster/camera/avstream.go:194-198 @v0.15.5 (VDO needs a VideoStreamPort, ADO an AudioStreamPort, SNP a SnapshotStreamPort and a SnapshotCapturePort)", "go-fabric cluster/camera/avstream.go:262-306 @v0.15.5 (chipDefaults: the scalars only; the capability structures and lists start unset)", "go-fabric cluster/spec/cameraavstreammanagement/definition_gen.go:396,545 @v0.15.5 (RequiresHardwareEncoder only with RequiresEncodedPixels; MaxHdrfps only with HDR, which the row does not select)", "connectedhomeip data_model/1.7/clusters/CameraAVStreamManagement.xml:173-185 @1dc3b69ed5e (H264 is the mandatory video codec)", "connectedhomeip examples/camera-app/linux/include/camera-device.h:42-44,48,52-53,58-59,66-67 @1dc3b69ed5e (the camera app's MaxContentBufferSize 4096, MaxNetworkBandwidth 128000000, MaxConcurrentEncoders 1, MaxEncodedPixelRate 248832000, min resolution 640x480, snapshot 30 fps, video 120 fps, sensor 1920x1080)", "connectedhomeip examples/camera-app/linux/src/camera-device.cpp:1515-1520,1557-1568,1596-1603,1652-1657 @1dc3b69ed5e (VideoSensorParams, MinViewport, one H264 RateDistortionTradeOff point, the first JPEG SnapshotCapabilities entry, LiveView among the supported stream usages)", "connectedhomeip examples/camera-app/linux/src/camera-device.cpp:1986-1987 @1dc3b69ed5e (the app's mono LiveView audio stream: Opus, one channel, 48000 Hz, 24 bit; its MicrophoneCapabilities at :1576-1584 offer 8 channels, Opus and AAC-LC)", "go-ha-catalog data/features.json:10-13 (camera feature flags ON_OFF 1, STREAM 2)", "home-assistant/core homeassistant/components/camera/const.py:71-75 @2026.10.3 (CameraEntityFeature ON_OFF = 1, STREAM = 2)"},
+		Cites: []string{"home-assistant/core homeassistant/components/camera/__init__.py:742-755 @2026.10.3 (camera_capabilities: the stream types WEB_RTC and HLS under STREAM; no codec, resolution or frame rate)", "go-fabric device/camera_gen.go:34-71 @v0.15.5 (Camera: CameraAvStreamManagement with VDO, ADO, SNP and WebRtcTransportProvider mandatory; no OnOff)", "go-fabric device/device.go:431-439 @v0.15.5 (a selection that leaves out a mandated feature is ErrConfiguration)", "go-fabric device/defaults_camera.go:110-125,147-157 @v0.15.5 (the kit's AvStream and Provider servers run on the Declare's ports)", "go-fabric cluster/spec/webrtctransportprovider/server_gen.go:314-339 @v0.27.0 (MaxSessions over every session, MaxSessionsPerFabric over one fabric's; 0 is no bound: the optional session bounds of the host's WebRTCSessionBounds)", "go-fabric cluster/camera/avstream.go:194-198 @v0.15.5 (VDO needs a VideoStreamPort, ADO an AudioStreamPort, SNP a SnapshotStreamPort and a SnapshotCapturePort)", "go-fabric cluster/camera/avstream.go:262-306 @v0.15.5 (chipDefaults: the scalars only; the capability structures and lists start unset)", "go-fabric cluster/spec/cameraavstreammanagement/definition_gen.go:396,545 @v0.15.5 (RequiresHardwareEncoder only with RequiresEncodedPixels; MaxHdrfps only with HDR, which the row does not select)", "connectedhomeip data_model/1.7/clusters/CameraAVStreamManagement.xml:173-185 @1dc3b69ed5e (H264 is the mandatory video codec)", "connectedhomeip examples/camera-app/linux/include/camera-device.h:42-44,48,52-53,58-59,66-67 @1dc3b69ed5e (the camera app's MaxContentBufferSize 4096, MaxNetworkBandwidth 128000000, MaxConcurrentEncoders 1, MaxEncodedPixelRate 248832000, min resolution 640x480, snapshot 30 fps, video 120 fps, sensor 1920x1080)", "connectedhomeip examples/camera-app/linux/src/camera-device.cpp:1515-1520,1557-1568,1596-1603,1652-1657 @1dc3b69ed5e (VideoSensorParams, MinViewport, one H264 RateDistortionTradeOff point, the first JPEG SnapshotCapabilities entry, LiveView among the supported stream usages)", "connectedhomeip examples/camera-app/linux/src/camera-device.cpp:1986-1987 @1dc3b69ed5e (the app's mono LiveView audio stream: Opus, one channel, 48000 Hz, 24 bit; its MicrophoneCapabilities at :1576-1584 offer 8 channels, Opus and AAC-LC)", "go-ha-catalog data/features.json:10-13 (camera feature flags ON_OFF 1, STREAM 2)", "home-assistant/core homeassistant/components/camera/const.py:71-75 @2026.10.3 (CameraEntityFeature ON_OFF = 1, STREAM = 2)"},
 		Type:  device.CameraType(),
 		Caveats: []Caveat{
 			{When: When{}, Reason: "the stream declaration is nominal: Home Assistant reports no codec, resolution or frame rate for a camera; the host relays the offer and answer and does not read the stream"},
@@ -711,7 +719,7 @@ var rows = []Row{
 		ID: "climate/air_conditioner", Platform: "climate",
 		When:  When{Features: &Set{All: []string{"FAN_MODE", "TURN_ON", "TURN_OFF"}}, Extra: map[string]Set{"modes": Set{Any: []string{"heat", "cool", "heat_cool"}}}},
 		State: eligibility.StateMappable,
-		Cites: []string{"go-fabric cluster/thermo/presets.go:246-257 @v0.15.4 (every preset needs the setpoints of the selected Heating and Cooling features)", "go-fabric device/room_air_conditioner_gen.go:39-86 @v0.15.4 (OnOff mandatory with DF, Thermostat mandatory, FanControl and RelativeHumidityMeasurement optional)", "matter.js packages/model/src/standard/resources/fan-control.resource.ts:44,80,95 @862ad75f (FanMode, PercentSetting, PercentCurrent)", "matter.js packages/model/src/standard/resources/relative-humidity-measurement.resource.ts:20-26 @862ad75f (MeasuredValue = 100 x water content)", "connectedhomeip src/app/clusters/fan-control-server/FanControlCluster.cpp:85-110,137-166 @6170af84 (PercentSetting of a FanMode: Off 0, Low 33, Medium 66, High 100, Auto null; FanMode of a percentage: up to 33 Low, up to 66 Medium, above High)", "home-assistant-matter-hub packages/backend/src/matter/behaviors/fan-control-server.ts:354-355,385-386 @664575a (a preset's percentage is served as PercentSetting and PercentCurrent)", "go-fabric cluster/spec/server.go:105-110,518-529 @v0.25.0 (a write of the value the server holds reaches no veto, so the held value has to follow Home Assistant)", "home-assistant/core homeassistant/components/climate/const.py:71-81,194-205 @2026.10.3 (fan modes; FAN_MODE, TURN_OFF, TURN_ON)", "home-assistant/core homeassistant/components/climate/__init__.py:318-325 @2026.10.3 (current_humidity and fan_mode state attributes)", "home-assistant/core homeassistant/components/climate/services.py:170-180,214-218 @2026.10.3 (turn_on, turn_off, set_fan_mode)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/climate/index.ts:83-102,172-186 @664575a (FAN_MODE makes a RoomAirConditioner; OnOff with TURN_ON and TURN_OFF; humidity from current_humidity)", "go-ha-catalog data/features.json:14-24 (climate feature flags)", "home-assistant/core homeassistant/components/climate/services.yaml:131-151 @2026.10.3 (turn_on, turn_off, toggle; toggle needs TURN_ON and TURN_OFF)", "go-ha-catalog data/mqtt.json:1200-1647 (climate schema; modes at 1385 with its default, mode_command_topic at 1370, temperature_command_topic at 1572, temperature_low/high_command_topic at 1582/1602)", "go-ha-catalog gen_vocab.go:837-847 (HVACMode vocabulary)"},
+		Cites: []string{"go-fabric cluster/thermo/presets.go:246-257 @v0.15.4 (every preset needs the setpoints of the selected Heating and Cooling features)", "go-fabric device/room_air_conditioner_gen.go:39-86 @v0.15.4 (OnOff mandatory with DF, Thermostat mandatory, FanControl and RelativeHumidityMeasurement optional)", "matter.js packages/model/src/standard/resources/fan-control.resource.ts:44,80,95 @862ad75f (FanMode, PercentSetting, PercentCurrent)", "matter.js packages/model/src/standard/resources/relative-humidity-measurement.resource.ts:20-26 @862ad75f (MeasuredValue = 100 x water content)", "connectedhomeip src/app/clusters/fan-control-server/FanControlCluster.cpp:85-110,137-166 @6170af84 (PercentSetting of a FanMode: Off 0, Low 33, Medium 66, High 100, Auto null; FanMode of a percentage: up to 33 Low, up to 66 Medium, above High)", "home-assistant-matter-hub packages/backend/src/matter/behaviors/fan-control-server.ts:354-355,385-386 @664575a (a preset's percentage is served as PercentSetting and PercentCurrent)", "go-fabric cluster/spec/server.go:105-110,518-529 @v0.25.0 (a write of the value the server holds reaches no veto, so the held value has to follow Home Assistant)", "home-assistant/core homeassistant/components/climate/const.py:71-81,194-205 @2026.10.3 (fan modes; FAN_MODE, TURN_OFF, TURN_ON)", "home-assistant/core homeassistant/components/climate/__init__.py:318-325 @2026.10.3 (current_humidity and fan_mode state attributes)", "home-assistant/core homeassistant/components/climate/services.py:170-180,214-218 @2026.10.3 (turn_on, turn_off, set_fan_mode)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/climate/index.ts:83-102,172-186 @664575a (FAN_MODE makes a RoomAirConditioner; OnOff with TURN_ON and TURN_OFF; humidity from current_humidity)", "go-ha-catalog data/features.json:14-24 (climate feature flags)", "home-assistant/core homeassistant/components/climate/services.yaml:131-151 @2026.10.3 (turn_on, turn_off, toggle; toggle needs TURN_ON and TURN_OFF)", "go-ha-catalog data/mqtt.json:1200-1647 (climate schema; modes at 1385 with its default, mode_command_topic at 1370, temperature_command_topic at 1572, temperature_low/high_command_topic at 1582/1602)", "go-ha-catalog gen_vocab.go:837-847 (HVACMode vocabulary)", "home-assistant/core homeassistant/components/climate/services.py:49-60,105-113,121-130,149-158 @2026.10.3 (set_temperature takes target_temp_low and target_temp_high together or not at all; refused when low is above high, when either lies outside min_temp/max_temp, or without TARGET_TEMPERATURE_RANGE: the temperature_range payload)", "home-assistant/core homeassistant/components/climate/const.py:131-132 @2026.10.3 (ATTR_TARGET_TEMP_HIGH target_temp_high, ATTR_TARGET_TEMP_LOW target_temp_low)", "go-fabric cluster/thermo/thermostat_server.go:1165-1184,1737-1752 @v0.27.0 (a setpoint write notifies OriginControllerWrite naming the written setpoint and the companion the deadband moved; SetpointRaiseLower Both notifies once, OriginCommand, naming both)", "go-fabric cluster/thermo/setpoints.go:180-197 @v0.27.0 (commitSetpoints lists every setpoint that moved, the companion included)", "home-assistant/core homeassistant/components/climate/__init__.py:105-106,239-254,653-668 @2026.10.3 (min_temp and max_temp are always capability attributes; unset, they default to 7 and 35 °C converted into the entity's unit: the Thermostat's absent values)", "home-assistant/core homeassistant/components/mqtt/climate.py:337-338,498-501 @2026.10.3 (the MQTT min_temp and max_temp are optional; unset, the entity keeps the class default)"},
 		Type:  device.RoomAirConditionerType(),
 		Caveats: []Caveat{
 			{When: When{Extra: map[string]Set{"modes": Set{Any: []string{"auto"}}}}, Reason: "the hvac mode auto (the device's own schedule) has no SystemMode: it is not mapped"},
@@ -805,25 +813,22 @@ var rows = []Row{
 					{Name: "ControlSequenceOfOperation", Value: Value{Const: "ControlSequenceOfOperationCoolingOnly", HasConst: true}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"cool", "heat_cool"}, None: []string{"heat", "heat_cool"}}}}},
 					{Name: "ControlSequenceOfOperation", Value: Value{Const: "ControlSequenceOfOperationCoolingAndHeating", HasConst: true}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"heat_cool"}}}}},
 					{Name: "ControlSequenceOfOperation", Value: Value{Const: "ControlSequenceOfOperationCoolingAndHeating", HasConst: true}, When: &When{Extra: map[string]Set{"modes": Set{All: []string{"heat", "cool"}}}}},
-					{Name: "AbsMinHeatSetpointLimit", Value: Value{From: "extra.min_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C"}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"heat", "heat_cool"}}}}},
-					{Name: "MinHeatSetpointLimit", Value: Value{From: "extra.min_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C"}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"heat", "heat_cool"}}}}},
-					{Name: "AbsMaxHeatSetpointLimit", Value: Value{From: "extra.max_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C"}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"heat", "heat_cool"}}}}},
-					{Name: "MaxHeatSetpointLimit", Value: Value{From: "extra.max_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C"}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"heat", "heat_cool"}}}}},
-					{Name: "AbsMinCoolSetpointLimit", Value: Value{From: "extra.min_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C"}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"cool", "heat_cool"}}}}},
-					{Name: "MinCoolSetpointLimit", Value: Value{From: "extra.min_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C"}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"cool", "heat_cool"}}}}},
-					{Name: "AbsMaxCoolSetpointLimit", Value: Value{From: "extra.max_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C"}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"cool", "heat_cool"}}}}},
-					{Name: "MaxCoolSetpointLimit", Value: Value{From: "extra.max_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C"}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"cool", "heat_cool"}}}}},
+					{Name: "AbsMinHeatSetpointLimit", Value: Value{From: "extra.min_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C", Absent: &Quantity{Value: 7, Unit: "°C"}}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"heat", "heat_cool"}}}}},
+					{Name: "MinHeatSetpointLimit", Value: Value{From: "extra.min_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C", Absent: &Quantity{Value: 7, Unit: "°C"}}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"heat", "heat_cool"}}}}},
+					{Name: "AbsMaxHeatSetpointLimit", Value: Value{From: "extra.max_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C", Absent: &Quantity{Value: 35, Unit: "°C"}}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"heat", "heat_cool"}}}}},
+					{Name: "MaxHeatSetpointLimit", Value: Value{From: "extra.max_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C", Absent: &Quantity{Value: 35, Unit: "°C"}}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"heat", "heat_cool"}}}}},
+					{Name: "AbsMinCoolSetpointLimit", Value: Value{From: "extra.min_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C", Absent: &Quantity{Value: 7, Unit: "°C"}}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"cool", "heat_cool"}}}}},
+					{Name: "MinCoolSetpointLimit", Value: Value{From: "extra.min_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C", Absent: &Quantity{Value: 7, Unit: "°C"}}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"cool", "heat_cool"}}}}},
+					{Name: "AbsMaxCoolSetpointLimit", Value: Value{From: "extra.max_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C", Absent: &Quantity{Value: 35, Unit: "°C"}}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"cool", "heat_cool"}}}}},
+					{Name: "MaxCoolSetpointLimit", Value: Value{From: "extra.max_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C", Absent: &Quantity{Value: 35, Unit: "°C"}}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"cool", "heat_cool"}}}}},
 				},
 				Commands: []Command{
 					{Kind: "write", On: []string{"SystemMode"}, Method: "mode", Raw: &Value{Field: "SystemMode", Enum: map[int64]string{int64(thermostatdef.SystemModeAuto): "heat_cool", int64(thermostatdef.SystemModeCool): "cool", int64(thermostatdef.SystemModeDry): "dry", int64(thermostatdef.SystemModeFanOnly): "fan_only", int64(thermostatdef.SystemModeHeat): "heat", int64(thermostatdef.SystemModeOff): "off"}}},
 					{Kind: "write", On: []string{"OccupiedHeatingSetpoint"}, Method: "temperature", Raw: &Value{Field: "OccupiedHeatingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
-					{Kind: "write", On: []string{"OccupiedHeatingSetpoint"}, Method: "temperature_low", Raw: &Value{Field: "OccupiedHeatingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
 					{Kind: "write", On: []string{"OccupiedCoolingSetpoint"}, Method: "temperature", Raw: &Value{Field: "OccupiedCoolingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
-					{Kind: "write", On: []string{"OccupiedCoolingSetpoint"}, Method: "temperature_high", Raw: &Value{Field: "OccupiedCoolingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
 					{Kind: "change", On: []string{"OccupiedHeatingSetpoint"}, Method: "temperature", Raw: &Value{Field: "OccupiedHeatingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
 					{Kind: "change", On: []string{"OccupiedCoolingSetpoint"}, Method: "temperature", Raw: &Value{Field: "OccupiedCoolingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
-					{Kind: "change", On: []string{"OccupiedHeatingSetpoint"}, Method: "temperature_low", Raw: &Value{Field: "OccupiedHeatingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
-					{Kind: "change", On: []string{"OccupiedCoolingSetpoint"}, Method: "temperature_high", Raw: &Value{Field: "OccupiedCoolingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
+					{Kind: "change", On: []string{"OccupiedHeatingSetpoint", "OccupiedCoolingSetpoint"}, Method: "temperature_range", JSON: []Field{{Key: "target_temp_high", Value: Value{Field: "OccupiedCoolingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}}, {Key: "target_temp_low", Value: Value{Field: "OccupiedHeatingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}}}},
 				},
 				declare: func(b *binding, ci int) device.Declaration {
 					var d thermostatdef.Declare
@@ -906,14 +911,8 @@ var rows = []Row{
 						if slices.Contains([]uint32{thermostatdef.AttrOccupiedHeatingSetpoint}, attrID) && !slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto}, next.SystemMode) {
 							b.emit(ci, 1, f)
 						}
-						if slices.Contains([]uint32{thermostatdef.AttrOccupiedHeatingSetpoint}, attrID) && slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto}, next.SystemMode) {
-							b.emit(ci, 2, f)
-						}
 						if slices.Contains([]uint32{thermostatdef.AttrOccupiedCoolingSetpoint}, attrID) && !slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto}, next.SystemMode) {
-							b.emit(ci, 3, f)
-						}
-						if slices.Contains([]uint32{thermostatdef.AttrOccupiedCoolingSetpoint}, attrID) && slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto}, next.SystemMode) {
-							b.emit(ci, 4, f)
+							b.emit(ci, 2, f)
 						}
 						return nil
 					}
@@ -991,16 +990,13 @@ var rows = []Row{
 							return nil, false
 						}
 						if changed(c, thermostatdef.AttrOccupiedHeatingSetpoint) && !slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto, thermostatdef.SystemModeCool}, st.SystemMode) {
-							b.emit(ci, 5, f)
+							b.emit(ci, 3, f)
 						}
 						if changed(c, thermostatdef.AttrOccupiedCoolingSetpoint) && slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeCool}, st.SystemMode) {
-							b.emit(ci, 6, f)
+							b.emit(ci, 4, f)
 						}
-						if changed(c, thermostatdef.AttrOccupiedHeatingSetpoint) && slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto}, st.SystemMode) {
-							b.emit(ci, 7, f)
-						}
-						if changed(c, thermostatdef.AttrOccupiedCoolingSetpoint) && slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto}, st.SystemMode) {
-							b.emit(ci, 8, f)
+						if changedOrWritten(c, thermostatdef.AttrOccupiedHeatingSetpoint, thermostatdef.AttrOccupiedCoolingSetpoint) && slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto}, st.SystemMode) {
+							b.emit(ci, 5, f)
 						}
 					})
 				},
@@ -1158,7 +1154,7 @@ var rows = []Row{
 		ID: "climate/thermostat", Platform: "climate",
 		When:  When{Extra: map[string]Set{"modes": Set{Any: []string{"heat", "cool", "heat_cool"}}}},
 		State: eligibility.StateMappable,
-		Cites: []string{"matter.js packages/model/src/standard/elements/thermostat-device.element.ts:25 @862ad75f (Thermostat mandatory)", "matter.js packages/model/src/standard/resources/thermostat-cluster.resource.ts:50,163,322 @862ad75f (LocalTemperature, OccupiedHeatingSetpoint, SystemMode)", "matter.js packages/model/src/standard/elements/temperature.element.ts:12 @862ad75f (the temperature datatype, int16 in 0.01 degC)", "go-fabric cluster/thermo/presets.go:246-257 @v0.15.4 (every preset needs the setpoints of the selected Heating and Cooling features)", "home-assistant/core homeassistant/components/climate/services.yaml:131-151 @2026.10.3 (turn_on, turn_off, toggle; toggle needs TURN_ON and TURN_OFF)", "go-ha-catalog data/mqtt.json:1200-1647 (climate schema; modes at 1385 with its default, mode_command_topic at 1370, temperature_command_topic at 1572, temperature_low/high_command_topic at 1582/1602)", "go-ha-catalog gen_vocab.go:837-847 (HVACMode vocabulary)"},
+		Cites: []string{"matter.js packages/model/src/standard/elements/thermostat-device.element.ts:25 @862ad75f (Thermostat mandatory)", "matter.js packages/model/src/standard/resources/thermostat-cluster.resource.ts:50,163,322 @862ad75f (LocalTemperature, OccupiedHeatingSetpoint, SystemMode)", "matter.js packages/model/src/standard/elements/temperature.element.ts:12 @862ad75f (the temperature datatype, int16 in 0.01 degC)", "go-fabric cluster/thermo/presets.go:246-257 @v0.15.4 (every preset needs the setpoints of the selected Heating and Cooling features)", "home-assistant/core homeassistant/components/climate/services.yaml:131-151 @2026.10.3 (turn_on, turn_off, toggle; toggle needs TURN_ON and TURN_OFF)", "go-ha-catalog data/mqtt.json:1200-1647 (climate schema; modes at 1385 with its default, mode_command_topic at 1370, temperature_command_topic at 1572, temperature_low/high_command_topic at 1582/1602)", "go-ha-catalog gen_vocab.go:837-847 (HVACMode vocabulary)", "home-assistant/core homeassistant/components/climate/services.py:49-60,105-113,121-130,149-158 @2026.10.3 (set_temperature takes target_temp_low and target_temp_high together or not at all; refused when low is above high, when either lies outside min_temp/max_temp, or without TARGET_TEMPERATURE_RANGE: the temperature_range payload)", "home-assistant/core homeassistant/components/climate/const.py:131-132 @2026.10.3 (ATTR_TARGET_TEMP_HIGH target_temp_high, ATTR_TARGET_TEMP_LOW target_temp_low)", "go-fabric cluster/thermo/thermostat_server.go:1165-1184,1737-1752 @v0.27.0 (a setpoint write notifies OriginControllerWrite naming the written setpoint and the companion the deadband moved; SetpointRaiseLower Both notifies once, OriginCommand, naming both)", "go-fabric cluster/thermo/setpoints.go:180-197 @v0.27.0 (commitSetpoints lists every setpoint that moved, the companion included)", "home-assistant/core homeassistant/components/climate/__init__.py:105-106,239-254,653-668 @2026.10.3 (min_temp and max_temp are always capability attributes; unset, they default to 7 and 35 °C converted into the entity's unit: the Thermostat's absent values)", "home-assistant/core homeassistant/components/mqtt/climate.py:337-338,498-501 @2026.10.3 (the MQTT min_temp and max_temp are optional; unset, the entity keeps the class default)"},
 		Type:  device.ThermostatType(),
 		Caveats: []Caveat{
 			{When: When{Extra: map[string]Set{"modes": Set{Any: []string{"auto"}}}}, Reason: "the hvac mode auto (the device's own schedule) has no SystemMode: it is not mapped"},
@@ -1183,25 +1179,22 @@ var rows = []Row{
 					{Name: "ControlSequenceOfOperation", Value: Value{Const: "ControlSequenceOfOperationCoolingOnly", HasConst: true}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"cool", "heat_cool"}, None: []string{"heat", "heat_cool"}}}}},
 					{Name: "ControlSequenceOfOperation", Value: Value{Const: "ControlSequenceOfOperationCoolingAndHeating", HasConst: true}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"heat_cool"}}}}},
 					{Name: "ControlSequenceOfOperation", Value: Value{Const: "ControlSequenceOfOperationCoolingAndHeating", HasConst: true}, When: &When{Extra: map[string]Set{"modes": Set{All: []string{"heat", "cool"}}}}},
-					{Name: "AbsMinHeatSetpointLimit", Value: Value{From: "extra.min_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C"}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"heat", "heat_cool"}}}}},
-					{Name: "MinHeatSetpointLimit", Value: Value{From: "extra.min_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C"}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"heat", "heat_cool"}}}}},
-					{Name: "AbsMaxHeatSetpointLimit", Value: Value{From: "extra.max_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C"}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"heat", "heat_cool"}}}}},
-					{Name: "MaxHeatSetpointLimit", Value: Value{From: "extra.max_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C"}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"heat", "heat_cool"}}}}},
-					{Name: "AbsMinCoolSetpointLimit", Value: Value{From: "extra.min_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C"}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"cool", "heat_cool"}}}}},
-					{Name: "MinCoolSetpointLimit", Value: Value{From: "extra.min_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C"}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"cool", "heat_cool"}}}}},
-					{Name: "AbsMaxCoolSetpointLimit", Value: Value{From: "extra.max_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C"}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"cool", "heat_cool"}}}}},
-					{Name: "MaxCoolSetpointLimit", Value: Value{From: "extra.max_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C"}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"cool", "heat_cool"}}}}},
+					{Name: "AbsMinHeatSetpointLimit", Value: Value{From: "extra.min_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C", Absent: &Quantity{Value: 7, Unit: "°C"}}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"heat", "heat_cool"}}}}},
+					{Name: "MinHeatSetpointLimit", Value: Value{From: "extra.min_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C", Absent: &Quantity{Value: 7, Unit: "°C"}}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"heat", "heat_cool"}}}}},
+					{Name: "AbsMaxHeatSetpointLimit", Value: Value{From: "extra.max_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C", Absent: &Quantity{Value: 35, Unit: "°C"}}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"heat", "heat_cool"}}}}},
+					{Name: "MaxHeatSetpointLimit", Value: Value{From: "extra.max_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C", Absent: &Quantity{Value: 35, Unit: "°C"}}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"heat", "heat_cool"}}}}},
+					{Name: "AbsMinCoolSetpointLimit", Value: Value{From: "extra.min_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C", Absent: &Quantity{Value: 7, Unit: "°C"}}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"cool", "heat_cool"}}}}},
+					{Name: "MinCoolSetpointLimit", Value: Value{From: "extra.min_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C", Absent: &Quantity{Value: 7, Unit: "°C"}}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"cool", "heat_cool"}}}}},
+					{Name: "AbsMaxCoolSetpointLimit", Value: Value{From: "extra.max_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C", Absent: &Quantity{Value: 35, Unit: "°C"}}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"cool", "heat_cool"}}}}},
+					{Name: "MaxCoolSetpointLimit", Value: Value{From: "extra.max_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C", Absent: &Quantity{Value: 35, Unit: "°C"}}, When: &When{Extra: map[string]Set{"modes": Set{Any: []string{"cool", "heat_cool"}}}}},
 				},
 				Commands: []Command{
 					{Kind: "write", On: []string{"SystemMode"}, Method: "mode", Raw: &Value{Field: "SystemMode", Enum: map[int64]string{int64(thermostatdef.SystemModeAuto): "heat_cool", int64(thermostatdef.SystemModeCool): "cool", int64(thermostatdef.SystemModeDry): "dry", int64(thermostatdef.SystemModeFanOnly): "fan_only", int64(thermostatdef.SystemModeHeat): "heat", int64(thermostatdef.SystemModeOff): "off"}}},
 					{Kind: "write", On: []string{"OccupiedHeatingSetpoint"}, Method: "temperature", Raw: &Value{Field: "OccupiedHeatingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
-					{Kind: "write", On: []string{"OccupiedHeatingSetpoint"}, Method: "temperature_low", Raw: &Value{Field: "OccupiedHeatingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
 					{Kind: "write", On: []string{"OccupiedCoolingSetpoint"}, Method: "temperature", Raw: &Value{Field: "OccupiedCoolingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
-					{Kind: "write", On: []string{"OccupiedCoolingSetpoint"}, Method: "temperature_high", Raw: &Value{Field: "OccupiedCoolingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
 					{Kind: "change", On: []string{"OccupiedHeatingSetpoint"}, Method: "temperature", Raw: &Value{Field: "OccupiedHeatingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
 					{Kind: "change", On: []string{"OccupiedCoolingSetpoint"}, Method: "temperature", Raw: &Value{Field: "OccupiedCoolingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
-					{Kind: "change", On: []string{"OccupiedHeatingSetpoint"}, Method: "temperature_low", Raw: &Value{Field: "OccupiedHeatingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
-					{Kind: "change", On: []string{"OccupiedCoolingSetpoint"}, Method: "temperature_high", Raw: &Value{Field: "OccupiedCoolingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
+					{Kind: "change", On: []string{"OccupiedHeatingSetpoint", "OccupiedCoolingSetpoint"}, Method: "temperature_range", JSON: []Field{{Key: "target_temp_high", Value: Value{Field: "OccupiedCoolingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}}, {Key: "target_temp_low", Value: Value{Field: "OccupiedHeatingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}}}},
 				},
 				declare: func(b *binding, ci int) device.Declaration {
 					var d thermostatdef.Declare
@@ -1284,14 +1277,8 @@ var rows = []Row{
 						if slices.Contains([]uint32{thermostatdef.AttrOccupiedHeatingSetpoint}, attrID) && !slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto}, next.SystemMode) {
 							b.emit(ci, 1, f)
 						}
-						if slices.Contains([]uint32{thermostatdef.AttrOccupiedHeatingSetpoint}, attrID) && slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto}, next.SystemMode) {
-							b.emit(ci, 2, f)
-						}
 						if slices.Contains([]uint32{thermostatdef.AttrOccupiedCoolingSetpoint}, attrID) && !slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto}, next.SystemMode) {
-							b.emit(ci, 3, f)
-						}
-						if slices.Contains([]uint32{thermostatdef.AttrOccupiedCoolingSetpoint}, attrID) && slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto}, next.SystemMode) {
-							b.emit(ci, 4, f)
+							b.emit(ci, 2, f)
 						}
 						return nil
 					}
@@ -1369,16 +1356,13 @@ var rows = []Row{
 							return nil, false
 						}
 						if changed(c, thermostatdef.AttrOccupiedHeatingSetpoint) && !slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto, thermostatdef.SystemModeCool}, st.SystemMode) {
-							b.emit(ci, 5, f)
+							b.emit(ci, 3, f)
 						}
 						if changed(c, thermostatdef.AttrOccupiedCoolingSetpoint) && slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeCool}, st.SystemMode) {
-							b.emit(ci, 6, f)
+							b.emit(ci, 4, f)
 						}
-						if changed(c, thermostatdef.AttrOccupiedHeatingSetpoint) && slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto}, st.SystemMode) {
-							b.emit(ci, 7, f)
-						}
-						if changed(c, thermostatdef.AttrOccupiedCoolingSetpoint) && slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto}, st.SystemMode) {
-							b.emit(ci, 8, f)
+						if changedOrWritten(c, thermostatdef.AttrOccupiedHeatingSetpoint, thermostatdef.AttrOccupiedCoolingSetpoint) && slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto}, st.SystemMode) {
+							b.emit(ci, 5, f)
 						}
 					})
 				},
@@ -1390,24 +1374,27 @@ var rows = []Row{
 		When:   When{},
 		State:  eligibility.StateUnmappable,
 		Reason: "a climate entity without the hvac modes heat, cool or heat_cool has no Thermostat feature (Heating or Cooling)",
-		Cites:  []string{"home-assistant/core homeassistant/components/climate/services.yaml:131-151 @2026.10.3 (turn_on, turn_off, toggle; toggle needs TURN_ON and TURN_OFF)", "go-ha-catalog data/mqtt.json:1200-1647 (climate schema; modes at 1385 with its default, mode_command_topic at 1370, temperature_command_topic at 1572, temperature_low/high_command_topic at 1582/1602)", "go-ha-catalog gen_vocab.go:837-847 (HVACMode vocabulary)"},
+		Cites:  []string{"home-assistant/core homeassistant/components/climate/services.yaml:131-151 @2026.10.3 (turn_on, turn_off, toggle; toggle needs TURN_ON and TURN_OFF)", "go-ha-catalog data/mqtt.json:1200-1647 (climate schema; modes at 1385 with its default, mode_command_topic at 1370, temperature_command_topic at 1572, temperature_low/high_command_topic at 1582/1602)", "go-ha-catalog gen_vocab.go:837-847 (HVACMode vocabulary)", "home-assistant/core homeassistant/components/climate/services.py:49-60,105-113,121-130,149-158 @2026.10.3 (set_temperature takes target_temp_low and target_temp_high together or not at all; refused when low is above high, when either lies outside min_temp/max_temp, or without TARGET_TEMPERATURE_RANGE: the temperature_range payload)", "home-assistant/core homeassistant/components/climate/const.py:131-132 @2026.10.3 (ATTR_TARGET_TEMP_HIGH target_temp_high, ATTR_TARGET_TEMP_LOW target_temp_low)", "go-fabric cluster/thermo/thermostat_server.go:1165-1184,1737-1752 @v0.27.0 (a setpoint write notifies OriginControllerWrite naming the written setpoint and the companion the deadband moved; SetpointRaiseLower Both notifies once, OriginCommand, naming both)", "go-fabric cluster/thermo/setpoints.go:180-197 @v0.27.0 (commitSetpoints lists every setpoint that moved, the companion included)", "home-assistant/core homeassistant/components/climate/__init__.py:105-106,239-254,653-668 @2026.10.3 (min_temp and max_temp are always capability attributes; unset, they default to 7 and 35 °C converted into the entity's unit: the Thermostat's absent values)", "home-assistant/core homeassistant/components/mqtt/climate.py:337-338,498-501 @2026.10.3 (the MQTT min_temp and max_temp are optional; unset, the entity keeps the class default)"},
 	},
 	{
 		ID: "cover/window_covering", Platform: "cover",
 		When:  When{},
 		State: eligibility.StateMappable,
-		Cites: []string{"matter.js packages/model/src/standard/elements/window-covering-device.element.ts:24 @862ad75f (WindowCovering mandatory)", "matter.js packages/model/src/standard/resources/window-covering-cluster.resource.ts:39,98,116-118,180-199 @862ad75f (Type, EndProductType, CurrentPositionLiftPercent100ths; DownOrClose ends at 100.00%)", "go-fabric cluster/spec/windowcovering/definition_gen.go:104-128,273-283 @v0.25.0 (EndProductType and Type conformance: under LF & TL only TiltBlindLift, SheerShade, InteriorBlind, VerticalBlindStripCurtain, InteriorVenetianBlind, ExteriorVenetianBlind and Unknown)", "go-fabric cluster/cover/windowcovering_server.go:375-378,391-399 @v0.25.0 (Lift or Tilt required; Type and EndProductType checked against the FeatureMap)", "home-assistant/core homeassistant/components/cover/services.py:49-62 @2026.10.3 (set_cover_position requires SET_POSITION, stop_cover requires STOP)", "home-assistant/core homeassistant/components/cover/const.py:44-54 @2026.10.3 (CoverEntityFeature OPEN 1, CLOSE 2, SET_POSITION 4, STOP 8, OPEN_TILT 16, CLOSE_TILT 32, STOP_TILT 64, SET_TILT_POSITION 128)", "home-assistant/core homeassistant/components/cover/services.py:35-45,72-82,93-100 @2026.10.3 (open_cover requires OPEN, close_cover CLOSE, open_cover_tilt OPEN_TILT, close_cover_tilt CLOSE_TILT, set_cover_tilt_position SET_TILT_POSITION)", "home-assistant/core homeassistant/components/switchbot/cover.py:176-181 @2026.10.3 (a tilt-only cover, device_class blind, features 240)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/cover/behaviors/cover-window-covering-server.ts:67-111,242-258,283-297,385-395 @664575a (Type and EndProductType corrected by tilt; lift commands of a tilt-only cover go to tilt; open/close_cover_tilt without SET_TILT_POSITION)", "home-assistant/core homeassistant/helpers/service.py:750-760 @2026.10.3 (a call on a referenced entity without the feature raises ServiceNotSupported)", "go-fabric cluster/cover/windowcovering_server.go:144-158,624-634 @v0.18.0 (GoToLiftPercentage served on Lift without PositionAwareLift; openOrClose maps the percentage to open or close)", "matter.js packages/node/src/behaviors/window-covering/WindowCoveringServer.ts:576-590 @db021da0 (without positionAwareLift: LiftPercent100thsValue 0 opens, else closes)", "go-ha-catalog data/mqtt.json:1648-1912 (cover schema; payload_open/close/stop at 1756-1775, set_position_topic at 1816, tilt_command_topic at 1861)", "go-ha-catalog data/features.json:25-35 (cover feature flags)", "go-ha-catalog data/device_classes.json:38-49 (cover device classes)"},
+		Cites: []string{"matter.js packages/model/src/standard/elements/window-covering-device.element.ts:24 @862ad75f (WindowCovering mandatory)", "matter.js packages/model/src/standard/resources/window-covering-cluster.resource.ts:39,98,116-118,180-199 @862ad75f (Type, EndProductType, CurrentPositionLiftPercent100ths; DownOrClose ends at 100.00%)", "go-fabric cluster/spec/windowcovering/definition_gen.go:104-128,273-283 @v0.25.0 (EndProductType and Type conformance: under LF & TL only TiltBlindLift, SheerShade, InteriorBlind, VerticalBlindStripCurtain, InteriorVenetianBlind, ExteriorVenetianBlind and Unknown)", "go-fabric cluster/cover/windowcovering_server.go:375-378,391-399 @v0.25.0 (Lift or Tilt required; Type and EndProductType checked against the FeatureMap)", "home-assistant/core homeassistant/components/cover/services.py:49-62 @2026.10.3 (set_cover_position requires SET_POSITION, stop_cover requires STOP)", "home-assistant/core homeassistant/components/cover/services.py:60-62,85-90 @2026.10.3 (stop_cover requires STOP, stop_cover_tilt requires STOP_TILT)", "home-assistant/core homeassistant/components/cover/const.py:44-54 @2026.10.3 (CoverEntityFeature OPEN 1, CLOSE 2, SET_POSITION 4, STOP 8, OPEN_TILT 16, CLOSE_TILT 32, STOP_TILT 64, SET_TILT_POSITION 128)", "home-assistant/core homeassistant/components/cover/services.py:35-45,72-82,93-100 @2026.10.3 (open_cover requires OPEN, close_cover CLOSE, open_cover_tilt OPEN_TILT, close_cover_tilt CLOSE_TILT, set_cover_tilt_position SET_TILT_POSITION)", "home-assistant/core homeassistant/components/switchbot/cover.py:176-181 @2026.10.3 (a tilt-only cover, device_class blind, features 240)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/cover/behaviors/cover-window-covering-server.ts:67-111,242-258,283-297,385-395 @664575a (Type and EndProductType corrected by tilt; lift commands of a tilt-only cover go to tilt; open/close_cover_tilt without SET_TILT_POSITION)", "home-assistant/core homeassistant/helpers/service.py:750-760 @2026.10.3 (a call on a referenced entity without the feature raises ServiceNotSupported)", "go-fabric cluster/spec/windowcovering/definition_gen.go:96,120,245,253 @v0.27.0 (Rollershade and RollerShade only under LF & !TL; TiltBlindLift under LF & TL; EndProductType Unknown under any FeatureMap)", "go-fabric cluster/spec/windowcovering/definition_gen.go:37,40,51 @v0.27.0 (with PositionAwareLift: TargetPositionLiftPercent100ths and CurrentPositionLiftPercent100ths mandatory and nullable, GoToLiftPercentage mandatory)", "go-fabric device/defaults.go:449-458 @v0.27.0 (a position without an initial value reads null)", "home-assistant/core homeassistant/components/cover/__init__.py:217-218,239-240 @2026.10.3 (current_position is in the state whenever the entity has a position, whatever its features; the default features add SET_POSITION exactly when it has one)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/cover/index.ts:34-49 @664575a (Lift and PositionAwareLift always)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/cover/behaviors/cover-window-covering-server.ts:57-64,78-102,330-342,392-410 @664575a (a lift-only window Rollershade / RollerShade, a tilting one TiltBlindLift / Unknown; the lift position from current_position, else closed 0 and open 100 on Home Assistant's scale, else null; GoToLiftPercentage without position control by a 50 % threshold, which this row does not take)", "matter.js packages/node/src/behaviors/window-covering/WindowCoveringServer.ts:579-584 @db021da0 (with positionAwareLift the requested LiftPercent100thsValue becomes the target; the row hands out only 0 and 10000 and refuses the rest, docs/by_design.md)", "matter.js packages/node/src/behaviors/window-covering/WindowCoveringServer.ts:598-614 @db021da0 (with positionAwareTilt the requested TiltPercent100thsValue becomes the target, :601-606; without it 0 opens, else closes, :607-613 — the rule the row leaves by declaring PositionAwareTilt on every tilting cover)", "matter.js packages/model/src/standard/resources/window-covering-cluster.resource.ts:265-266 @862ad75f (without the PositionAware feature a zero tilt percentage is UpOrOpen, a non-zero one DownOrClose)", "go-ha-catalog data/mqtt.json:1648-1912 (cover schema; payload_open/close/stop at 1756-1775, set_position_topic at 1816, tilt_command_topic at 1861)", "go-ha-catalog data/features.json:25-35 (cover feature flags)", "go-ha-catalog data/device_classes.json:38-49 (cover device classes)"},
 		Type:  device.WindowCoveringType(),
 		Caveats: []Caveat{
-			{When: When{DeviceClass: []string{"garage", "gate", "door", "damper", "window"}}, Reason: "WindowCovering has no type for a {device_class}: Type and EndProductType are Unknown"},
+			{When: When{DeviceClass: []string{"garage", "gate", "door", "damper"}}, Reason: "WindowCovering has no type for a {device_class}: Type and EndProductType are Unknown"},
+			{When: When{DeviceClass: []string{"window"}, Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT", "SET_TILT_POSITION"}}}, Reason: "a tilting window has no WindowCovering product: EndProductType is Unknown"},
 		},
 		Clusters: []Cluster{
 			{
 				Name: "WindowCovering", ID: windowcoveringdef.ClusterID,
-				Features: []Feature{{Name: "Lift", When: nil}, {Name: "PositionAwareLift", When: &When{Features: &Set{Any: []string{"SET_POSITION"}}}}, {Name: "Tilt", When: &When{Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT", "SET_TILT_POSITION"}}}}, {Name: "PositionAwareTilt", When: &When{Features: &Set{Any: []string{"SET_TILT_POSITION"}}}}},
+				Features: []Feature{{Name: "Lift", When: nil}, {Name: "PositionAwareLift", When: nil}, {Name: "Tilt", When: &When{Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT", "SET_TILT_POSITION"}}}}, {Name: "PositionAwareTilt", When: &When{Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT", "SET_TILT_POSITION"}}}}},
 				Attributes: []Attr{
-					{Name: "CurrentPositionLiftPercent100ths", Value: Value{From: "state.current_position", Linear: Linear{Offset: -100, Scale: -100, Add: 0}, Min: new(float64(0)), Max: new(float64(10000))}, When: &When{Features: &Set{Any: []string{"SET_POSITION"}}}},
-					{Name: "TargetPositionLiftPercent100ths", Value: Value{From: "state.current_position", Linear: Linear{Offset: -100, Scale: -100, Add: 0}, Min: new(float64(0)), Max: new(float64(10000))}, When: &When{Features: &Set{Any: []string{"SET_POSITION"}}}},
+					{Name: "CurrentPositionLiftPercent100ths", Value: Value{From: "state"}, When: &When{Features: &Set{None: []string{"SET_POSITION"}}}},
+					{Name: "TargetPositionLiftPercent100ths", Value: Value{From: "state"}, When: &When{Features: &Set{None: []string{"SET_POSITION"}}}},
+					{Name: "CurrentPositionLiftPercent100ths", Value: Value{From: "state.current_position", Linear: Linear{Offset: -100, Scale: -100, Add: 0}, Min: new(float64(0)), Max: new(float64(10000))}},
+					{Name: "TargetPositionLiftPercent100ths", Value: Value{From: "state.current_position", Linear: Linear{Offset: -100, Scale: -100, Add: 0}, Min: new(float64(0)), Max: new(float64(10000))}},
 					{Name: "CurrentPositionTiltPercent100ths", Value: Value{From: "state.current_tilt_position", Linear: Linear{Offset: -100, Scale: -100, Add: 0}, Min: new(float64(0)), Max: new(float64(10000))}, When: &When{Features: &Set{Any: []string{"SET_TILT_POSITION"}}}},
 					{Name: "TargetPositionTiltPercent100ths", Value: Value{From: "state.current_tilt_position", Linear: Linear{Offset: -100, Scale: -100, Add: 0}, Min: new(float64(0)), Max: new(float64(10000))}, When: &When{Features: &Set{Any: []string{"SET_TILT_POSITION"}}}},
 				},
@@ -1427,28 +1414,31 @@ var rows = []Row{
 					{Kind: "handle", On: []string{"DownOrClose"}, Method: "tilt", Raw: &Value{Const: float64(0), HasConst: true}, When: &When{Features: &Set{All: []string{"SET_TILT_POSITION"}, None: []string{"OPEN", "CLOSE", "SET_POSITION"}}}},
 					{Kind: "handle", On: []string{"DownOrClose"}, Method: "close_tilt", Raw: &Value{Const: "CLOSE", HasConst: true}, When: &When{Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT"}, None: []string{"OPEN", "CLOSE", "SET_POSITION", "SET_TILT_POSITION"}}}},
 					{Kind: "handle", On: []string{"StopMotion"}, Raw: &Value{From: "extra.payload_stop", Catalog: true}, When: &When{Features: &Set{Any: []string{"STOP"}}}},
+					{Kind: "handle", On: []string{"StopMotion"}, Method: "stop_tilt", Raw: &Value{Const: "STOP", HasConst: true}, When: &When{Features: &Set{All: []string{"STOP_TILT"}, None: []string{"STOP"}}}},
 					{Kind: "handle", On: []string{"GoToLiftPercentage"}, Method: "set_position", Raw: &Value{Field: "LiftPercent100thsValue", Linear: Linear{Offset: 0, Scale: -0.01, Add: 100}}, When: &When{Features: &Set{Any: []string{"SET_POSITION"}}}},
 					{Kind: "handle", On: []string{"GoToLiftPercentage"}, Raw: &Value{From: "extra.payload_open", Catalog: true}, When: &When{Features: &Set{Any: []string{"OPEN", "CLOSE"}, None: []string{"SET_POSITION"}}}},
 					{Kind: "handle", On: []string{"GoToLiftPercentage"}, Raw: &Value{From: "extra.payload_close", Catalog: true}, When: &When{Features: &Set{Any: []string{"OPEN", "CLOSE"}, None: []string{"SET_POSITION"}}}},
+					{Kind: "handle", On: []string{"GoToLiftPercentage"}, When: &When{Features: &Set{Any: []string{"OPEN", "CLOSE"}, None: []string{"SET_POSITION"}}}, Refuse: contract.StatusFailure},
 					{Kind: "handle", On: []string{"GoToLiftPercentage"}, Raw: &Value{From: "extra.payload_open", Catalog: true}, When: &When{Features: &Set{None: []string{"OPEN", "CLOSE", "SET_POSITION", "OPEN_TILT", "CLOSE_TILT", "SET_TILT_POSITION"}}}},
 					{Kind: "handle", On: []string{"GoToLiftPercentage"}, Raw: &Value{From: "extra.payload_close", Catalog: true}, When: &When{Features: &Set{None: []string{"OPEN", "CLOSE", "SET_POSITION", "OPEN_TILT", "CLOSE_TILT", "SET_TILT_POSITION"}}}},
+					{Kind: "handle", On: []string{"GoToLiftPercentage"}, When: &When{Features: &Set{None: []string{"OPEN", "CLOSE", "SET_POSITION", "OPEN_TILT", "CLOSE_TILT", "SET_TILT_POSITION"}}}, Refuse: contract.StatusFailure},
 					{Kind: "handle", On: []string{"GoToLiftPercentage"}, Method: "tilt", Raw: &Value{Field: "LiftPercent100thsValue", Linear: Linear{Offset: 0, Scale: -0.01, Add: 100}}, When: &When{Features: &Set{All: []string{"SET_TILT_POSITION"}, None: []string{"OPEN", "CLOSE", "SET_POSITION"}}}},
 					{Kind: "handle", On: []string{"GoToLiftPercentage"}, Method: "open_tilt", Raw: &Value{Const: "OPEN", HasConst: true}, When: &When{Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT"}, None: []string{"OPEN", "CLOSE", "SET_POSITION", "SET_TILT_POSITION"}}}},
 					{Kind: "handle", On: []string{"GoToLiftPercentage"}, Method: "close_tilt", Raw: &Value{Const: "CLOSE", HasConst: true}, When: &When{Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT"}, None: []string{"OPEN", "CLOSE", "SET_POSITION", "SET_TILT_POSITION"}}}},
+					{Kind: "handle", On: []string{"GoToLiftPercentage"}, When: &When{Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT"}, None: []string{"OPEN", "CLOSE", "SET_POSITION", "SET_TILT_POSITION"}}}, Refuse: contract.StatusFailure},
 					{Kind: "handle", On: []string{"GoToTiltPercentage"}, Method: "tilt", Raw: &Value{Field: "TiltPercent100thsValue", Linear: Linear{Offset: 0, Scale: -0.01, Add: 100}}, When: &When{Features: &Set{Any: []string{"SET_TILT_POSITION"}}}},
 					{Kind: "handle", On: []string{"GoToTiltPercentage"}, Method: "open_tilt", Raw: &Value{Const: "OPEN", HasConst: true}, When: &When{Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT"}, None: []string{"SET_TILT_POSITION"}}}},
 					{Kind: "handle", On: []string{"GoToTiltPercentage"}, Method: "close_tilt", Raw: &Value{Const: "CLOSE", HasConst: true}, When: &When{Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT"}, None: []string{"SET_TILT_POSITION"}}}},
+					{Kind: "handle", On: []string{"GoToTiltPercentage"}, When: &When{Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT"}, None: []string{"SET_TILT_POSITION"}}}, Refuse: contract.StatusFailure},
 				},
 				declare: func(b *binding, ci int) device.Declaration {
 					var d windowcoveringdef.Declare
 					d.Features |= windowcoveringdef.FeatureLift
-					if b.match(&When{Features: &Set{Any: []string{"SET_POSITION"}}}) {
-						d.Features |= windowcoveringdef.FeaturePositionAwareLift
-					}
+					d.Features |= windowcoveringdef.FeaturePositionAwareLift
 					if b.match(&When{Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT", "SET_TILT_POSITION"}}}) {
 						d.Features |= windowcoveringdef.FeatureTilt
 					}
-					if b.match(&When{Features: &Set{Any: []string{"SET_TILT_POSITION"}}}) {
+					if b.match(&When{Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT", "SET_TILT_POSITION"}}}) {
 						d.Features |= windowcoveringdef.FeaturePositionAwareTilt
 					}
 					if b.match(&When{Features: &Set{None: []string{"OPEN_TILT", "CLOSE_TILT", "SET_TILT_POSITION"}}}) {
@@ -1474,7 +1464,7 @@ var rows = []Row{
 						case "shutter":
 							d.Initial.Type = new(windowcoveringdef.TypeShutter)
 						case "window":
-							d.Initial.Type = new(windowcoveringdef.TypeUnknown)
+							d.Initial.Type = new(windowcoveringdef.TypeRollershade)
 						}
 					}
 					if b.match(&When{Features: &Set{None: []string{"OPEN_TILT", "CLOSE_TILT", "SET_TILT_POSITION"}}}) {
@@ -1500,7 +1490,7 @@ var rows = []Row{
 						case "shutter":
 							d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeRollerShutter)
 						case "window":
-							d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeUnknown)
+							d.Initial.EndProductType = new(windowcoveringdef.EndProductTypeRollerShade)
 						}
 					}
 					if b.match(&When{Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT", "SET_TILT_POSITION"}}}) {
@@ -1526,7 +1516,7 @@ var rows = []Row{
 						case "shutter":
 							d.Initial.Type = new(windowcoveringdef.TypeTiltBlindLift)
 						case "window":
-							d.Initial.Type = new(windowcoveringdef.TypeUnknown)
+							d.Initial.Type = new(windowcoveringdef.TypeTiltBlindLift)
 						}
 					}
 					if b.match(&When{Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT", "SET_TILT_POSITION"}}}) {
@@ -1591,16 +1581,19 @@ var rows = []Row{
 							return resp, err
 						}
 					}
-					if b.match(&When{Features: &Set{Any: []string{"STOP"}}}) {
+					if b.match(&When{Features: &Set{Any: []string{"STOP"}}}) || b.match(&When{Features: &Set{All: []string{"STOP_TILT"}, None: []string{"STOP"}}}) {
 						d.HandleStopMotion = func(_ context.Context, req windowcoveringdef.StopMotionRequest) (resp struct{}, err error) {
 							f := func(string) (any, bool) { return nil, false }
 							if true {
 								b.emit(ci, 8, f)
 							}
+							if true {
+								b.emit(ci, 9, f)
+							}
 							return resp, err
 						}
 					}
-					if b.match(&When{Features: &Set{Any: []string{"SET_POSITION"}}}) || b.match(&When{Features: &Set{Any: []string{"OPEN", "CLOSE"}, None: []string{"SET_POSITION"}}}) || b.match(&When{Features: &Set{Any: []string{"OPEN", "CLOSE"}, None: []string{"SET_POSITION"}}}) || b.match(&When{Features: &Set{None: []string{"OPEN", "CLOSE", "SET_POSITION", "OPEN_TILT", "CLOSE_TILT", "SET_TILT_POSITION"}}}) || b.match(&When{Features: &Set{None: []string{"OPEN", "CLOSE", "SET_POSITION", "OPEN_TILT", "CLOSE_TILT", "SET_TILT_POSITION"}}}) || b.match(&When{Features: &Set{All: []string{"SET_TILT_POSITION"}, None: []string{"OPEN", "CLOSE", "SET_POSITION"}}}) || b.match(&When{Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT"}, None: []string{"OPEN", "CLOSE", "SET_POSITION", "SET_TILT_POSITION"}}}) || b.match(&When{Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT"}, None: []string{"OPEN", "CLOSE", "SET_POSITION", "SET_TILT_POSITION"}}}) {
+					if b.match(&When{Features: &Set{Any: []string{"SET_POSITION"}}}) || b.match(&When{Features: &Set{Any: []string{"OPEN", "CLOSE"}, None: []string{"SET_POSITION"}}}) || b.match(&When{Features: &Set{Any: []string{"OPEN", "CLOSE"}, None: []string{"SET_POSITION"}}}) || b.match(&When{Features: &Set{Any: []string{"OPEN", "CLOSE"}, None: []string{"SET_POSITION"}}}) || b.match(&When{Features: &Set{None: []string{"OPEN", "CLOSE", "SET_POSITION", "OPEN_TILT", "CLOSE_TILT", "SET_TILT_POSITION"}}}) || b.match(&When{Features: &Set{None: []string{"OPEN", "CLOSE", "SET_POSITION", "OPEN_TILT", "CLOSE_TILT", "SET_TILT_POSITION"}}}) || b.match(&When{Features: &Set{None: []string{"OPEN", "CLOSE", "SET_POSITION", "OPEN_TILT", "CLOSE_TILT", "SET_TILT_POSITION"}}}) || b.match(&When{Features: &Set{All: []string{"SET_TILT_POSITION"}, None: []string{"OPEN", "CLOSE", "SET_POSITION"}}}) || b.match(&When{Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT"}, None: []string{"OPEN", "CLOSE", "SET_POSITION", "SET_TILT_POSITION"}}}) || b.match(&When{Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT"}, None: []string{"OPEN", "CLOSE", "SET_POSITION", "SET_TILT_POSITION"}}}) || b.match(&When{Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT"}, None: []string{"OPEN", "CLOSE", "SET_POSITION", "SET_TILT_POSITION"}}}) {
 						d.HandleGoToLiftPercentage = func(_ context.Context, req windowcoveringdef.GoToLiftPercentageRequest) (resp struct{}, err error) {
 							f := func(name string) (any, bool) {
 								switch name {
@@ -1610,33 +1603,48 @@ var rows = []Row{
 								return nil, false
 							}
 							if true {
-								b.emit(ci, 9, f)
-							}
-							if slices.Contains([]uint16{uint16(0)}, req.LiftPercent100thsValue) {
 								b.emit(ci, 10, f)
 							}
-							if !slices.Contains([]uint16{uint16(0)}, req.LiftPercent100thsValue) {
+							if slices.Contains([]uint16{uint16(0)}, req.LiftPercent100thsValue) {
 								b.emit(ci, 11, f)
 							}
-							if slices.Contains([]uint16{uint16(0)}, req.LiftPercent100thsValue) {
+							if slices.Contains([]uint16{uint16(10000)}, req.LiftPercent100thsValue) {
 								b.emit(ci, 12, f)
 							}
-							if !slices.Contains([]uint16{uint16(0)}, req.LiftPercent100thsValue) {
-								b.emit(ci, 13, f)
-							}
-							if true {
-								b.emit(ci, 14, f)
+							if !slices.Contains([]uint16{uint16(0), uint16(10000)}, req.LiftPercent100thsValue) {
+								if e := b.refuse(ci, 13); e != nil {
+									err = e
+								}
 							}
 							if slices.Contains([]uint16{uint16(0)}, req.LiftPercent100thsValue) {
+								b.emit(ci, 14, f)
+							}
+							if slices.Contains([]uint16{uint16(10000)}, req.LiftPercent100thsValue) {
 								b.emit(ci, 15, f)
 							}
-							if !slices.Contains([]uint16{uint16(0)}, req.LiftPercent100thsValue) {
-								b.emit(ci, 16, f)
+							if !slices.Contains([]uint16{uint16(0), uint16(10000)}, req.LiftPercent100thsValue) {
+								if e := b.refuse(ci, 16); e != nil {
+									err = e
+								}
+							}
+							if true {
+								b.emit(ci, 17, f)
+							}
+							if slices.Contains([]uint16{uint16(0)}, req.LiftPercent100thsValue) {
+								b.emit(ci, 18, f)
+							}
+							if slices.Contains([]uint16{uint16(10000)}, req.LiftPercent100thsValue) {
+								b.emit(ci, 19, f)
+							}
+							if !slices.Contains([]uint16{uint16(0), uint16(10000)}, req.LiftPercent100thsValue) {
+								if e := b.refuse(ci, 20); e != nil {
+									err = e
+								}
 							}
 							return resp, err
 						}
 					}
-					if b.match(&When{Features: &Set{Any: []string{"SET_TILT_POSITION"}}}) || b.match(&When{Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT"}, None: []string{"SET_TILT_POSITION"}}}) || b.match(&When{Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT"}, None: []string{"SET_TILT_POSITION"}}}) {
+					if b.match(&When{Features: &Set{Any: []string{"SET_TILT_POSITION"}}}) || b.match(&When{Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT"}, None: []string{"SET_TILT_POSITION"}}}) || b.match(&When{Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT"}, None: []string{"SET_TILT_POSITION"}}}) || b.match(&When{Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT"}, None: []string{"SET_TILT_POSITION"}}}) {
 						d.HandleGoToTiltPercentage = func(_ context.Context, req windowcoveringdef.GoToTiltPercentageRequest) (resp struct{}, err error) {
 							f := func(name string) (any, bool) {
 								switch name {
@@ -1646,13 +1654,18 @@ var rows = []Row{
 								return nil, false
 							}
 							if true {
-								b.emit(ci, 17, f)
+								b.emit(ci, 21, f)
 							}
 							if slices.Contains([]uint16{uint16(0)}, req.TiltPercent100thsValue) {
-								b.emit(ci, 18, f)
+								b.emit(ci, 22, f)
 							}
-							if !slices.Contains([]uint16{uint16(0)}, req.TiltPercent100thsValue) {
-								b.emit(ci, 19, f)
+							if slices.Contains([]uint16{uint16(10000)}, req.TiltPercent100thsValue) {
+								b.emit(ci, 23, f)
+							}
+							if !slices.Contains([]uint16{uint16(0), uint16(10000)}, req.TiltPercent100thsValue) {
+								if e := b.refuse(ci, 24); e != nil {
+									err = e
+								}
 							}
 							return resp, err
 						}
@@ -1662,38 +1675,72 @@ var rows = []Row{
 				apply: func(b *binding, ci int, st model.State) (any, error) {
 					var p windowcoveringdef.Patch
 					n := 0
-					if b.match(&When{Features: &Set{Any: []string{"SET_POSITION"}}}) {
-						if v, ok := b.number(&st, ci, 0); ok {
-							p.CurrentPositionLiftPercent100ths = new(conv[uint16](v))
+					if b.match(&When{Features: &Set{None: []string{"SET_POSITION"}}}) {
+						switch b.text(&st, ci, 0) {
+						case "closed":
+							p.CurrentPositionLiftPercent100ths = new(uint16(10000))
+							p.Null = drop(p.Null, windowcoveringdef.AttrCurrentPositionLiftPercent100ths)
 							n++
-						} else if b.null(&st, ci, 0) {
+						case "closing":
+							p.Null = append(p.Null, windowcoveringdef.AttrCurrentPositionLiftPercent100ths)
+							n++
+						case "open":
+							p.CurrentPositionLiftPercent100ths = new(uint16(0))
+							p.Null = drop(p.Null, windowcoveringdef.AttrCurrentPositionLiftPercent100ths)
+							n++
+						case "opening":
 							p.Null = append(p.Null, windowcoveringdef.AttrCurrentPositionLiftPercent100ths)
 							n++
 						}
 					}
-					if b.match(&When{Features: &Set{Any: []string{"SET_POSITION"}}}) {
-						if v, ok := b.number(&st, ci, 1); ok {
-							p.TargetPositionLiftPercent100ths = new(conv[uint16](v))
+					if b.match(&When{Features: &Set{None: []string{"SET_POSITION"}}}) {
+						switch b.text(&st, ci, 1) {
+						case "closed":
+							p.TargetPositionLiftPercent100ths = new(uint16(10000))
+							p.Null = drop(p.Null, windowcoveringdef.AttrTargetPositionLiftPercent100ths)
 							n++
-						} else if b.null(&st, ci, 1) {
+						case "closing":
+							p.Null = append(p.Null, windowcoveringdef.AttrTargetPositionLiftPercent100ths)
+							n++
+						case "open":
+							p.TargetPositionLiftPercent100ths = new(uint16(0))
+							p.Null = drop(p.Null, windowcoveringdef.AttrTargetPositionLiftPercent100ths)
+							n++
+						case "opening":
 							p.Null = append(p.Null, windowcoveringdef.AttrTargetPositionLiftPercent100ths)
 							n++
 						}
 					}
+					if v, ok := b.number(&st, ci, 2); ok {
+						p.CurrentPositionLiftPercent100ths = new(conv[uint16](v))
+						p.Null = drop(p.Null, windowcoveringdef.AttrCurrentPositionLiftPercent100ths)
+						n++
+					} else if b.null(&st, ci, 2) {
+						p.Null = append(p.Null, windowcoveringdef.AttrCurrentPositionLiftPercent100ths)
+						n++
+					}
+					if v, ok := b.number(&st, ci, 3); ok {
+						p.TargetPositionLiftPercent100ths = new(conv[uint16](v))
+						p.Null = drop(p.Null, windowcoveringdef.AttrTargetPositionLiftPercent100ths)
+						n++
+					} else if b.null(&st, ci, 3) {
+						p.Null = append(p.Null, windowcoveringdef.AttrTargetPositionLiftPercent100ths)
+						n++
+					}
 					if b.match(&When{Features: &Set{Any: []string{"SET_TILT_POSITION"}}}) {
-						if v, ok := b.number(&st, ci, 2); ok {
+						if v, ok := b.number(&st, ci, 4); ok {
 							p.CurrentPositionTiltPercent100ths = new(conv[uint16](v))
 							n++
-						} else if b.null(&st, ci, 2) {
+						} else if b.null(&st, ci, 4) {
 							p.Null = append(p.Null, windowcoveringdef.AttrCurrentPositionTiltPercent100ths)
 							n++
 						}
 					}
 					if b.match(&When{Features: &Set{Any: []string{"SET_TILT_POSITION"}}}) {
-						if v, ok := b.number(&st, ci, 3); ok {
+						if v, ok := b.number(&st, ci, 5); ok {
 							p.TargetPositionTiltPercent100ths = new(conv[uint16](v))
 							n++
-						} else if b.null(&st, ci, 3) {
+						} else if b.null(&st, ci, 5) {
 							p.Null = append(p.Null, windowcoveringdef.AttrTargetPositionTiltPercent100ths)
 							n++
 						}
@@ -1710,7 +1757,7 @@ var rows = []Row{
 		ID: "event/generic_switch", Platform: "event",
 		When:  When{},
 		State: eligibility.StateMappable,
-		Cites: []string{"matter.js packages/model/src/standard/elements/generic-switch.element.ts:19 @862ad75f (Switch mandatory)", "go-fabric cluster/spec/switchcluster/definition_gen.go:30-31,38,40,54-55 @v0.15.4 (NumberOfPositions, CurrentPosition; InitialPress (MS), ShortRelease (MSR))", "go-fabric cluster/spec/switchcluster/server_gen.go:156-171 @v0.15.4 (EmitInitialPress, EmitShortRelease)", "home-assistant/core homeassistant/components/event/__init__.py:187-194 @2026.10.3 (the state is the last event's timestamp)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/event/index.ts:12-24,191-195 @664575a (GenericSwitch; a short press is InitialPress then ShortRelease at position 1)"},
+		Cites: []string{"matter.js packages/model/src/standard/elements/generic-switch.element.ts:19 @862ad75f (Switch mandatory)", "go-fabric cluster/spec/switchcluster/definition_gen.go:30-31,38,40,54-55 @v0.15.4 (NumberOfPositions, CurrentPosition; InitialPress (MS), ShortRelease (MSR))", "go-fabric cluster/spec/switchcluster/server_gen.go:181-193,227-239 @v0.27.0 (RecordInitialPress, RecordShortRelease: emitted on the endpoint the server is mounted on)", "home-assistant/core homeassistant/components/event/__init__.py:187-194 @2026.10.3 (the state is the last event's timestamp)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/event/index.ts:12-24,191-195 @664575a (GenericSwitch; a short press is InitialPress then ShortRelease at position 1)"},
 		Type:  device.GenericSwitchType(),
 		Caveats: []Caveat{
 			{When: When{}, Reason: "every event is a short press (InitialPress, ShortRelease); long and multi presses from the event type are not mapped yet"},
@@ -5357,7 +5404,7 @@ var rows = []Row{
 		ID: "water_heater/thermostat", Platform: "water_heater",
 		When:  When{},
 		State: eligibility.StateMappable,
-		Cites: []string{"matter.js packages/model/src/standard/elements/thermostat-device.element.ts:25 @862ad75f (Thermostat mandatory)", "matter.js packages/model/src/standard/elements/temperature.element.ts:12 @862ad75f (the temperature datatype, int16 in 0.01 degC)", "home-assistant/core homeassistant/components/water_heater/__init__.py:146-151,164-182,187-219 @2026.10.3 (the state is the operation mode; min_temp, max_temp; current_temperature, temperature)", "home-assistant/core homeassistant/components/water_heater/const.py:53-58 @2026.10.3 (the operation states eco, electric, performance, high_demand, heat_pump, gas)", "home-assistant/core homeassistant/const.py:299-300 @2026.10.3 (on, off)", "home-assistant/core homeassistant/components/water_heater/services.py:78-100 @2026.10.3 (turn_on, turn_off, set_temperature, set_operation_mode)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/water-heater/index.ts:14-20,34-45 @664575a (a heating-only Thermostat with the entity's limits)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/water-heater/behaviors/water-heater-thermostat-server.ts:46-81 @664575a (off is Off, else Heat; off to set_operation_mode, else turn_on; the setpoint to set_temperature)", "go-ha-catalog data/mqtt.json:6680-6900 (water_heater schema; min_temp, max_temp at 6770-6789)", "go-ha-catalog data/features.json:124-129 (water_heater feature flags)"},
+		Cites: []string{"matter.js packages/model/src/standard/elements/thermostat-device.element.ts:25 @862ad75f (Thermostat mandatory)", "matter.js packages/model/src/standard/elements/temperature.element.ts:12 @862ad75f (the temperature datatype, int16 in 0.01 degC)", "home-assistant/core homeassistant/components/water_heater/__init__.py:146-151,164-182,187-219 @2026.10.3 (the state is the operation mode; min_temp, max_temp; current_temperature, temperature)", "home-assistant/core homeassistant/components/water_heater/__init__.py:52-53,164-172,349-366 @2026.10.3 (min_temp and max_temp are always state attributes; unset, they default to 110 and 140 °F converted into the entity's unit: the row's absent values)", "home-assistant/core homeassistant/components/mqtt/water_heater.py:146-147,207-210 @2026.10.3 (the MQTT min_temp and max_temp are optional; unset, the entity keeps the class default)", "home-assistant/core homeassistant/components/water_heater/const.py:53-58 @2026.10.3 (the operation states eco, electric, performance, high_demand, heat_pump, gas)", "home-assistant/core homeassistant/const.py:299-300 @2026.10.3 (on, off)", "home-assistant/core homeassistant/components/water_heater/services.py:78-100 @2026.10.3 (turn_on, turn_off, set_temperature, set_operation_mode)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/water-heater/index.ts:14-20,34-45 @664575a (a heating-only Thermostat with the entity's limits)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/water-heater/behaviors/water-heater-thermostat-server.ts:46-81 @664575a (off is Off, else Heat; off to set_operation_mode, else turn_on; the setpoint to set_temperature)", "go-ha-catalog data/mqtt.json:6680-6900 (water_heater schema; min_temp, max_temp at 6770-6789)", "go-ha-catalog data/features.json:124-129 (water_heater feature flags)"},
 		Type:  device.ThermostatType(),
 		Caveats: []Caveat{
 			{When: When{}, Reason: "operation modes other than off are all SystemMode Heat; the WaterHeater device type (modes, boost) is not mapped yet"},
@@ -5373,10 +5420,10 @@ var rows = []Row{
 				},
 				Initial: []Attr{
 					{Name: "ControlSequenceOfOperation", Value: Value{Const: "ControlSequenceOfOperationHeatingOnly", HasConst: true}},
-					{Name: "AbsMinHeatSetpointLimit", Value: Value{From: "extra.min_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C"}},
-					{Name: "MinHeatSetpointLimit", Value: Value{From: "extra.min_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C"}},
-					{Name: "AbsMaxHeatSetpointLimit", Value: Value{From: "extra.max_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C"}},
-					{Name: "MaxHeatSetpointLimit", Value: Value{From: "extra.max_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C"}},
+					{Name: "AbsMinHeatSetpointLimit", Value: Value{From: "extra.min_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C", Absent: &Quantity{Value: 110, Unit: "°F"}}},
+					{Name: "MinHeatSetpointLimit", Value: Value{From: "extra.min_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C", Absent: &Quantity{Value: 110, Unit: "°F"}}},
+					{Name: "AbsMaxHeatSetpointLimit", Value: Value{From: "extra.max_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C", Absent: &Quantity{Value: 140, Unit: "°F"}}},
+					{Name: "MaxHeatSetpointLimit", Value: Value{From: "extra.max_temp", Units: map[string]Linear{"°C": {Offset: 0, Scale: 100, Add: 0}, "°F": {Offset: -32, Scale: 55.55555555555556, Add: 0}}, DefaultUnit: "°C", Absent: &Quantity{Value: 140, Unit: "°F"}}},
 				},
 				Commands: []Command{
 					{Kind: "write", On: []string{"SystemMode"}, Method: "operation_mode", Raw: &Value{Field: "SystemMode", Enum: map[int64]string{int64(thermostatdef.SystemModeHeat): "on", int64(thermostatdef.SystemModeOff): "off"}}},

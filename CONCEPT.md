@@ -77,8 +77,13 @@ validator of go-fabric judges every generated declaration.
   `Description.Extra` under the catalog's key names
   (`supported_color_modes`, `supported_features` as the catalog's flag bits
   or names, `modes`, `preset_modes`); a row's predicate and its feature
-  conditions read them, so a cover without position declares no
-  PositionAwareLift and a light without colour is a DimmableLight.
+  conditions read them, so a cover without tilt features declares no Tilt
+  and a light without colour is a DimmableLight. Every cover declares
+  PositionAwareLift, as home-assistant-matter-hub does, and every tilting
+  cover PositionAwareTilt; without SET_POSITION its lift position is the
+  state's (`open`, `closed`) unless the state carries `current_position`,
+  and a GoToLiftPercentage or GoToTiltPercentage between fully open and
+  fully closed of an axis without a position service is refused (#44).
 - Decided in R1–R5: a cluster may carry `events` — events emitted through
   the typed server's `Emit<Event>` when a value of the entity changes
   (Home Assistant's event entity as a GenericSwitch press). The first

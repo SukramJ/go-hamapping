@@ -272,6 +272,52 @@ func TestGenerateDiscard(t *testing.T) {
 	}
 }
 
+func TestGenerateRefuse(t *testing.T) {
+	lock := "          - handle: LockDoor\n            raw: {const: LOCK}"
+	refuse := lock + "\n          - handle: LockDoor\n            if: {state: LockState, in: [LockStateLocked]}\n            refuse: FAILURE"
+	out, err := GenerateFiles([]rowfile.File{parse(t, strings.Replace(base, lock, refuse, 1))})
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := string(out)
+	for _, want := range []string{"b.refuse(ci, 1)", "Refuse: contract.StatusFailure", "\"thingfabric.dev/go-fabric/contract\""} {
+		if !strings.Contains(s, want) {
+			t.Errorf("no %s:\n%s", want, s)
+		}
+	}
+	// A handler of refusals alone reads no field for a payload.
+	only := strings.Replace(base, lock, "          - handle: LockDoor\n            refuse: FAILURE", 1)
+	out, err = GenerateFiles([]rowfile.File{parse(t, only)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	s = string(out)
+	_, body, ok := strings.Cut(s, "d.HandleLockDoor = func(")
+	body, _, _ = strings.Cut(body, "return resp, err")
+	if !ok || !strings.Contains(body, "b.refuse(ci, 0)") || strings.Contains(body, "f := ") {
+		t.Fatalf("refusal-only handler:\n%s", s)
+	}
+}
+
+func TestGenerateWritesAndDoc(t *testing.T) {
+	change := "          - change: [LockState]\n"
+	src := strings.Replace(base, change, change+"            writes: true\n            doc: \"locks or unlocks the door, from a command or a write\"\n", 1)
+	out, err := GenerateFiles([]rowfile.File{parse(t, src)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := string(out)
+	for _, want := range []string{"if changedOrWritten(c, doorlockdef.AttrLockState)", "// MethodM locks or unlocks the door, from a command or a write\n"} {
+		if !strings.Contains(s, want) {
+			t.Errorf("no %q:\n%s", want, s)
+		}
+	}
+	twice := strings.Replace(src, "          - handle: LockDoor\n            raw: {const: LOCK}", "          - handle: LockDoor\n            method: m\n            doc: other\n            raw: {const: LOCK}", 1)
+	if err := generate(t, twice); err == nil || !strings.Contains(err.Error(), "two docs") {
+		t.Errorf("two docs for one method: %v", err)
+	}
+}
+
 func parse(t *testing.T, src string) rowfile.File {
 	t.Helper()
 	f, err := rowfile.Parse([]byte(src))
@@ -319,7 +365,7 @@ func TestMethodConst(t *testing.T) {
 			t.Errorf("MethodConst(%q) = %q; want %q", in, got, want)
 		}
 	}
-	if methodsSource(nil) != "" {
+	if methodsSource(nil, nil) != "" {
 		t.Error("no rows: want no constant block")
 	}
 	if _, err := SpliceBetween([]byte("no markers"), KeysBegin, KeysEnd, ""); err == nil {

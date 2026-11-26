@@ -45,6 +45,26 @@ func Methods(files []rowfile.File) []string {
 	return slices.Sorted(maps.Keys(set))
 }
 
+// wrap breaks text into lines of at most width bytes between words.
+func wrap(text string, width int) []string {
+	var lines []string
+	line := ""
+	for w := range strings.FieldsSeq(text) {
+		if line != "" && len(line)+1+len(w) > width {
+			lines = append(lines, line)
+			line = ""
+		}
+		if line != "" {
+			line += " "
+		}
+		line += w
+	}
+	if line != "" {
+		lines = append(lines, line)
+	}
+	return lines
+}
+
 func partClusters(r *rowfile.Row) []rowfile.Cluster {
 	var out []rowfile.Cluster
 	for _, p := range r.Parts {
@@ -67,8 +87,34 @@ func MethodConst(m string) string {
 	return b.String()
 }
 
+// methodDocs are the docs the rows' commands state for their methods;
+// two different docs for one method are refused.
+func methodDocs(files []rowfile.File) (map[string]string, error) {
+	docs := map[string]string{}
+	for _, f := range files {
+		for i := range f.Rows {
+			r := &f.Rows[i]
+			for _, cs := range [][]rowfile.Cluster{r.Clusters, partClusters(r)} {
+				for j := range cs {
+					for k := range cs[j].Commands {
+						cmd := &cs[j].Commands[k]
+						if cmd.Doc == "" {
+							continue
+						}
+						if d, ok := docs[cmd.Method]; ok && d != cmd.Doc {
+							return nil, fmt.Errorf("method %s: two docs", cmd.Method)
+						}
+						docs[cmd.Method] = cmd.Doc
+					}
+				}
+			}
+		}
+	}
+	return docs, nil
+}
+
 // methodsSource is the constant block of rows_gen.go.
-func methodsSource(files []rowfile.File) string {
+func methodsSource(files []rowfile.File, docs map[string]string) string {
 	ms := Methods(files)
 	if len(ms) == 0 {
 		return ""
@@ -78,6 +124,11 @@ func methodsSource(files []rowfile.File) string {
 	b.WriteString("// consumer's command handler compares against these, not against literals.\n")
 	b.WriteString("const (\n")
 	for _, m := range ms {
+		if d := docs[m]; d != "" {
+			for _, line := range wrap(MethodConst(m)+" "+d, 72) {
+				fmt.Fprintf(&b, "\t// %s\n", line)
+			}
+		}
 		fmt.Fprintf(&b, "\t%s = %q\n", MethodConst(m), m)
 	}
 	b.WriteString(")\n\n// methods are the method constants, sorted.\nvar methods = []string{")

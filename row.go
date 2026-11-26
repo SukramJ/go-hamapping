@@ -176,6 +176,10 @@ type Command struct {
 	// answered with the cluster's success and reaches [Plan.OnDiscard]
 	// instead of [Plan.OnChange].
 	Discard bool
+	// Refuse is the Interaction Model status (go-fabric's contract
+	// Status* constants) a handled command is answered with when the
+	// command's if holds; nothing is handed out. 0 is no refusal.
+	Refuse uint8
 }
 
 // Field is one key of a JSON payload.
@@ -219,6 +223,16 @@ type Value struct {
 	// Catalog marks an extra.<key> whose absence reads the catalog's
 	// default for the key.
 	Catalog bool
+	// Absent is the value an attribute mapping reads when the entity
+	// states no extra.<key>: the source's own default, converted from the
+	// unit it is stated in rather than the entity's.
+	Absent *Quantity
+}
+
+// Quantity is a number in a unit (a key of [Value.Units]).
+type Quantity struct {
+	Value float64
+	Unit  string
 }
 
 // Linear is the linear part of a conversion.

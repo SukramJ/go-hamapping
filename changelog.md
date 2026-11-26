@@ -6,6 +6,109 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-26
+
+### What a host must do
+
+- Serve a new command method on `cover`: `MethodStopTilt` (`stop_tilt`)
+  calls `cover.stop_cover_tilt` without data; the payload is a constant.
+  A cover with STOP_TILT and no STOP now hands StopMotion out as this
+  method instead of answering it with success and handing out nothing; a
+  cover with STOP keeps `stop_cover` (#43).
+- Serve a new command method on `climate`: `MethodTemperatureRange`
+  (`temperature_range`), a JSON object `{"target_temp_low": …,
+  "target_temp_high": …}` in the entity's unit. Map it to **one**
+  `climate.set_temperature` with both values, which Home Assistant takes
+  only together. It replaces `MethodTemperatureLow` and
+  `MethodTemperatureHigh` in heat_cool (SystemMode Auto) and carries the
+  pair the thermostat holds after its deadband adjustment; a write request
+  with both setpoints yields two, the last with both written values.
+  Outside heat_cool a setpoint is `MethodTemperature` as before (#39).
+- Expect a `cover` without SET_POSITION to be served with
+  PositionAwareLift: a controller's GoToLiftPercentage of 0 % reaches the
+  host as `payload_open` (or `MethodOpenTilt` on a tilt-only cover), of
+  100 % as `payload_close` (or `MethodCloseTilt`); any position between is
+  refused with FAILURE and reaches no host. Before, any non-zero
+  percentage closed. The same holds for a tilting cover without
+  SET_TILT_POSITION, now served with PositionAwareTilt: GoToTiltPercentage
+  0 % is `MethodOpenTilt`, 100 % `MethodCloseTilt`, a tilt between is
+  refused with FAILURE (#44).
+
+### Added
+
+- `StableKey(dev, e, opts...)`: the stable key `Map` gives an entity's
+  endpoint (`Endpoint.Options.StableKey`) — the device UID, `/` and
+  `Options.StableKey`'s identity or the entity's key — so a consumer can key
+  what it keeps about an endpoint without a plan. `Map` derives its keys
+  through it, with the same options merge (#40).
+- `BuildError.Owner`: the key of the entity whose declarations go-fabric
+  refused — `Key` or one of `Riders`. It is measured, not parsed from
+  go-fabric's error: `Build` builds the refused endpoint again from the
+  primary's own declarations, then adds each rider's in `Riders` order, and
+  names the first whose addition is refused. When no rider isolates the
+  refusal, and for a refused part, it is `Key`. A consumer drops `Owner` and
+  maps the rest again. `Error()` is unchanged (#46).
+- `WebRTCSessionBounds`: an optional interface of the host object a
+  camera's `Options.Ports` returns. Its `WebRTCSessionBounds() (total,
+  perFabric int)` is copied unchanged into the WebRtcTransportProvider
+  declaration as `MaxSessions` and `MaxSessionsPerFabric` (0 is no bound),
+  only together with the host's `ProviderPort`; a negative bound fails
+  `Plan.Build` with a `*BuildError` wrapping go-fabric's
+  `camera.ErrNegativeMaxSessions` (#50).
+
+### Changed
+
+- **Breaking:** `MethodTemperatureLow` and `MethodTemperatureHigh` are gone:
+  no row emits them. In heat_cool a setpoint write, a deadband-adjusted
+  write and a SetpointRaiseLower are one `MethodTemperatureRange` each
+  (before: one `temperature_low` / `temperature_high` per attribute from
+  the write veto, before the deadband adjustment, and two for a
+  SetpointRaiseLower Both). The row format has `writes: true` on a
+  `change` and a method `doc` (`docs/rows.md`) (#39).
+- `cover`: every cover serves PositionAwareLift, as home-assistant-matter-hub
+  does. Without SET_POSITION the lift position is the state's — `closed`
+  100 %, `open` 0 %, `opening` / `closing` unknown — unless the state carries
+  `current_position`, and GoToLiftPercentage moves only fully open or
+  closed (see What a host must do; `docs/by_design.md`). A `window` cover is
+  Rollershade / RollerShade with Lift alone and TiltBlindLift / Unknown with
+  Tilt (was Unknown / Unknown); only the tilting window keeps a caveat.
+  Every tilting cover serves PositionAwareTilt; without SET_TILT_POSITION
+  its tilt position is unknown (null). **On upgrade the FeatureMap of an
+  existing cover endpoint changes once**: a cover without SET_POSITION
+  gains PositionAwareLift, a tilting one without SET_TILT_POSITION gains
+  PositionAwareTilt, and a controller sees the new FeatureMap with its
+  position attributes and GoTo commands (#44).
+- `climate` / `water_heater`: a missing `min_temp` or `max_temp` is read
+  as Home Assistant's own default for the entity — 7 / 35 °C for a climate,
+  110 / 140 °F for a water heater — instead of go-fabric's Thermostat
+  default (the row format's new `absent` value). `Map` calls such an entity
+  Unmappable, with a reason naming both bounds, when go-fabric could not
+  build its setpoint limits: the lower above the upper (now also when one
+  of them is the default; compared as the int16 hundredths go-fabric is
+  given), or, with the hvac mode `heat_cool`, a span below the 2.0 °C
+  heat/cool deadband. Before, both shapes were mappable and failed
+  `Plan.Build`. A climate with `min_temp` alone now gets AbsMax 35 °C
+  (was go-fabric's 30 °C); a water heater with `max_temp` below 43.33 °C
+  alone is Unmappable, as the Home Assistant entity states (#45).
+- The row format has `refuse: <status>` on a `handle`: the command is
+  answered with that Interaction Model status (`FAILURE`) when its `if`
+  holds, and nothing is handed out (`docs/rows.md`) (#44).
+- go-fabric `v0.27.0` (was `v0.26.0`). No API change here and no other
+  module in the graph moved; the bump alone leaves the generated rows
+  unchanged. One of its
+  changes reaches a plan: `node` refuses an endpoint whose tree holds a part
+  whose key is nil or renders empty with `node.ErrNoStableKey` at `Add` and
+  `Replace`.
+- The primary endpoint no longer depends on the order of the entities:
+  `Map` orders `Plan.Endpoints` by stable key (`StableKey`, compared
+  byte-wise; the key breaks a tie), so `Endpoints[0]` — the primary — is the
+  mapped entity with the smallest stable key among those whose row does not
+  ride, and a primary's `Riders` follow the same order. Permuting the input
+  yields the same plan; the verdicts still follow the input order. **On
+  upgrade a rider can move once**: a device whose primary was the first
+  mapped entity in the consumer's order gets the one with the smallest
+  stable key, and its battery rides there from then on (#41).
+
 ## [0.8.0] - 2026-11-26
 
 ### Changed

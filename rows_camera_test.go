@@ -5,6 +5,7 @@ package hamapping_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	hacatalog "sukramj.dev/go-ha-catalog"
@@ -152,5 +153,82 @@ func TestCameraWithoutHostPorts(t *testing.T) {
 	if len(v) != 1 || v[0].Row != "camera/unmapped" || v[0].State != eligibility.StateUnmappable ||
 		v[0].Reason != "a camera without the STREAM feature has no live stream; a SnapshotCamera row is a later wave" {
 		t.Fatalf("ON_OFF only: %+v", v)
+	}
+}
+
+// boundedHost serves every camera port and the optional session bounds;
+// boundsOnlyHost states the bounds but serves no ProviderPort.
+type (
+	boundedHost struct {
+		cameraHost
+		total, perFabric int
+	}
+	boundsOnlyHost struct {
+		videoPort
+		audioPort
+		snapshotPort
+	}
+)
+
+func (h boundedHost) WebRTCSessionBounds() (total, perFabric int) { return h.total, h.perFabric }
+
+func (boundsOnlyHost) WebRTCSessionBounds() (total, perFabric int) { return 5, 2 }
+
+var _ hamapping.WebRTCSessionBounds = boundedHost{}
+
+// providerDeclare is the camera endpoint's WebRtcTransportProvider
+// declaration.
+func providerDeclare(t *testing.T, p *hamapping.Plan) wpdef.Declare {
+	t.Helper()
+	if len(p.Endpoints) != 1 {
+		t.Fatalf("endpoints %+v", p.Endpoints)
+	}
+	for _, d := range p.Endpoints[0].Declarations {
+		if wd, ok := d.(wpdef.Declare); ok {
+			return wd
+		}
+	}
+	t.Fatal("no WebRtcTransportProvider declaration")
+	return wpdef.Declare{}
+}
+
+// TestCameraSessionBounds: a host implementing WebRTCSessionBounds has its
+// bounds copied unchanged into the WebRtcTransportProvider declaration and
+// the kit's server builds on them; without the interface both stay 0 (no
+// bound); a negative bound fails the build with go-fabric's
+// ErrNegativeMaxSessions; bounds without a ProviderPort leave the camera
+// unserved, with no build error.
+func TestCameraSessionBounds(t *testing.T) {
+	opts := func(h any) hamapping.Options {
+		return hamapping.Options{Ports: func(model.Entity) any { return h }}
+	}
+	p, _ := hamapping.Map(testDevice, []model.Entity{cameraEntity(2)}, opts(boundedHost{total: 5, perFabric: 2}))
+	if d := providerDeclare(t, p); d.MaxSessions != 5 || d.MaxSessionsPerFabric != 2 || d.ProviderPort == nil {
+		t.Fatalf("with bounds: MaxSessions %d, MaxSessionsPerFabric %d, port %v", d.MaxSessions, d.MaxSessionsPerFabric, d.ProviderPort)
+	}
+	if _, err := p.Build(context.Background()); err != nil {
+		t.Fatalf("Build with bounds: %v", err)
+	}
+	p.Close()
+
+	p, _ = hamapping.Map(testDevice, []model.Entity{cameraEntity(2)}, opts(cameraHost{}))
+	if d := providerDeclare(t, p); d.MaxSessions != 0 || d.MaxSessionsPerFabric != 0 {
+		t.Fatalf("without bounds: MaxSessions %d, MaxSessionsPerFabric %d", d.MaxSessions, d.MaxSessionsPerFabric)
+	}
+
+	p, _ = hamapping.Map(testDevice, []model.Entity{cameraEntity(2)}, opts(boundedHost{total: -1}))
+	_, err := p.Build(context.Background())
+	var be *hamapping.BuildError
+	if !errors.As(err, &be) || !errors.Is(err, camera.ErrNegativeMaxSessions) {
+		t.Fatalf("Build with a negative bound: %v, want a *BuildError wrapping camera.ErrNegativeMaxSessions", err)
+	}
+
+	p, v := hamapping.Map(testDevice, []model.Entity{cameraEntity(2)}, opts(boundsOnlyHost{}))
+	if len(p.Endpoints) != 0 || len(v) != 1 || v[0].State != eligibility.StateUnmappable ||
+		v[0].Reason != "camera/camera: the consumer serves no host ports for WebRtcTransportProvider" {
+		t.Fatalf("bounds without a ProviderPort: endpoints %+v, verdicts %+v", p.Endpoints, v)
+	}
+	if _, err := p.Build(context.Background()); err != nil {
+		t.Fatalf("Build of the unserved camera: %v", err)
 	}
 }

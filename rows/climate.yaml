@@ -1,14 +1,23 @@
 # Home Assistant's climate. State is the hvac mode; current_temperature,
 # temperature, target_temp_low and target_temp_high are keys of the state.
 # A command on a mode or a temperature goes to the entity's named method
-# (mode, temperature, temperature_low, temperature_high: the MQTT
-# <name>_command_topic keys of the catalog); a RoomAirConditioner's power
-# goes to turn_on and turn_off, its fan to fan_mode with the mode's name.
+# (mode, temperature: the MQTT <name>_command_topic keys of the catalog);
+# in heat_cool (SystemMode Auto) a setpoint change goes to
+# temperature_range with both setpoints the thermostat holds, the pair
+# Home Assistant's set_temperature takes together; a RoomAirConditioner's
+# power goes to turn_on and turn_off, its fan to fan_mode with the mode's
+# name.
 platform: climate
 cites:
   - home-assistant/core homeassistant/components/climate/services.yaml:131-151 @2026.10.3 (turn_on, turn_off, toggle; toggle needs TURN_ON and TURN_OFF)
   - go-ha-catalog data/mqtt.json:1200-1647 (climate schema; modes at 1385 with its default, mode_command_topic at 1370, temperature_command_topic at 1572, temperature_low/high_command_topic at 1582/1602)
   - go-ha-catalog gen_vocab.go:837-847 (HVACMode vocabulary)
+  - "home-assistant/core homeassistant/components/climate/services.py:49-60,105-113,121-130,149-158 @2026.10.3 (set_temperature takes target_temp_low and target_temp_high together or not at all; refused when low is above high, when either lies outside min_temp/max_temp, or without TARGET_TEMPERATURE_RANGE: the temperature_range payload)"
+  - "home-assistant/core homeassistant/components/climate/const.py:131-132 @2026.10.3 (ATTR_TARGET_TEMP_HIGH target_temp_high, ATTR_TARGET_TEMP_LOW target_temp_low)"
+  - "go-fabric cluster/thermo/thermostat_server.go:1165-1184,1737-1752 @v0.27.0 (a setpoint write notifies OriginControllerWrite naming the written setpoint and the companion the deadband moved; SetpointRaiseLower Both notifies once, OriginCommand, naming both)"
+  - go-fabric cluster/thermo/setpoints.go:180-197 @v0.27.0 (commitSetpoints lists every setpoint that moved, the companion included)
+  - "home-assistant/core homeassistant/components/climate/__init__.py:105-106,239-254,653-668 @2026.10.3 (min_temp and max_temp are always capability attributes; unset, they default to 7 and 35 °C converted into the entity's unit: the Thermostat's absent values)"
+  - home-assistant/core homeassistant/components/mqtt/climate.py:337-338,498-501 @2026.10.3 (the MQTT min_temp and max_temp are optional; unset, the entity keeps the class default)
 rows:
   - id: air_conditioner
     when:
@@ -65,14 +74,14 @@ rows:
           - {attribute: ControlSequenceOfOperation, const: ControlSequenceOfOperationCoolingOnly, when: {extra: {modes: {any: [cool, heat_cool], none: [heat, heat_cool]}}}}
           - {attribute: ControlSequenceOfOperation, const: ControlSequenceOfOperationCoolingAndHeating, when: {extra: {modes: {any: [heat_cool]}}}}
           - {attribute: ControlSequenceOfOperation, const: ControlSequenceOfOperationCoolingAndHeating, when: {extra: {modes: {all: [heat, cool]}}}}
-          - {attribute: AbsMinHeatSetpointLimit, from: extra.min_temp, when: *heat, default_unit: "°C", units: &centi {"°C": {scale: 100}, "°F": {offset: -32, scale: 55.55555555555556}}}
-          - {attribute: MinHeatSetpointLimit, from: extra.min_temp, when: *heat, default_unit: "°C", units: *centi}
-          - {attribute: AbsMaxHeatSetpointLimit, from: extra.max_temp, when: *heat, default_unit: "°C", units: *centi}
-          - {attribute: MaxHeatSetpointLimit, from: extra.max_temp, when: *heat, default_unit: "°C", units: *centi}
-          - {attribute: AbsMinCoolSetpointLimit, from: extra.min_temp, when: *cool, default_unit: "°C", units: *centi}
-          - {attribute: MinCoolSetpointLimit, from: extra.min_temp, when: *cool, default_unit: "°C", units: *centi}
-          - {attribute: AbsMaxCoolSetpointLimit, from: extra.max_temp, when: *cool, default_unit: "°C", units: *centi}
-          - {attribute: MaxCoolSetpointLimit, from: extra.max_temp, when: *cool, default_unit: "°C", units: *centi}
+          - {attribute: AbsMinHeatSetpointLimit, from: extra.min_temp, absent: {value: 7, unit: "°C"}, when: *heat, default_unit: "°C", units: &centi {"°C": {scale: 100}, "°F": {offset: -32, scale: 55.55555555555556}}}
+          - {attribute: MinHeatSetpointLimit, from: extra.min_temp, absent: {value: 7, unit: "°C"}, when: *heat, default_unit: "°C", units: *centi}
+          - {attribute: AbsMaxHeatSetpointLimit, from: extra.max_temp, absent: {value: 35, unit: "°C"}, when: *heat, default_unit: "°C", units: *centi}
+          - {attribute: MaxHeatSetpointLimit, from: extra.max_temp, absent: {value: 35, unit: "°C"}, when: *heat, default_unit: "°C", units: *centi}
+          - {attribute: AbsMinCoolSetpointLimit, from: extra.min_temp, absent: {value: 7, unit: "°C"}, when: *cool, default_unit: "°C", units: *centi}
+          - {attribute: MinCoolSetpointLimit, from: extra.min_temp, absent: {value: 7, unit: "°C"}, when: *cool, default_unit: "°C", units: *centi}
+          - {attribute: AbsMaxCoolSetpointLimit, from: extra.max_temp, absent: {value: 35, unit: "°C"}, when: *cool, default_unit: "°C", units: *centi}
+          - {attribute: MaxCoolSetpointLimit, from: extra.max_temp, absent: {value: 35, unit: "°C"}, when: *cool, default_unit: "°C", units: *centi}
         attributes:
           - {attribute: LocalTemperature, from: state.current_temperature, default_unit: "°C", units: *centi}
           - {attribute: OccupiedHeatingSetpoint, from: state.temperature, state_in: [heat], when: *heat, default_unit: "°C", units: *centi}
@@ -90,18 +99,10 @@ rows:
             if: {field: SystemMode, not_in: [SystemModeAuto]}
             method: temperature
             raw: &setpoint {field: OccupiedHeatingSetpoint, digits: 1, default_unit: "°C", units: &decenti {"°C": {scale: 0.01}, "°F": {scale: 0.018, add: 32}}}
-          - write: [OccupiedHeatingSetpoint]
-            if: {field: SystemMode, in: [SystemModeAuto]}
-            method: temperature_low
-            raw: *setpoint
           - write: [OccupiedCoolingSetpoint]
             if: {field: SystemMode, not_in: [SystemModeAuto]}
             method: temperature
             raw: &coolpoint {field: OccupiedCoolingSetpoint, digits: 1, default_unit: "°C", units: *decenti}
-          - write: [OccupiedCoolingSetpoint]
-            if: {field: SystemMode, in: [SystemModeAuto]}
-            method: temperature_high
-            raw: *coolpoint
           - change: [OccupiedHeatingSetpoint]
             if: {field: SystemMode, not_in: [SystemModeAuto, SystemModeCool]}
             method: temperature
@@ -110,14 +111,19 @@ rows:
             if: {field: SystemMode, in: [SystemModeCool]}
             method: temperature
             raw: *coolpoint
-          - change: [OccupiedHeatingSetpoint]
+          # In Auto a setpoint write or a SetpointRaiseLower is one
+          # temperature_range with the pair the server holds after its
+          # deadband adjustment: from the change notification, which a
+          # write reaches too (writes), not from the write veto, whose pair
+          # is the one before the adjustment. A write request with both
+          # setpoints is two such commands, the last with both written
+          # values: go-fabric has no hook per write request.
+          - change: [OccupiedHeatingSetpoint, OccupiedCoolingSetpoint]
+            writes: true
             if: {field: SystemMode, in: [SystemModeAuto]}
-            method: temperature_low
-            raw: *setpoint
-          - change: [OccupiedCoolingSetpoint]
-            if: {field: SystemMode, in: [SystemModeAuto]}
-            method: temperature_high
-            raw: *coolpoint
+            method: temperature_range
+            doc: "is a climate's setpoint change in heat_cool (SystemMode Auto): a JSON object with target_temp_low and target_temp_high, the heating and cooling setpoints the thermostat holds after its deadband adjustment, for one climate.set_temperature with both. It follows every admitted write that moved a setpoint (a setpoint limit write included) and every SetpointRaiseLower, so a write request with both setpoints yields two, the last carrying both written values: go-fabric has no hook per write request."
+            json: {target_temp_low: *setpoint, target_temp_high: *coolpoint}
       - cluster: FanControl
         features:
           - {name: Auto, when: &autofan {extra: {fan_modes: {any: [auto]}}}}

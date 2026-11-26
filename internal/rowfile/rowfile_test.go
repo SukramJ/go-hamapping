@@ -55,7 +55,40 @@ func TestParse(t *testing.T) {
 	if v, ok := f.Rows[0].Clusters[0].Attributes[0].Enum["off"]; !ok || v != nil {
 		t.Fatalf("enum off %v %v", v, ok)
 	}
+	// A change may also catch writes; a method may carry a doc.
+	f, err = Parse([]byte(strings.Replace(good, "          - change: [OnOff]\n", "          - change: [OnOff]\n            writes: true\n            method: m\n            doc: the m method\n", 1)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c := f.Rows[0].Clusters[0].Commands[0]; !c.Writes || c.Doc != "the m method" {
+		t.Fatalf("writes, doc %+v", c)
+	}
+	// An initial value from extra.<key> may name the source's default for
+	// an entity that states none, in one of its units.
+	f, err = Parse([]byte(strings.Replace(good, "{attribute: A, const: 1}", absentInitial, 1)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a := f.Rows[0].Clusters[0].Initial[0].Absent; a == nil || *a.Value != 7 || a.Unit != "°C" {
+		t.Fatalf("absent %+v", a)
+	}
+	// A handle may refuse a value with a status, with or without an if.
+	for _, refuse := range []string{refuseLine, "          - handle: On\n            refuse: FAILURE\n"} {
+		f, err = Parse([]byte(strings.Replace(good, "        events:\n", refuse+"        events:\n", 1)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if cmds := f.Rows[0].Clusters[0].Commands; cmds[len(cmds)-1].Refuse != "FAILURE" {
+			t.Fatalf("refuse %+v", cmds[len(cmds)-1])
+		}
+	}
 }
+
+// absentInitial is an initial value with the source's default.
+const absentInitial = `{attribute: A, from: extra.min_temp, units: {"°C": {scale: 100}}, absent: {value: 7, unit: "°C"}}`
+
+// refuseLine is a handle that refuses a value, added to good's commands.
+const refuseLine = "          - handle: Off\n            if: {field: X, not_in: [\"1\"]}\n            refuse: FAILURE\n"
 
 func TestParseRefuses(t *testing.T) {
 	for name, edit := range map[string][2]string{
@@ -98,6 +131,10 @@ func TestParseRefuses(t *testing.T) {
 		"otherwise without if": {"json: {state: {const: \"OFF\"}}", "json: {state: {const: \"OFF\"}}\n            otherwise: {Status: X}"},
 		"discard with payload": {"handle: Off", "handle: Off\n            discard: true"},
 		"discard not handle":   {"            raw: {from: extra.payload_on, catalog: true}", "            discard: true"},
+		"discard with doc":     {"handle: Off\n            json: {state: {const: \"OFF\"}}", "handle: Off\n            discard: true\n            doc: x"},
+		"discard with writes":  {"handle: Off\n            json: {state: {const: \"OFF\"}}", "handle: Off\n            discard: true\n            writes: true"},
+		"writes not change":    {"handle: Off", "handle: Off\n            writes: true"},
+		"doc without method":   {"handle: Off", "handle: Off\n            doc: x"},
 		"options list":         {"list: desc.options", "list: desc.min"},
 		"options current":      {"current: state,", "current: device_class,"},
 		"options method":       {"method: select_option", "method: \"\""},
@@ -107,6 +144,48 @@ func TestParseRefuses(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			src := strings.Replace(good, edit[0], edit[1], 1)
 			if src == good {
+				t.Fatalf("edit %q does not apply", edit[0])
+			}
+			if _, err := Parse([]byte(src)); err == nil {
+				t.Fatal("parsed")
+			}
+		})
+	}
+	for name, edit := range map[string][2]string{
+		"refuse status":       {"refuse: FAILURE", "refuse: NOPE"},
+		"refuse with payload": {"refuse: FAILURE", "refuse: FAILURE\n            raw: {const: x}"},
+		"refuse with method":  {"refuse: FAILURE", "refuse: FAILURE\n            method: m"},
+		"refuse with discard": {"refuse: FAILURE", "refuse: FAILURE\n            discard: true"},
+		"refuse otherwise":    {"refuse: FAILURE", "refuse: FAILURE\n            otherwise: {Status: X}"},
+		"refuse not handle":   {"handle: Off\n            if", "change: [Off]\n            if"},
+		"refuse if":           {`not_in: ["1"]`, `not_in: ["1"], in: ["2"]`},
+		"refuse if constant":  {`not_in: ["1"]`, `not_in: ["a-b"]`},
+		"refuse with writes":  {"refuse: FAILURE", "refuse: FAILURE\n            writes: true"},
+		"refuse with doc":     {"refuse: FAILURE", "refuse: FAILURE\n            doc: x"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			withRefuse := strings.Replace(good, "        events:\n", refuseLine+"        events:\n", 1)
+			src := strings.Replace(withRefuse, edit[0], edit[1], 1)
+			if src == withRefuse {
+				t.Fatalf("edit %q does not apply", edit[0])
+			}
+			if _, err := Parse([]byte(src)); err == nil {
+				t.Fatal("parsed")
+			}
+		})
+	}
+	for name, edit := range map[string][2]string{
+		"absent unit":     {`unit: "°C"}}`, `unit: "°F"}}`},
+		"absent no value": {`value: 7, `, ``},
+		"absent NaN":      {`value: 7,`, `value: .nan,`},
+		"absent Inf":      {`value: 7,`, `value: -.inf,`},
+		"absent catalog":  {`absent:`, `catalog: true, absent:`},
+		"absent desc":     {`from: extra.min_temp`, `from: desc.min`},
+	} {
+		t.Run(name, func(t *testing.T) {
+			withAbsent := strings.Replace(good, "{attribute: A, const: 1}", absentInitial, 1)
+			src := strings.Replace(withAbsent, edit[0], edit[1], 1)
+			if src == withAbsent {
 				t.Fatalf("edit %q does not apply", edit[0])
 			}
 			if _, err := Parse([]byte(src)); err == nil {
@@ -149,6 +228,9 @@ func FuzzParse(f *testing.F) {
 	f.Add([]byte("platform: x\nrows:\n  - id: a\n    verdict: \"unmappable: b\"\n"))
 	f.Add([]byte("{"))
 	f.Add([]byte(strings.Replace(good, `enum: {"on": true}`, `enum: {"on": true, "off": null}`, 1)))
+	f.Add([]byte(strings.Replace(good, "{attribute: A, const: 1}", absentInitial, 1)))
+	f.Add([]byte(strings.Replace(good, "{attribute: A, const: 1}", strings.Replace(absentInitial, "value: 7", "value: .nan", 1), 1)))
+	f.Add([]byte(strings.Replace(good, "        events:\n", refuseLine+"        events:\n", 1)))
 	f.Fuzz(func(t *testing.T, data []byte) {
 		file, err := Parse(data)
 		if err != nil {
