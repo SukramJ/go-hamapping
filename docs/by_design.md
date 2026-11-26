@@ -182,6 +182,23 @@ open or close, a move the user did not ask for; refusing it tells the
 controller the position is not reachable. Row
 `cover/window_covering` (`refuse: FAILURE`); fact note 2026-11-26 Q4b.
 
+Tilt follows the same rule: every tilting cover serves PositionAwareTilt,
+so GoToTiltPercentage carries a target (matter.js
+`packages/node/src/behaviors/window-covering/WindowCoveringServer.ts:601-606`
+at `db021da0`). Without SET_TILT_POSITION 0 % is `open_cover_tilt`, 100 %
+`close_cover_tilt` (0 is fully open, 10000 fully closed:
+`packages/model/src/standard/resources/window-covering-cluster.resource.ts:157,
+190` at `862ad75f`), and a tilt between is refused with FAILURE. Without
+PositionAwareTilt the specification would require a non-zero percentage to
+be treated as DownOrClose (`window-covering-cluster.resource.ts:265-266`;
+matter.js `WindowCoveringServer.ts:607-613`), which a refusal would break;
+home-assistant-matter-hub ties PositionAwareTilt to `set_tilt_position`
+(`packages/backend/src/matter/endpoints/legacy/cover/index.ts:52-63` at
+`664575a`) and so closes on any non-zero tilt. Declaring PositionAwareTilt
+puts tilt on lift's footing: no move the user did not ask for, and no
+departure from a "shall". Its tilt position is unknown (null) without
+SET_TILT_POSITION. Fact note 2026-11-26 review, A1–A5.
+
 ## A garage, gate, door or damper cover is Unknown
 
 These device classes stay Type and EndProductType Unknown, with or without

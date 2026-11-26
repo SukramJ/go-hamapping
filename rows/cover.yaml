@@ -33,14 +33,16 @@ rows:
       - "home-assistant/core homeassistant/components/cover/__init__.py:217-218,239-240 @2026.10.3 (current_position is in the state whenever the entity has a position, whatever its features; the default features add SET_POSITION exactly when it has one)"
       - home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/cover/index.ts:34-49 @664575a (Lift and PositionAwareLift always)
       - "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/cover/behaviors/cover-window-covering-server.ts:57-64,78-102,330-342,392-410 @664575a (a lift-only window Rollershade / RollerShade, a tilting one TiltBlindLift / Unknown; the lift position from current_position, else closed 0 and open 100 on Home Assistant's scale, else null; GoToLiftPercentage without position control by a 50 % threshold, which this row does not take)"
-      - "matter.js packages/node/src/behaviors/window-covering/WindowCoveringServer.ts:576-590 @db021da0 (without positionAwareLift: LiftPercent100thsValue 0 opens, else closes)"
+      - "matter.js packages/node/src/behaviors/window-covering/WindowCoveringServer.ts:579-584 @db021da0 (with positionAwareLift the requested LiftPercent100thsValue becomes the target; the row hands out only 0 and 10000 and refuses the rest, docs/by_design.md)"
+      - "matter.js packages/node/src/behaviors/window-covering/WindowCoveringServer.ts:598-614 @db021da0 (with positionAwareTilt the requested TiltPercent100thsValue becomes the target, :601-606; without it 0 opens, else closes, :607-613 — the rule the row leaves by declaring PositionAwareTilt on every tilting cover)"
+      - matter.js packages/model/src/standard/resources/window-covering-cluster.resource.ts:265-266 @862ad75f (without the PositionAware feature a zero tilt percentage is UpOrOpen, a non-zero one DownOrClose)
     clusters:
       - cluster: WindowCovering
         features:
           - Lift
           - PositionAwareLift
           - {name: Tilt, when: {features: {any: [OPEN_TILT, CLOSE_TILT, SET_TILT_POSITION]}}}
-          - {name: PositionAwareTilt, when: {features: {any: [SET_TILT_POSITION]}}}
+          - {name: PositionAwareTilt, when: {features: {any: [OPEN_TILT, CLOSE_TILT, SET_TILT_POSITION]}}}
         initial:   # Lift only: the LF & !TL members; with Tilt (the feature's predicate): TiltBlindLift and the LF & TL members
           - attribute: Type
             from: device_class
@@ -163,13 +165,20 @@ rows:
             when: {features: {any: [SET_TILT_POSITION]}}
             method: tilt
             raw: {field: TiltPercent100thsValue, scale: -0.01, add: 100}
-          - handle: GoToTiltPercentage   # Tilt without PositionAwareTilt: 0 opens, else closes
+          # Without SET_TILT_POSITION: fully open (0) opens, fully closed
+          # (10000) closes, a tilt between is refused with FAILURE
+          # (docs/by_design.md).
+          - handle: GoToTiltPercentage
             when: {features: {any: [OPEN_TILT, CLOSE_TILT], none: [SET_TILT_POSITION]}}
             if: {field: TiltPercent100thsValue, in: [0]}
             method: open_tilt
             raw: {const: OPEN}
           - handle: GoToTiltPercentage
             when: {features: {any: [OPEN_TILT, CLOSE_TILT], none: [SET_TILT_POSITION]}}
-            if: {field: TiltPercent100thsValue, not_in: [0]}
+            if: {field: TiltPercent100thsValue, in: [10000]}
             method: close_tilt
             raw: {const: CLOSE}
+          - handle: GoToTiltPercentage
+            when: {features: {any: [OPEN_TILT, CLOSE_TILT], none: [SET_TILT_POSITION]}}
+            if: {field: TiltPercent100thsValue, not_in: [0, 10000]}
+            refuse: FAILURE

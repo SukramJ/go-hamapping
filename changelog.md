@@ -27,7 +27,10 @@ All notable changes to this project are documented here. The format follows
   host as `payload_open` (or `MethodOpenTilt` on a tilt-only cover), of
   100 % as `payload_close` (or `MethodCloseTilt`); any position between is
   refused with FAILURE and reaches no host. Before, any non-zero
-  percentage closed (#44).
+  percentage closed. The same holds for a tilting cover without
+  SET_TILT_POSITION, now served with PositionAwareTilt: GoToTiltPercentage
+  0 % is `MethodOpenTilt`, 100 % `MethodCloseTilt`, a tilt between is
+  refused with FAILURE (#44).
 
 ### Added
 
@@ -66,8 +69,13 @@ All notable changes to this project are documented here. The format follows
   `current_position`, and GoToLiftPercentage moves only fully open or
   closed (see What a host must do; `docs/by_design.md`). A `window` cover is
   Rollershade / RollerShade with Lift alone and TiltBlindLift / Unknown with
-  Tilt (was Unknown / Unknown); only the tilting window keeps a caveat
-  (#44).
+  Tilt (was Unknown / Unknown); only the tilting window keeps a caveat.
+  Every tilting cover serves PositionAwareTilt; without SET_TILT_POSITION
+  its tilt position is unknown (null). **On upgrade the FeatureMap of an
+  existing cover endpoint changes once**: a cover without SET_POSITION
+  gains PositionAwareLift, a tilting one without SET_TILT_POSITION gains
+  PositionAwareTilt, and a controller sees the new FeatureMap with its
+  position attributes and GoTo commands (#44).
 - `climate` / `water_heater`: a missing `min_temp` or `max_temp` is read
   as Home Assistant's own default for the entity — 7 / 35 °C for a climate,
   110 / 140 °F for a water heater — instead of go-fabric's Thermostat
@@ -84,7 +92,8 @@ All notable changes to this project are documented here. The format follows
   answered with that Interaction Model status (`FAILURE`) when its `if`
   holds, and nothing is handed out (`docs/rows.md`) (#44).
 - go-fabric `v0.27.0` (was `v0.26.0`). No API change here and no other
-  module in the graph moved; the generated rows are unchanged. One of its
+  module in the graph moved; the bump alone leaves the generated rows
+  unchanged. One of its
   changes reaches a plan: `node` refuses an endpoint whose tree holds a part
   whose key is nil or renders empty with `node.ErrNoStableKey` at `Add` and
   `Replace`.

@@ -136,8 +136,8 @@ func TestCoverTiltOnlyPositional(t *testing.T) {
 
 // TestCoverTiltOnlyBinary: a tilt-only cover without SET_TILT_POSITION
 // (OPEN_TILT|CLOSE_TILT) opens and closes its tilt: a lift fully open
-// opens, fully closed closes, a position between is refused; its own tilt
-// percentage opens at 0 and closes otherwise.
+// opens, fully closed closes, a position between is refused, and so does
+// its own tilt percentage.
 func TestCoverTiltOnlyBinary(t *testing.T) {
 	r := serve(t, cover("blind", 48))
 	r.cover(windowcoveringdef.CmdUpOrOpen)
@@ -153,6 +153,7 @@ func TestCoverTiltOnlyBinary(t *testing.T) {
 	expect(t, r.command(), hamapping.MethodOpenTilt, "OPEN")
 	r.cover(windowcoveringdef.CmdGoToTiltPercentage, uint16(10000))
 	expect(t, r.command(), hamapping.MethodCloseTilt, "CLOSE")
+	r.refusedTilt(5000)
 	r.noMore()
 }
 
@@ -167,8 +168,9 @@ func TestCoverLiftBinaryTilt(t *testing.T) {
 	expect(t, r.command(), "", "CLOSE")
 	r.cover(windowcoveringdef.CmdGoToTiltPercentage, uint16(0))
 	expect(t, r.command(), hamapping.MethodOpenTilt, "OPEN")
-	r.cover(windowcoveringdef.CmdGoToTiltPercentage, uint16(2500))
+	r.cover(windowcoveringdef.CmdGoToTiltPercentage, uint16(10000))
 	expect(t, r.command(), hamapping.MethodCloseTilt, "CLOSE")
+	r.refusedTilt(2500)
 	r.noMore()
 }
 
@@ -296,5 +298,40 @@ func TestCoverGoToLiftWithoutSetPosition(t *testing.T) {
 	r := serve(t, cover("blind", 240))
 	r.cover(windowcoveringdef.CmdGoToLiftPercentage, uint16(4000))
 	expect(t, r.command(), hamapping.MethodTilt, "60")
+	r.noMore()
+}
+
+// refusedTilt invokes GoToTiltPercentage and wants it refused with FAILURE.
+func (r *rig) refusedTilt(pct uint16) {
+	r.t.Helper()
+	_, err := fabrictest.Invoke(r.ctx, r.pair, client.CommandAt(r.ep("cover"), windowcoveringdef.ClusterID, windowcoveringdef.CmdGoToTiltPercentage),
+		windowcoveringdef.GoToTiltPercentageRequest{TiltPercent100thsValue: pct})
+	if s := statusOf(err); s != 0x01 {
+		r.t.Fatalf("GoToTiltPercentage %d: status 0x%02X (%v), want FAILURE", pct, s, err)
+	}
+}
+
+// TestCoverPositionAwareTiltWithTilt: a cover with any tilt feature serves
+// PositionAwareTilt; without SET_TILT_POSITION its tilt position stays
+// unknown (null), GoToTiltPercentage 0 opens, 10000 closes, a tilt between
+// is refused with FAILURE and hands out nothing.
+func TestCoverPositionAwareTiltWithTilt(t *testing.T) {
+	for f, want := range map[int]bool{0: false, 15: false, 16: true, 32: true, 48: true, 51: true, 128: true, 240: true, 255: true} {
+		p, _ := hamapping.Map(testDevice, []model.Entity{cover("blind", f)})
+		for _, d := range p.Endpoints[0].Declarations {
+			if wd, ok := d.(windowcoveringdef.Declare); ok && (wd.Features&windowcoveringdef.FeaturePositionAwareTilt != 0) != want {
+				t.Errorf("features %d: Features 0x%X, PositionAwareTilt want %v", f, uint32(wd.Features), want)
+			}
+		}
+	}
+	r := serve(t, cover("blind", 51)) // OPEN|CLOSE|OPEN_TILT|CLOSE_TILT
+	r.apply("cover", on(map[string]any{"state": "open", "current_position": 100}))
+	st, _ := windowcoveringdef.StateFrom(r.values("cover", windowcoveringdef.ClusterID))
+	if st.CurrentPositionTiltPercent100ths != nil || st.TargetPositionTiltPercent100ths != nil {
+		t.Fatalf("tilt position %v %v, want unknown", deref(st.CurrentPositionTiltPercent100ths), deref(st.TargetPositionTiltPercent100ths))
+	}
+	for _, pct := range []uint16{1, 4000, 9999} {
+		r.refusedTilt(pct)
+	}
 	r.noMore()
 }
