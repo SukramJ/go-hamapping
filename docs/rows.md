@@ -134,8 +134,9 @@ colour before the controller's target is set). `writes: true` makes a
 `change` also catch a controller's write of its attributes that the
 server admitted, from the server's state after the write — after the
 server's own adjustments, which the write veto does not see (the
-thermostat's deadband moving the other setpoint) — once per admitted
-attribute: go-fabric has no hook per write request. Every command reaches
+thermostat's deadband moving the other setpoint) — once per admitted write
+that moved one of them, a write of a setpoint limit that moves a setpoint
+included: go-fabric has no hook per write request. Every command reaches
 `Plan.OnChange`'s function inline, in the controller's request. A command with an empty `method` goes to the entity's command
 binding (`model.Command.Role` `command`, its `Slot`); one with a method to
 the named method (the MQTT `<method>_command_topic` of the platform).

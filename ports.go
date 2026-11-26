@@ -60,7 +60,8 @@ func unservedVerdict(b *binding) Verdict {
 // total bounds every session of the camera, perFabric the sessions of one
 // fabric; 0 is no bound. They are copied unchanged into the declaration,
 // and only together with the host's ProviderPort: a bound without the port
-// fails the build (device/options.go:297-316 at v0.27.0). A negative bound
+// fails the build (device/options.go:288-315 counts a non-zero bound as a
+// port, device/device.go:492-496 refuses it, at v0.27.0). A negative bound
 // fails [Plan.Build] with a [*BuildError] wrapping go-fabric's
 // camera.ErrNegativeMaxSessions (device/defaults_camera.go:147-151 at
 // v0.27.0); no relation between the two is checked, as go-fabric checks

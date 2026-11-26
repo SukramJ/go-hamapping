@@ -269,8 +269,9 @@ func changed(c contract.Change, ids ...uint32) bool {
 // controller's write the server admitted, touched one of ids: the server's
 // change notification after the write is stored, so its state is the one
 // the server holds after its own adjustments (go-fabric
-// cluster/thermo/thermostat_server.go:1165-1172 at v0.27.0, a setpoint
-// write naming the companion it moved).
+// cluster/thermo/thermostat_server.go:1165-1184 and setpoints.go:180-197
+// at v0.27.0: a setpoint write notifies every setpoint that moved, the
+// companion included).
 func changedOrWritten(c contract.Change, ids ...uint32) bool {
 	if c.Origin != contract.OriginCommand && c.Origin != contract.OriginControllerWrite {
 		return false
