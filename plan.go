@@ -4,6 +4,7 @@
 package hamapping
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -170,10 +171,13 @@ type Options struct {
 
 // Map plans dev's entities: every entity gets a verdict, every mapped one
 // an endpoint — but a row that rides ([RideOnPrimary]) puts its clusters
-// on the device's primary endpoint when there is one. The entities are
-// taken in order; the primary endpoint is the first mapped entity whose
-// row does not ride. opts is at most one [Options]; a later one's
-// non-nil fields override an earlier one's.
+// on the device's primary endpoint when there is one. The order of
+// entities does not matter: the verdicts follow it, but the endpoints are
+// ordered by their stable key ([StableKey], compared byte-wise; the Key
+// breaks a tie), so the primary endpoint, Endpoints[0], is the mapped
+// entity with the smallest stable key among those whose row does not
+// ride, and a primary's Riders are in the same order. opts is at most one
+// [Options]; a later one's non-nil fields override an earlier one's.
 func Map(dev *model.Device, entities []model.Entity, opts ...Options) (*Plan, []Verdict) {
 	p := &Plan{Device: dev, opts: mergeOptions(opts), bindings: map[string]*binding{}, devices: map[string]*device.Device{}}
 	verdicts := make([]Verdict, 0, len(entities))
@@ -192,7 +196,7 @@ func Map(dev *model.Device, entities []model.Entity, opts ...Options) (*Plan, []
 		if v.State == eligibility.StateUnmappable {
 			continue
 		}
-		b := &binding{plan: p, row: row, entity: e, key: e.Key()}
+		b := &binding{plan: p, row: row, entity: e, key: e.Key(), stable: stableKey(dev, e, p.opts)}
 		if row.Ride == RideOnPrimary {
 			p.bindings[b.key] = b
 			riders = append(riders, pending{b, len(verdicts) - 1})
@@ -206,6 +210,11 @@ func Map(dev *model.Device, entities []model.Entity, opts ...Options) (*Plan, []
 		p.bindings[b.key] = b
 		p.Endpoints = append(p.Endpoints, ep)
 	}
+	byStable := func(x, y *binding) int {
+		return cmp.Or(strings.Compare(x.stable, y.stable), strings.Compare(x.key, y.key))
+	}
+	slices.SortStableFunc(p.Endpoints, func(x, y Endpoint) int { return byStable(p.bindings[x.Key], p.bindings[y.Key]) })
+	slices.SortStableFunc(riders, func(x, y pending) int { return byStable(x.b, y.b) })
 	primaries := len(p.Endpoints)
 	for _, r := range riders {
 		if primaries == 0 {

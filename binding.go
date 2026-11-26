@@ -25,6 +25,9 @@ type binding struct {
 	row    *Row
 	entity model.Entity
 	key    string
+	// stable is the entity's stable key ([StableKey]), the order of the
+	// plan's endpoints and riders.
+	stable string
 	// target is the device the row's clusters live on: the entity's own,
 	// or for a row that rides, its primary's.
 	target *device.Device

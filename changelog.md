@@ -21,6 +21,15 @@ All notable changes to this project are documented here. The format follows
   changes reaches a plan: `node` refuses an endpoint whose tree holds a part
   whose key is nil or renders empty with `node.ErrNoStableKey` at `Add` and
   `Replace`.
+- The primary endpoint no longer depends on the order of the entities:
+  `Map` orders `Plan.Endpoints` by stable key (`StableKey`, compared
+  byte-wise; the key breaks a tie), so `Endpoints[0]` — the primary — is the
+  mapped entity with the smallest stable key among those whose row does not
+  ride, and a primary's `Riders` follow the same order. Permuting the input
+  yields the same plan; the verdicts still follow the input order. **On
+  upgrade a rider can move once**: a device whose primary was the first
+  mapped entity in the consumer's order gets the one with the smallest
+  stable key, and its battery rides there from then on (#41).
 
 ## [0.8.0] - 2026-11-26
 

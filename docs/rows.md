@@ -22,8 +22,9 @@ is the entity's device class. A unit the row cannot convert makes the
 entity Unmappable, naming the unit.
 
 A row with `ride: primary` does not get an endpoint of its own when the
-device has a primary endpoint (the first mapped entity whose row does not
-ride): its `ride_measurement` (H1: the battery) is declared on the primary
+device has a primary endpoint (among the mapped entities whose row does
+not ride, the one with the smallest stable key, whatever the order of the
+entities): its `ride_measurement` (H1: the battery) is declared on the primary
 as go-fabric's measurement source (`device.Measurement`). Without a primary
 it is an endpoint of its own type.
 
