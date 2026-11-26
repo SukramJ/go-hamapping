@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"path/filepath"
 	"slices"
@@ -615,7 +616,7 @@ func (cmd *Command) check() error {
 	}
 	if cmd.Discard {
 		if cmd.Handle == "" || cmd.Method != "" || cmd.Raw != nil || len(cmd.JSON) > 0 || cmd.Derive != "" ||
-			cmd.If != nil || cmd.When != nil || cmd.Otherwise != nil || cmd.Refuse != "" || cmd.Writes {
+			cmd.If != nil || cmd.When != nil || cmd.Otherwise != nil || cmd.Refuse != "" || cmd.Writes || cmd.Doc != "" {
 			return errors.New("discard: a handle's alone")
 		}
 		return nil
@@ -624,8 +625,9 @@ func (cmd *Command) check() error {
 		if _, ok := Refusals[cmd.Refuse]; !ok {
 			return fmt.Errorf("refuse %q", cmd.Refuse)
 		}
-		if cmd.Handle == "" || cmd.Method != "" || cmd.Raw != nil || len(cmd.JSON) > 0 || cmd.Derive != "" || cmd.Otherwise != nil {
-			return errors.New("refuse: a handle's, without method, payload or otherwise")
+		if cmd.Handle == "" || cmd.Method != "" || cmd.Raw != nil || len(cmd.JSON) > 0 || cmd.Derive != "" || cmd.Otherwise != nil ||
+			cmd.Writes || cmd.Doc != "" {
+			return errors.New("refuse: a handle's, without method, payload, otherwise, writes or doc")
 		}
 		return cmd.If.check()
 	}
@@ -739,7 +741,7 @@ func (v *Value) check(command bool) error {
 		if command || !strings.HasPrefix(v.From, "extra.") || v.Catalog {
 			return errors.New("absent: an attribute mapping's from extra.<key>, without catalog")
 		}
-		if _, ok := v.Units[a.Unit]; !ok || a.Value == nil {
+		if _, ok := v.Units[a.Unit]; !ok || a.Value == nil || math.IsNaN(*a.Value) || math.IsInf(*a.Value, 0) {
 			return fmt.Errorf("absent: a value in one of the units, not %q", a.Unit)
 		}
 	}

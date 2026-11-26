@@ -291,7 +291,10 @@ func TestGenerateRefuse(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if s := string(out); !strings.Contains(s, "b.refuse(ci, 0)") || strings.Contains(s, "req doorlockdef.LockDoorRequest) (resp struct{}, err error) {\nf :=") {
+	s = string(out)
+	_, body, ok := strings.Cut(s, "d.HandleLockDoor = func(")
+	body, _, _ = strings.Cut(body, "return resp, err")
+	if !ok || !strings.Contains(body, "b.refuse(ci, 0)") || strings.Contains(body, "f := ") {
 		t.Fatalf("refusal-only handler:\n%s", s)
 	}
 }

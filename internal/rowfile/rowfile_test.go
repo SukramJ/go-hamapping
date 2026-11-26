@@ -131,6 +131,8 @@ func TestParseRefuses(t *testing.T) {
 		"otherwise without if": {"json: {state: {const: \"OFF\"}}", "json: {state: {const: \"OFF\"}}\n            otherwise: {Status: X}"},
 		"discard with payload": {"handle: Off", "handle: Off\n            discard: true"},
 		"discard not handle":   {"            raw: {from: extra.payload_on, catalog: true}", "            discard: true"},
+		"discard with doc":     {"handle: Off\n            json: {state: {const: \"OFF\"}}", "handle: Off\n            discard: true\n            doc: x"},
+		"discard with writes":  {"handle: Off\n            json: {state: {const: \"OFF\"}}", "handle: Off\n            discard: true\n            writes: true"},
 		"writes not change":    {"handle: Off", "handle: Off\n            writes: true"},
 		"doc without method":   {"handle: Off", "handle: Off\n            doc: x"},
 		"options list":         {"list: desc.options", "list: desc.min"},
@@ -158,6 +160,8 @@ func TestParseRefuses(t *testing.T) {
 		"refuse not handle":   {"handle: Off\n            if", "change: [Off]\n            if"},
 		"refuse if":           {`not_in: ["1"]`, `not_in: ["1"], in: ["2"]`},
 		"refuse if constant":  {`not_in: ["1"]`, `not_in: ["a-b"]`},
+		"refuse with writes":  {"refuse: FAILURE", "refuse: FAILURE\n            writes: true"},
+		"refuse with doc":     {"refuse: FAILURE", "refuse: FAILURE\n            doc: x"},
 	} {
 		t.Run(name, func(t *testing.T) {
 			withRefuse := strings.Replace(good, "        events:\n", refuseLine+"        events:\n", 1)
@@ -173,6 +177,8 @@ func TestParseRefuses(t *testing.T) {
 	for name, edit := range map[string][2]string{
 		"absent unit":     {`unit: "°C"}}`, `unit: "°F"}}`},
 		"absent no value": {`value: 7, `, ``},
+		"absent NaN":      {`value: 7,`, `value: .nan,`},
+		"absent Inf":      {`value: 7,`, `value: -.inf,`},
 		"absent catalog":  {`absent:`, `catalog: true, absent:`},
 		"absent desc":     {`from: extra.min_temp`, `from: desc.min`},
 	} {
@@ -222,6 +228,9 @@ func FuzzParse(f *testing.F) {
 	f.Add([]byte("platform: x\nrows:\n  - id: a\n    verdict: \"unmappable: b\"\n"))
 	f.Add([]byte("{"))
 	f.Add([]byte(strings.Replace(good, `enum: {"on": true}`, `enum: {"on": true, "off": null}`, 1)))
+	f.Add([]byte(strings.Replace(good, "{attribute: A, const: 1}", absentInitial, 1)))
+	f.Add([]byte(strings.Replace(good, "{attribute: A, const: 1}", strings.Replace(absentInitial, "value: 7", "value: .nan", 1), 1)))
+	f.Add([]byte(strings.Replace(good, "        events:\n", refuseLine+"        events:\n", 1)))
 	f.Fuzz(func(t *testing.T, data []byte) {
 		file, err := Parse(data)
 		if err != nil {
