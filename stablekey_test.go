@@ -68,3 +68,34 @@ func TestStableKeyDefaultsToKey(t *testing.T) {
 		t.Errorf("without the option a rename kept the stable key %v", plain.Endpoints[0].Options.StableKey)
 	}
 }
+
+// TestExportedStableKeyIsMapsKey: StableKey returns the stable key Map
+// assigns the endpoint, with and without Options.StableKey (an identity,
+// and an empty one), and with and without the device's UID.
+func TestExportedStableKeyIsMapsKey(t *testing.T) {
+	noUID := &model.Device{Name: model.L("No UID")}
+	for _, dev := range []*model.Device{testDevice, noUID, nil} {
+		for _, opts := range [][]hamapping.Options{nil, {{StableKey: stableKey}}, {{StableKey: stableKey}, {}}} {
+			for _, e := range []model.Entity{
+				registry("switch.plug", "0f3c"),
+				entity("switch.plain", hacatalog.PlatformSwitch, model.Description{}),
+			} {
+				p, _ := hamapping.Map(dev, []model.Entity{e}, opts...)
+				if len(p.Endpoints) != 1 {
+					t.Fatalf("%s: %d endpoints; want 1", e.Key(), len(p.Endpoints))
+				}
+				got := hamapping.StableKey(dev, e, opts...)
+				if p.Endpoints[0].Options.StableKey != got {
+					t.Errorf("device %v, %d options, %s: StableKey %q, Map %v", dev.UID(), len(opts), e.Key(), got, p.Endpoints[0].Options.StableKey)
+				}
+			}
+		}
+	}
+	if got, want := hamapping.StableKey(testDevice, registry("switch.plug", "0f3c"), hamapping.Options{StableKey: stableKey}),
+		device.StringKey(testDevice.UID()+"/0f3c"); got != want {
+		t.Errorf("StableKey %q; want %q", got, want)
+	}
+	if got := hamapping.StableKey(nil, registry("switch.plug", "0f3c")); got != "switch.plug" {
+		t.Errorf("StableKey without a device %q; want the Key", got)
+	}
+}

@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `StableKey(dev, e, opts...)`: the stable key `Map` gives an entity's
+  endpoint (`Endpoint.Options.StableKey`) — the device UID, `/` and
+  `Options.StableKey`'s identity or the entity's key — so a consumer can key
+  what it keeps about an endpoint without a plan. `Map` derives its keys
+  through it, with the same options merge (#40).
+
 ### Changed
 
 - go-fabric `v0.27.0` (was `v0.26.0`). No API change here and no other

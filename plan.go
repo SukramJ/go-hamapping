@@ -175,18 +175,7 @@ type Options struct {
 // row does not ride. opts is at most one [Options]; a later one's
 // non-nil fields override an earlier one's.
 func Map(dev *model.Device, entities []model.Entity, opts ...Options) (*Plan, []Verdict) {
-	p := &Plan{Device: dev, bindings: map[string]*binding{}, devices: map[string]*device.Device{}}
-	for _, o := range opts {
-		if o.StableKey != nil {
-			p.opts.StableKey = o.StableKey
-		}
-		if o.Name != nil {
-			p.opts.Name = o.Name
-		}
-		if o.Ports != nil {
-			p.opts.Ports = o.Ports
-		}
-	}
+	p := &Plan{Device: dev, opts: mergeOptions(opts), bindings: map[string]*binding{}, devices: map[string]*device.Device{}}
 	verdicts := make([]Verdict, 0, len(entities))
 	type pending struct {
 		b *binding
@@ -246,6 +235,49 @@ func Map(dev *model.Device, entities []model.Entity, opts ...Options) (*Plan, []
 		verdicts[r.v].DeviceType = uint16(primary.Type.ID)
 	}
 	return p, verdicts
+}
+
+// mergeOptions is the [Options] Map and [StableKey] take from opts: a
+// later one's non-nil fields override an earlier one's.
+func mergeOptions(opts []Options) Options {
+	var m Options
+	for _, o := range opts {
+		if o.StableKey != nil {
+			m.StableKey = o.StableKey
+		}
+		if o.Name != nil {
+			m.Name = o.Name
+		}
+		if o.Ports != nil {
+			m.Ports = o.Ports
+		}
+	}
+	return m
+}
+
+// StableKey is the stable key [Map] gives the endpoint of entity e of
+// dev (its Endpoint.Options.StableKey), with the same opts: dev's UID,
+// "/" and the entity's identity — [Options].StableKey's result, or the
+// entity's Key when the option is nil or returns "". Without a device, or
+// with a device without a UID, it is the identity alone. A consumer keys
+// what it keeps about an endpoint by it before or without a [Plan]. e is
+// not nil.
+func StableKey(dev *model.Device, e model.Entity, opts ...Options) device.StringKey {
+	return device.StringKey(stableKey(dev, e, mergeOptions(opts)))
+}
+
+// stableKey is [StableKey] with merged options.
+func stableKey(dev *model.Device, e model.Entity, o Options) string {
+	stable := e.Key()
+	if o.StableKey != nil {
+		if id := o.StableKey(e); id != "" {
+			stable = id
+		}
+	}
+	if uid := dev.UID(); uid != "" { // UID is "" for a nil device
+		return uid + "/" + stable
+	}
+	return stable
 }
 
 // find returns the first row of the entity's platform that matches it,
@@ -383,15 +415,7 @@ func (p *Plan) options(e model.Entity) device.Options {
 		devName, vendor, uid = p.Device.Name.Default, p.Device.Manufacturer, p.Device.UID()
 	}
 	key := e.Key()
-	stable := key
-	if p.opts.StableKey != nil {
-		if id := p.opts.StableKey(e); id != "" {
-			stable = id
-		}
-	}
-	if uid != "" {
-		stable = uid + "/" + stable
-	}
+	stable := stableKey(p.Device, e, p.opts)
 	name := e.Desc().Name.Default
 	verbatim := false
 	if p.opts.Name != nil {
