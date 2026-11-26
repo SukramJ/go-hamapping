@@ -248,9 +248,14 @@ func unitOf(e model.Entity, v *Value) string {
 
 // convert runs the pipeline of v over x for the entity's unit.
 func convert(e model.Entity, v *Value, x float64) (float64, bool) {
+	return convertIn(e, v, x, unitOf(e, v))
+}
+
+// convertIn runs the pipeline of v over x stated in unit.
+func convertIn(e model.Entity, v *Value, x float64, unit string) (float64, bool) {
 	lin := v.Linear
 	if v.Units != nil {
-		u, ok := v.Units[unitOf(e, v)]
+		u, ok := v.Units[unit]
 		if !ok {
 			return 0, false
 		}

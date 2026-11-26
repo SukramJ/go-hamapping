@@ -55,6 +55,15 @@ func TestParse(t *testing.T) {
 	if v, ok := f.Rows[0].Clusters[0].Attributes[0].Enum["off"]; !ok || v != nil {
 		t.Fatalf("enum off %v %v", v, ok)
 	}
+	// An initial value from extra.<key> may name the source's default for
+	// an entity that states none, in one of its units.
+	f, err = Parse([]byte(strings.Replace(good, "{attribute: A, const: 1}", absentInitial, 1)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a := f.Rows[0].Clusters[0].Initial[0].Absent; a == nil || *a.Value != 7 || a.Unit != "°C" {
+		t.Fatalf("absent %+v", a)
+	}
 	// A handle may refuse a value with a status, with or without an if.
 	for _, refuse := range []string{refuseLine, "          - handle: On\n            refuse: FAILURE\n"} {
 		f, err = Parse([]byte(strings.Replace(good, "        events:\n", refuse+"        events:\n", 1)))
@@ -66,6 +75,9 @@ func TestParse(t *testing.T) {
 		}
 	}
 }
+
+// absentInitial is an initial value with the source's default.
+const absentInitial = `{attribute: A, from: extra.min_temp, units: {"°C": {scale: 100}}, absent: {value: 7, unit: "°C"}}`
 
 // refuseLine is a handle that refuses a value, added to good's commands.
 const refuseLine = "          - handle: Off\n            if: {field: X, not_in: [\"1\"]}\n            refuse: FAILURE\n"
@@ -141,6 +153,23 @@ func TestParseRefuses(t *testing.T) {
 			withRefuse := strings.Replace(good, "        events:\n", refuseLine+"        events:\n", 1)
 			src := strings.Replace(withRefuse, edit[0], edit[1], 1)
 			if src == withRefuse {
+				t.Fatalf("edit %q does not apply", edit[0])
+			}
+			if _, err := Parse([]byte(src)); err == nil {
+				t.Fatal("parsed")
+			}
+		})
+	}
+	for name, edit := range map[string][2]string{
+		"absent unit":     {`unit: "°C"}}`, `unit: "°F"}}`},
+		"absent no value": {`value: 7, `, ``},
+		"absent catalog":  {`absent:`, `catalog: true, absent:`},
+		"absent desc":     {`from: extra.min_temp`, `from: desc.min`},
+	} {
+		t.Run(name, func(t *testing.T) {
+			withAbsent := strings.Replace(good, "{attribute: A, const: 1}", absentInitial, 1)
+			src := strings.Replace(withAbsent, edit[0], edit[1], 1)
+			if src == withAbsent {
 				t.Fatalf("edit %q does not apply", edit[0])
 			}
 			if _, err := Parse([]byte(src)); err == nil {

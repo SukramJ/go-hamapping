@@ -547,6 +547,9 @@ func (g *gen) value(v *rowfile.Value, enumExpr func(string) string) string {
 	if v.Catalog {
 		parts = append(parts, "Catalog: true")
 	}
+	if v.Absent != nil {
+		parts = append(parts, fmt.Sprintf("Absent: &Quantity{Value: %s, Unit: %q}", float(*v.Absent.Value), v.Absent.Unit))
+	}
 	return "Value{" + strings.Join(parts, ", ") + "}"
 }
 

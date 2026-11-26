@@ -102,17 +102,32 @@ func TestClimateFanModesWithoutPower(t *testing.T) {
 
 // TestSetpointBoundsMappableBuilds is the standing guard of HR-P2-adpt-43:
 // a climate or water_heater entity Map calls mappable builds for every
-// pair of min_temp and max_temp; one whose min_temp is above its max_temp
-// is unmappable with a reason, not swapped.
-//
-// Known gaps, left out of the matrix until a fact note decides them (C8
-// report, questions): one bound stated and the other beyond go-fabric's
-// default for the missing one (min 50 alone, max 5 alone), and heat_cool /
-// auto with a range narrower than go-fabric's deadband (20..20, 20..21).
+// pair of min_temp and max_temp, a missing bound read as Home Assistant's
+// default for it; one whose min_temp is above its max_temp is unmappable
+// with a reason, not swapped, and so is a heat_cool one whose span is
+// below the thermostat's deadband.
 func TestSetpointBoundsMappableBuilds(t *testing.T) {
 	bounds := map[string][][2]any{
-		"":   {{nil, nil}, {7, 30}, {30, 7}, {20, 20}, {20, 23}, {20.5, 20}, {40, 65}, {65, 40}, {nil, 25}, {15, nil}, {-10, -20}},
-		"°F": {{nil, nil}, {45, 86}, {86, 45}, {68, 68}, {60, 80}, {68.5, 68}, {110, 140}, {140, 110}, {50, nil}},
+		"": {
+			{nil, nil},
+			{7, 30},
+			{30, 7},
+			{20, 20},
+			{20, 21},
+			{20, 22},
+			{20, 23},
+			{20.5, 20},
+			{40, 65},
+			{65, 40},
+			{nil, 25},
+			{15, nil},
+			{-10, -20},
+			{50, nil},
+			{nil, 5},
+			{34, nil},
+			{nil, 8},
+		},
+		"°F": {{nil, nil}, {45, 86}, {86, 45}, {68, 68}, {60, 80}, {68.5, 68}, {110, 140}, {140, 110}, {50, nil}, {122, nil}, {nil, 40}},
 	}
 	shapes := []struct {
 		p     hacatalog.Platform
@@ -129,9 +144,6 @@ func TestSetpointBoundsMappableBuilds(t *testing.T) {
 	for _, s := range shapes {
 		for _, unit := range []string{"", "°F"} {
 			for _, b := range bounds[unit] {
-				if m, _ := s.extra["modes"].([]string); (b == [2]any{20, 20} || b == [2]any{68, 68}) && len(m) == 5 {
-					continue // the deadband gap above
-				}
 				x := map[string]any{}
 				for k, v := range s.extra {
 					x[k] = v
@@ -166,4 +178,57 @@ func toF(v any) float64 {
 		return x
 	}
 	return 0
+}
+
+// TestSetpointBoundsRefused: the shapes go-fabric cannot build are
+// unmappable with a reason naming the bounds — a missing bound read as
+// Home Assistant's default (climate 7 / 35 °C, water_heater 110 / 140 °F),
+// compared as the int16 go-fabric is given — and a heat_cool span of at
+// least the 2.0 °C deadband is mappable.
+func TestSetpointBoundsRefused(t *testing.T) {
+	heatCool := map[string]any{"modes": []string{"off", "heat", "cool", "heat_cool"}}
+	for _, c := range []struct {
+		p        hacatalog.Platform
+		unit     string
+		extra    map[string]any
+		min, max any
+		reason   string // "" for mappable
+	}{
+		{hacatalog.PlatformClimate, "", map[string]any{"modes": []string{"heat"}}, 50, nil, "min_temp 50 is above max_temp 35 °C (Home Assistant's default)"},
+		{hacatalog.PlatformClimate, "", map[string]any{"modes": []string{"cool"}}, nil, 5, "min_temp 7 °C (Home Assistant's default) is above max_temp 5"},
+		{hacatalog.PlatformClimate, "", map[string]any{"modes": []string{"heat"}}, 15, nil, ""},
+		{"water_heater", "", map[string]any{}, nil, 25, "min_temp 110 °F (Home Assistant's default) is above max_temp 25"},
+		{"water_heater", "°F", map[string]any{}, nil, 120, ""},
+		{hacatalog.PlatformClimate, "", heatCool, 20, 20, "min_temp 20 and max_temp 20 are closer than the thermostat's 2.0 °C heat/cool deadband"},
+		{hacatalog.PlatformClimate, "", heatCool, 20, 21.99, "min_temp 20 and max_temp 21.99 are closer than the thermostat's 2.0 °C heat/cool deadband"},
+		{hacatalog.PlatformClimate, "", heatCool, 20, 21.996, ""}, // 2200 as go-fabric is given it
+		{hacatalog.PlatformClimate, "", heatCool, 34, nil, "min_temp 34 and max_temp 35 °C (Home Assistant's default) are closer than the thermostat's 2.0 °C heat/cool deadband"},
+		{hacatalog.PlatformClimate, "", map[string]any{"modes": []string{"heat", "cool"}}, 20, 20, ""}, // no heat_cool, no AutoMode
+	} {
+		x := map[string]any{}
+		for k, v := range c.extra {
+			x[k] = v
+		}
+		if c.min != nil {
+			x["min_temp"] = c.min
+		}
+		if c.max != nil {
+			x["max_temp"] = c.max
+		}
+		p, v := hamapping.Map(testDevice, []model.Entity{entity("e", c.p, model.Description{Unit: model.Unit(c.unit), Extra: x})})
+		if c.reason != "" {
+			if v[0].State != eligibility.StateUnmappable || v[0].Reason != c.reason || len(p.Endpoints) != 0 {
+				t.Errorf("%s %v %v..%v: %+v, want unmappable %q", c.p, c.extra, c.min, c.max, v[0], c.reason)
+			}
+			continue
+		}
+		if v[0].State == eligibility.StateUnmappable {
+			t.Errorf("%s %v %v..%v: unmappable: %s", c.p, c.extra, c.min, c.max, v[0].Reason)
+			continue
+		}
+		if _, err := p.Build(context.Background()); err != nil {
+			t.Errorf("%s %v %v..%v: refused: %v", c.p, c.extra, c.min, c.max, err)
+		}
+		p.Close()
+	}
 }

@@ -52,6 +52,18 @@ All notable changes to this project are documented here. The format follows
   Rollershade / RollerShade with Lift alone and TiltBlindLift / Unknown with
   Tilt (was Unknown / Unknown); only the tilting window keeps a caveat
   (#44).
+- `climate` / `water_heater`: a missing `min_temp` or `max_temp` is read
+  as Home Assistant's own default for the entity — 7 / 35 °C for a climate,
+  110 / 140 °F for a water heater — instead of go-fabric's Thermostat
+  default (the row format's new `absent` value). `Map` calls such an entity
+  Unmappable, with a reason naming both bounds, when go-fabric could not
+  build its setpoint limits: the lower above the upper (now also when one
+  of them is the default; compared as the int16 hundredths go-fabric is
+  given), or, with the hvac mode `heat_cool`, a span below the 2.0 °C
+  heat/cool deadband. Before, both shapes were mappable and failed
+  `Plan.Build`. A climate with `min_temp` alone now gets AbsMax 35 °C
+  (was go-fabric's 30 °C); a water heater with `max_temp` below 43.33 °C
+  alone is Unmappable, as the Home Assistant entity states (#45).
 - The row format has `refuse: <status>` on a `handle`: the command is
   answered with that Interaction Model status (`FAILURE`) when its `if`
   holds, and nothing is handed out (`docs/rows.md`) (#44).

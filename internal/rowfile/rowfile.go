@@ -207,6 +207,16 @@ type Value struct {
 	// for a command value.
 	Enum    map[string]any `yaml:"enum"`
 	Catalog bool           `yaml:"catalog"`
+	// Absent is the value an attribute mapping reads when the entity
+	// states no extra.<key>: the source's own default, in the unit the
+	// source states it in (a key of Units), cited by the row.
+	Absent *Quantity `yaml:"absent"`
+}
+
+// Quantity is a number in a unit.
+type Quantity struct {
+	Value *float64 `yaml:"value"`
+	Unit  string   `yaml:"unit"`
 }
 
 // Linear is a linear conversion.
@@ -712,6 +722,14 @@ func (v *Value) check(command bool) error {
 	}
 	if v.Digits < 0 || v.Digits > 9 {
 		return fmt.Errorf("digits %d", v.Digits)
+	}
+	if a := v.Absent; a != nil {
+		if command || !strings.HasPrefix(v.From, "extra.") || v.Catalog {
+			return errors.New("absent: an attribute mapping's from extra.<key>, without catalog")
+		}
+		if _, ok := v.Units[a.Unit]; !ok || a.Value == nil {
+			return fmt.Errorf("absent: a value in one of the units, not %q", a.Unit)
+		}
 	}
 	return nil
 }

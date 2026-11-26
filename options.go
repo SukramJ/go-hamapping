@@ -91,7 +91,7 @@ func unmaterializable(e model.Entity, row *Row) string {
 	for ci := range row.Clusters {
 		c := &row.Clusters[ci]
 		if c.ID == thermostatdef.ClusterID {
-			if why := invertedBounds(e); why != "" {
+			if why := setpointBounds(e, row, ci); why != "" {
 				return why
 			}
 		}
@@ -105,23 +105,75 @@ func unmaterializable(e model.Entity, row *Row) string {
 	return ""
 }
 
-// invertedBounds names a Thermostat entity that states a min_temp above
-// its max_temp: go-fabric cannot fix such
-// setpoint limits and refuses the device (HR-P2-adpt-43). The bounds are
-// not swapped: which one is wrong is the source's to say.
-func invertedBounds(e model.Entity) string {
-	x := e.Desc().Extra
-	lo, okLo := x["min_temp"]
-	hi, okHi := x["max_temp"]
-	if !okLo || !okHi {
-		return ""
+// autoDeadband is the heat/cool deadband go-fabric's Thermostat server
+// keeps under AutoMode, in 0.01 °C: its MinSetpointDeadBand default 20
+// (0.1 °C) times ten (go-fabric cluster/thermo/thermostat_server.go:135-139
+// and setpoints.go:65-67 at v0.27.0). The rows declare no
+// MinSetpointDeadBand.
+const autoDeadband = 200
+
+// setpointBounds names why a Thermostat entity's setpoint limits cannot be
+// built, or returns "". The limits are the row's AbsMin/AbsMax
+// SetpointLimit mappings of cluster ci, a missing min_temp or max_temp
+// read as Home Assistant's default for it (the mapping's Absent), each
+// compared as the int16 go-fabric is given. go-fabric refuses the device
+// (cluster/thermo/setpoints.go:315-352, 449-554 at v0.27.0) when, on a
+// served side, the lower limit is above the upper — the bounds are not
+// swapped, which one is wrong is the source's to say — and, with
+// AutoMode, when the span is below the deadband: a span of at least the
+// deadband always repairs, a narrower one never does.
+func setpointBounds(e model.Entity, row *Row, ci int) string {
+	b := &binding{entity: e, row: row}
+	c := &row.Clusters[ci]
+	auto := false
+	for _, f := range c.Features {
+		if f.Name == "AutoMode" && b.match(f.When) {
+			auto = true
+		}
 	}
-	l, okL := toFloat(lo)
-	h, okH := toFloat(hi)
-	if okL && okH && l > h {
-		return fmt.Sprintf("min_temp %v is above max_temp %v", lo, hi)
+	for _, side := range []string{"Heat", "Cool"} {
+		lo, okLo := b.limit(c, "AbsMin"+side+"SetpointLimit")
+		hi, okHi := b.limit(c, "AbsMax"+side+"SetpointLimit")
+		if !okLo || !okHi {
+			continue
+		}
+		switch {
+		case lo.n > hi.n:
+			return fmt.Sprintf("min_temp %s is above max_temp %s", lo.text, hi.text)
+		case auto && int(hi.n)-int(lo.n) < autoDeadband:
+			return fmt.Sprintf("min_temp %s and max_temp %s are closer than the thermostat's 2.0 °C heat/cool deadband", lo.text, hi.text)
+		}
 	}
 	return ""
+}
+
+// boundValue is a setpoint limit as go-fabric is given it, and as the
+// entity states it for a reason.
+type boundValue struct {
+	n    int16
+	text string
+}
+
+// limit is the value of the cluster's initial mapping of attr that
+// applies to the entity.
+func (b *binding) limit(c *Cluster, attr string) (boundValue, bool) {
+	for i := range c.Initial {
+		a := &c.Initial[i]
+		if a.Name != attr || !b.applies(nil, a) {
+			continue
+		}
+		y, ok := b.attrNumber(nil, a)
+		if !ok {
+			return boundValue{}, false
+		}
+		raw, stated := b.attr(nil, a)
+		text := fmt.Sprint(raw)
+		if q := a.Value.Absent; !stated && q != nil {
+			text = fmt.Sprintf("%v %s (Home Assistant's default)", q.Value, q.Unit)
+		}
+		return boundValue{n: conv[int16](y), text: text}, true
+	}
+	return boundValue{}, false
 }
 
 // checkOptions is the check of one materializer's list.

@@ -223,6 +223,16 @@ type Value struct {
 	// Catalog marks an extra.<key> whose absence reads the catalog's
 	// default for the key.
 	Catalog bool
+	// Absent is the value an attribute mapping reads when the entity
+	// states no extra.<key>: the source's own default, converted from the
+	// unit it is stated in rather than the entity's.
+	Absent *Quantity
+}
+
+// Quantity is a number in a unit (a key of [Value.Units]).
+type Quantity struct {
+	Value float64
+	Unit  string
 }
 
 // Linear is the linear part of a conversion.

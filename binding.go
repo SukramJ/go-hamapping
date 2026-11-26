@@ -151,18 +151,8 @@ func features(e model.Entity) []string {
 // value). ok is false when the mapping does not apply or the value is
 // absent.
 func (b *binding) attr(st *model.State, a *Attr) (any, bool) {
-	if a.When != nil && !b.match(a.When) {
+	if !b.applies(st, a) {
 		return nil, false
-	}
-	if len(a.StateIn) > 0 {
-		if st == nil {
-			return nil, false
-		}
-		v, _ := lookupState(*st, fromState)
-		s, _ := toText(v)
-		if !slices.Contains(a.StateIn, s) {
-			return nil, false
-		}
 	}
 	if a.Value.HasConst {
 		return a.Value.Const, true
@@ -174,6 +164,25 @@ func (b *binding) attr(st *model.State, a *Attr) (any, bool) {
 		return lookupState(*st, a.Value.From)
 	}
 	return describe(b.entity, a.Value.From)
+}
+
+// applies reports whether attribute mapping a applies to the entity and,
+// with a StateIn, to the state.
+func (b *binding) applies(st *model.State, a *Attr) bool {
+	if a.When != nil && !b.match(a.When) {
+		return false
+	}
+	if len(a.StateIn) > 0 {
+		if st == nil {
+			return false
+		}
+		v, _ := lookupState(*st, fromState)
+		s, _ := toText(v)
+		if !slices.Contains(a.StateIn, s) {
+			return false
+		}
+	}
+	return true
 }
 
 func (b *binding) pick(ci, ai int, initial bool) *Attr {
@@ -189,9 +198,18 @@ func (b *binding) pick(ci, ai int, initial bool) *Attr {
 
 // number is the converted value of attribute mapping ai of cluster ci.
 func (b *binding) number(st *model.State, ci, ai int) (float64, bool) {
-	a := b.pick(ci, ai, st == nil)
+	return b.attrNumber(st, b.pick(ci, ai, st == nil))
+}
+
+// attrNumber is the converted value of attribute mapping a; an
+// extra.<key> the entity does not state reads the mapping's Absent value,
+// converted from its own unit.
+func (b *binding) attrNumber(st *model.State, a *Attr) (float64, bool) {
 	raw, ok := b.attr(st, a)
 	if !ok {
+		if q := a.Value.Absent; q != nil && b.applies(st, a) {
+			return convertIn(b.entity, &a.Value, q.Value, q.Unit)
+		}
 		return 0, false
 	}
 	x, ok := toFloat(raw)
