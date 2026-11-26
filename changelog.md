@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- go-fabric `v0.27.0` (was `v0.26.0`). No API change here and no other
+  module in the graph moved; the generated rows are unchanged. One of its
+  changes reaches a plan: `node` refuses an endpoint whose tree holds a part
+  whose key is nil or renders empty with `node.ErrNoStableKey` at `Add` and
+  `Replace`.
+
 ## [0.8.0] - 2026-11-26
 
 ### Changed
