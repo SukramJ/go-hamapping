@@ -8,8 +8,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/SukramJ/go-hamapping/internal/gen"
-	"github.com/SukramJ/go-hamapping/internal/rowfile"
+	"sukramj.dev/go-hamapping/internal/gen"
+	"sukramj.dev/go-hamapping/internal/rowfile"
 )
 
 // TestGeneratedRowsAreCurrent fails when rows_gen.go (the rows and the

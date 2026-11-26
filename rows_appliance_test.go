@@ -6,8 +6,8 @@ package hamapping_test
 import (
 	"testing"
 
-	hacatalog "github.com/SukramJ/go-ha-catalog"
-	"github.com/SukramJ/go-hamqtt/model"
+	hacatalog "sukramj.dev/go-ha-catalog"
+	"sukramj.dev/go-hamqtt/model"
 	"thingfabric.dev/go-fabric/cluster/spec"
 	rvcopdef "thingfabric.dev/go-fabric/cluster/spec/rvcoperationalstate"
 	rvcrunmodedef "thingfabric.dev/go-fabric/cluster/spec/rvcrunmode"
@@ -18,7 +18,7 @@ import (
 	"thingfabric.dev/go-fabric/eligibility"
 	"thingfabric.dev/go-fabric/fabrictest"
 
-	"github.com/SukramJ/go-hamapping"
+	"sukramj.dev/go-hamapping"
 )
 
 func TestVacuum(t *testing.T) {

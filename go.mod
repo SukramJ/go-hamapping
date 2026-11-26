@@ -1,11 +1,11 @@
-module github.com/SukramJ/go-hamapping
+module sukramj.dev/go-hamapping
 
 go 1.27.4
 
 require (
-	github.com/SukramJ/go-ha-catalog v0.3.2-0.20261024093528-d9582e022b8f
-	github.com/SukramJ/go-hamqtt v0.40.0
 	gopkg.in/yaml.v3 v3.0.1
+	sukramj.dev/go-ha-catalog v0.4.0
+	sukramj.dev/go-hamqtt v0.41.0
 	thingfabric.dev/go-fabric v0.26.0
 )
 

@@ -11,8 +11,8 @@ import (
 	"strings"
 	"sync"
 
-	hacatalog "github.com/SukramJ/go-ha-catalog"
-	"github.com/SukramJ/go-hamqtt/model"
+	hacatalog "sukramj.dev/go-ha-catalog"
+	"sukramj.dev/go-hamqtt/model"
 	colorcontroldef "thingfabric.dev/go-fabric/cluster/spec/colorcontrol"
 	"thingfabric.dev/go-fabric/contract"
 	"thingfabric.dev/go-fabric/device"

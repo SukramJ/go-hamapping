@@ -23,7 +23,7 @@ import (
 	"strings"
 )
 
-const module = "github.com/SukramJ/go-hamapping/"
+const module = "sukramj.dev/go-hamapping/"
 
 type block struct {
 	stmts   int

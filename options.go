@@ -10,7 +10,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/SukramJ/go-hamqtt/model"
+	"sukramj.dev/go-hamqtt/model"
 	modeselectdef "thingfabric.dev/go-fabric/cluster/spec/modeselect"
 	thermostatdef "thingfabric.dev/go-fabric/cluster/spec/thermostat"
 	"thingfabric.dev/go-fabric/contract"

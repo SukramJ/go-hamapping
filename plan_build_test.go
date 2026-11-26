@@ -9,9 +9,9 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/SukramJ/go-hamqtt/model"
+	"sukramj.dev/go-hamqtt/model"
 
-	"github.com/SukramJ/go-hamapping"
+	"sukramj.dev/go-hamapping"
 )
 
 // TestBuildError: a refused endpoint is a *BuildError naming the entity,

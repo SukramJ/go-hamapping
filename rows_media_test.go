@@ -6,7 +6,7 @@ package hamapping_test
 import (
 	"testing"
 
-	"github.com/SukramJ/go-hamqtt/model"
+	"sukramj.dev/go-hamqtt/model"
 	keypaddef "thingfabric.dev/go-fabric/cluster/spec/keypadinput"
 	levelcontroldef "thingfabric.dev/go-fabric/cluster/spec/levelcontrol"
 	playbackdef "thingfabric.dev/go-fabric/cluster/spec/mediaplayback"
@@ -16,7 +16,7 @@ import (
 	"thingfabric.dev/go-fabric/eligibility"
 	"thingfabric.dev/go-fabric/fabrictest"
 
-	"github.com/SukramJ/go-hamapping"
+	"sukramj.dev/go-hamapping"
 )
 
 func player(key, class string, features ...string) model.Entity {

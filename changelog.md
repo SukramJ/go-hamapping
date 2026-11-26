@@ -6,6 +6,17 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-26
+
+### Changed
+
+- **Breaking:** the module path is now `sukramj.dev/go-hamapping` (was
+  `github.com/SukramJ/go-hamapping`). Update imports and `go.mod`; the vanity
+  path resolves to the same repository.
+- Dependencies moved to their vanity paths: `sukramj.dev/go-hamqtt` v0.41.0
+  and `sukramj.dev/go-ha-catalog` v0.4.0 (was a pseudo-version after v0.3.1).
+  The generated rows are unchanged.
+
 ## [0.7.1] - 2026-11-24
 
 ### Changed

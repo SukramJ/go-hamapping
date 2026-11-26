@@ -6,7 +6,7 @@ package hamapping_test
 import (
 	"testing"
 
-	"github.com/SukramJ/go-hamqtt/model"
+	"sukramj.dev/go-hamqtt/model"
 	airqualitydef "thingfabric.dev/go-fabric/cluster/spec/airquality"
 	booleanstatedef "thingfabric.dev/go-fabric/cluster/spec/booleanstate"
 	co2def "thingfabric.dev/go-fabric/cluster/spec/carbondioxideconcentrationmeasurement"
@@ -20,7 +20,7 @@ import (
 	"thingfabric.dev/go-fabric/device"
 	"thingfabric.dev/go-fabric/eligibility"
 
-	"github.com/SukramJ/go-hamapping"
+	"sukramj.dev/go-hamapping"
 )
 
 func TestSensorCarbonDioxide(t *testing.T) {

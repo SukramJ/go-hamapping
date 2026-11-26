@@ -12,8 +12,8 @@ import (
 	"testing"
 	"unicode/utf8"
 
-	hacatalog "github.com/SukramJ/go-ha-catalog"
-	"github.com/SukramJ/go-hamqtt/model"
+	hacatalog "sukramj.dev/go-ha-catalog"
+	"sukramj.dev/go-hamqtt/model"
 )
 
 // TestCut: cut keeps at most n bytes and never splits a character.
