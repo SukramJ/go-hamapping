@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-26
+
 ### What a host must do
 
 - Serve a new command method on `cover`: `MethodStopTilt` (`stop_tilt`)
