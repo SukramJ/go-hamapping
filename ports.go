@@ -53,15 +53,36 @@ func unservedVerdict(b *binding) Verdict {
 	}
 }
 
+// WebRTCSessionBounds is an optional interface of the consumer's host
+// object ([Options.Ports]) for a camera: the session bounds of its
+// WebRtcTransportProvider (go-fabric
+// cluster/spec/webrtctransportprovider/server_gen.go:314-339 at v0.27.0).
+// total bounds every session of the camera, perFabric the sessions of one
+// fabric; 0 is no bound. They are copied unchanged into the declaration,
+// and only together with the host's ProviderPort: a bound without the port
+// fails the build (device/options.go:297-316 at v0.27.0). A negative bound
+// fails [Plan.Build] with a [*BuildError] wrapping go-fabric's
+// camera.ErrNegativeMaxSessions (device/defaults_camera.go:147-151 at
+// v0.27.0); no relation between the two is checked, as go-fabric checks
+// none.
+type WebRTCSessionBounds interface {
+	WebRTCSessionBounds() (total, perFabric int)
+}
+
 // portsWebRTCProvider sets WebRtcTransportProvider's ProviderPort from
-// the host; the kit's server needs it (go-fabric
-// device/defaults_camera.go:147-151 at v0.15.5).
+// the host, and its session bounds when the host also implements
+// [WebRTCSessionBounds]; the kit's server needs the port (go-fabric
+// device/defaults_camera.go:147-160 at v0.27.0).
 func (b *binding) portsWebRTCProvider(d *webrtctransportproviderdef.Declare) bool {
-	p, ok := b.host().(webrtctransportproviderdef.ProviderPort)
+	h := b.host()
+	p, ok := h.(webrtctransportproviderdef.ProviderPort)
 	if !ok {
 		return false
 	}
 	d.ProviderPort = p
+	if sb, ok := h.(WebRTCSessionBounds); ok {
+		d.MaxSessions, d.MaxSessionsPerFabric = sb.WebRTCSessionBounds()
+	}
 	return true
 }
 

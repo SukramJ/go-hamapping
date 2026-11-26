@@ -20,6 +20,13 @@ All notable changes to this project are documented here. The format follows
   names the first whose addition is refused. When no rider isolates the
   refusal, and for a refused part, it is `Key`. A consumer drops `Owner` and
   maps the rest again. `Error()` is unchanged (#46).
+- `WebRTCSessionBounds`: an optional interface of the host object a
+  camera's `Options.Ports` returns. Its `WebRTCSessionBounds() (total,
+  perFabric int)` is copied unchanged into the WebRtcTransportProvider
+  declaration as `MaxSessions` and `MaxSessionsPerFabric` (0 is no bound),
+  only together with the host's `ProviderPort`; a negative bound fails
+  `Plan.Build` with a `*BuildError` wrapping go-fabric's
+  `camera.ErrNegativeMaxSessions` (#50).
 
 ### Changed
 
