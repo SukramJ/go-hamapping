@@ -1,0 +1,22 @@
+# The deprecation guard (make deprecated-check): staticcheck's SA1019
+# alone, over generated code and tests too. The main configuration
+# excludes generated files leniently (exclusions.generated: lax), so a
+# deprecated go-fabric identifier in rows_gen.go would pass it unseen.
+version: "2"
+run:
+  go: "1.27"
+  tests: true
+  allow-parallel-runners: true
+linters:
+  default: none
+  enable:
+    - staticcheck
+  settings:
+    staticcheck:
+      checks:
+        - SA1019
+  exclusions:
+    generated: disable
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

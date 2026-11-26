@@ -36,6 +36,13 @@ lint: fmt-check ## gofumpt check + golangci-lint + go mod tidy -diff + go mod ve
 	$(GO) mod tidy -diff
 	$(GO) mod verify
 
+# The main configuration excludes generated files leniently
+# (exclusions.generated: lax); this run is SA1019 alone with that exclusion
+# off, so a deprecated identifier in rows_gen.go or a test fails too.
+deprecated-check: ## fail on a deprecated identifier, generated code and tests included (SA1019)
+	golangci-lint config verify --config .golangci-deprecated.yaml
+	golangci-lint run --config .golangci-deprecated.yaml --timeout=5m ./...
+
 tidy-check: ## verify go.mod/go.sum are tidy and the module checksums verify
 	$(GO) mod tidy -diff
 	$(GO) mod verify
@@ -64,6 +71,6 @@ FUZZTIME ?= 10s
 fuzz-smoke: ## the fuzz target of the row loader, $(FUZZTIME)
 	$(GO) test -run '^$$' -fuzz '^FuzzParse$$' -fuzztime $(FUZZTIME) ./internal/rowfile/
 
-ci: build vet test lint ## everything the pipeline runs
+ci: build vet test lint deprecated-check ## everything the pipeline runs
 
-.PHONY: help setup build vet test race fmt fmt-check lint tidy-check vuln licenses generate cover cover-check fuzz-smoke ci
+.PHONY: help setup build vet test race fmt fmt-check lint deprecated-check tidy-check vuln licenses generate cover cover-check fuzz-smoke ci
