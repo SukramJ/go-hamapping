@@ -28,6 +28,11 @@ type binding struct {
 	// stable is the entity's stable key ([StableKey]), the order of the
 	// plan's endpoints and riders.
 	stable string
+	// decls are the declarations the binding contributed to its
+	// endpoint: a primary's own (its row's and the serial), a rider's
+	// added to its primary's. [Plan.Build] rebuilds from them to find
+	// the owner of a refused endpoint (BuildError.Owner).
+	decls []device.Declaration
 	// target is the device the row's clusters live on: the entity's own,
 	// or for a row that rides, its primary's.
 	target *device.Device

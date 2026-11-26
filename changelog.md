@@ -13,6 +13,13 @@ All notable changes to this project are documented here. The format follows
   `Options.StableKey`'s identity or the entity's key — so a consumer can key
   what it keeps about an endpoint without a plan. `Map` derives its keys
   through it, with the same options merge (#40).
+- `BuildError.Owner`: the key of the entity whose declarations go-fabric
+  refused — `Key` or one of `Riders`. It is measured, not parsed from
+  go-fabric's error: `Build` builds the refused endpoint again from the
+  primary's own declarations, then adds each rider's in `Riders` order, and
+  names the first whose addition is refused. When no rider isolates the
+  refusal, and for a refused part, it is `Key`. A consumer drops `Owner` and
+  maps the rest again. `Error()` is unchanged (#46).
 
 ### Changed
 

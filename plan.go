@@ -24,8 +24,9 @@ var ErrNotBuilt = errors.New("hamapping: plan not built")
 
 // BuildError is [Plan.Build]'s refusal of one endpoint: go-fabric refused
 // the device of entity Key (decided by Row), or its component device Part.
-// Riders are the entities riding on that endpoint, which lose it too. A
-// consumer takes it with errors.As, drops Key and maps the rest again;
+// Riders are the entities riding on that endpoint, which lose it too;
+// Owner names the one whose declarations were refused. A consumer takes it
+// with errors.As, drops Owner and maps the rest again;
 // Unwrap reaches go-fabric's error.
 type BuildError struct {
 	// Key is the entity's key, Row the row that decided.
@@ -35,6 +36,15 @@ type BuildError struct {
 	Part string
 	// Riders are the keys of the entities riding on the endpoint.
 	Riders []string
+	// Owner is the key of the entity whose declarations go-fabric
+	// refused: Key or one of Riders. It is measured, not read from Err:
+	// the endpoint is built again from the primary's own declarations
+	// alone — refused, Owner is Key — and then with each rider's added in
+	// Riders order; Owner is the first rider whose addition is refused.
+	// When no rider isolates the refusal (only the endpoint as a whole,
+	// or a change made to Endpoint.Declarations after Map, is refused)
+	// and for a refused Part, Owner is Key.
+	Owner string
 	// Err is go-fabric's error.
 	Err error
 }
@@ -230,7 +240,8 @@ func Map(dev *model.Device, entities []model.Entity, opts ...Options) (*Plan, []
 		primary := &p.Endpoints[0]
 		if m := r.b.row.RideMeasurement; m != nil {
 			r.b.measure = &measure{class: m.Class}
-			primary.Declarations = append(primary.Declarations, device.Measurement(r.b.measure))
+			r.b.decls = []device.Declaration{device.Measurement(r.b.measure)}
+			primary.Declarations = append(primary.Declarations, r.b.decls...)
 		} else {
 			decls := declarations(r.b)
 			if r.b.noPorts != "" {
@@ -238,6 +249,7 @@ func Map(dev *model.Device, entities []model.Entity, opts ...Options) (*Plan, []
 				verdicts[r.v] = unservedVerdict(r.b)
 				continue
 			}
+			r.b.decls = decls
 			primary.Declarations = append(primary.Declarations, decls...)
 		}
 		primary.Riders = append(primary.Riders, r.b.key)
@@ -367,10 +379,13 @@ func unconvertible(e model.Entity, row *Row) string {
 // endpoint is the endpoint of b's entity on its own device.
 func (p *Plan) endpoint(b *binding) Endpoint {
 	e := b.entity
+	// Clipped: a rider's declarations appended to the endpoint's list
+	// leave the binding's own untouched.
+	b.decls = slices.Clip(append(declarations(b), p.serial()...))
 	return Endpoint{
 		Key: b.key, Row: b.row.ID, Type: b.row.Type,
 		Options:      p.options(e),
-		Declarations: append(declarations(b), p.serial()...),
+		Declarations: b.decls,
 		Features:     features(e),
 		Bindings:     slices.Clone(e.Bindings()),
 	}
@@ -461,7 +476,7 @@ func (p *Plan) Build(_ context.Context) ([]*device.Device, error) {
 		ep := &p.Endpoints[i]
 		d, err := device.New(ep.Type, ep.Options, ep.Declarations...)
 		if err != nil {
-			return nil, &BuildError{Key: ep.Key, Row: ep.Row, Riders: slices.Clone(ep.Riders), Err: err}
+			return nil, &BuildError{Key: ep.Key, Row: ep.Row, Riders: slices.Clone(ep.Riders), Owner: p.owner(ep), Err: err}
 		}
 		if err := p.parts(d, ep); err != nil {
 			return nil, err
@@ -484,6 +499,35 @@ func (p *Plan) Build(_ context.Context) ([]*device.Device, error) {
 	return out, nil
 }
 
+// owner is BuildError.Owner of the refused endpoint ep. The probe builds
+// are safe to discard: device.New starts no goroutine — the device's
+// queue starts when a node runs it — and subscribes only the host ports
+// a declared CommodityTariff TimeSource holds, which no row declares
+// (go-fabric device/device.go:171-203, 206-288; device/lifecycle.go:141-155;
+// device/defaults_declared.go:351 at v0.27.0).
+func (p *Plan) owner(ep *Endpoint) string {
+	if len(ep.Riders) == 0 {
+		return ep.Key
+	}
+	decls := slices.Clone(p.bindings[ep.Key].decls)
+	if !builds(ep, decls) {
+		return ep.Key
+	}
+	for _, key := range ep.Riders {
+		decls = append(decls, p.bindings[key].decls...)
+		if !builds(ep, decls) {
+			return key
+		}
+	}
+	return ep.Key
+}
+
+// builds reports whether go-fabric builds ep's device from decls.
+func builds(ep *Endpoint, decls []device.Declaration) bool {
+	_, err := device.New(ep.Type, ep.Options, decls...)
+	return err == nil
+}
+
 // parts builds the component devices the endpoint's row requires and
 // adds them to d.
 func (p *Plan) parts(d *device.Device, ep *Endpoint) error {
@@ -502,7 +546,7 @@ func (p *Plan) parts(d *device.Device, ep *Endpoint) error {
 			err = d.AddPart(pd)
 		}
 		if err != nil {
-			return &BuildError{Key: ep.Key, Row: ep.Row, Part: part.Type.Name, Riders: slices.Clone(ep.Riders), Err: err}
+			return &BuildError{Key: ep.Key, Row: ep.Row, Part: part.Type.Name, Riders: slices.Clone(ep.Riders), Owner: ep.Key, Err: err}
 		}
 	}
 	return nil
