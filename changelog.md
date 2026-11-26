@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### What a host must do
+
+- Serve a new command method on `cover`: `MethodStopTilt` (`stop_tilt`)
+  calls `cover.stop_cover_tilt` without data; the payload is a constant.
+  A cover with STOP_TILT and no STOP now hands StopMotion out as this
+  method instead of answering it with success and handing out nothing; a
+  cover with STOP keeps `stop_cover` (#43).
+
 ### Added
 
 - `StableKey(dev, e, opts...)`: the stable key `Map` gives an entity's

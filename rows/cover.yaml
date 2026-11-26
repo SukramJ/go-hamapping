@@ -19,6 +19,7 @@ rows:
       - "go-fabric cluster/spec/windowcovering/definition_gen.go:104-128,273-283 @v0.25.0 (EndProductType and Type conformance: under LF & TL only TiltBlindLift, SheerShade, InteriorBlind, VerticalBlindStripCurtain, InteriorVenetianBlind, ExteriorVenetianBlind and Unknown)"
       - go-fabric cluster/cover/windowcovering_server.go:375-378,391-399 @v0.25.0 (Lift or Tilt required; Type and EndProductType checked against the FeatureMap)
       - "home-assistant/core homeassistant/components/cover/services.py:49-62 @2026.10.3 (set_cover_position requires SET_POSITION, stop_cover requires STOP)"
+      - "home-assistant/core homeassistant/components/cover/services.py:60-62,85-90 @2026.10.3 (stop_cover requires STOP, stop_cover_tilt requires STOP_TILT)"
       - home-assistant/core homeassistant/components/cover/const.py:44-54 @2026.10.3 (CoverEntityFeature OPEN 1, CLOSE 2, SET_POSITION 4, STOP 8, OPEN_TILT 16, CLOSE_TILT 32, STOP_TILT 64, SET_TILT_POSITION 128)
       - "home-assistant/core homeassistant/components/cover/services.py:35-45,72-82,93-100 @2026.10.3 (open_cover requires OPEN, close_cover CLOSE, open_cover_tilt OPEN_TILT, close_cover_tilt CLOSE_TILT, set_cover_tilt_position SET_TILT_POSITION)"
       - home-assistant/core homeassistant/components/switchbot/cover.py:176-181 @2026.10.3 (a tilt-only cover, device_class blind, features 240)
@@ -93,6 +94,10 @@ rows:
           - handle: StopMotion
             when: {features: {any: [STOP]}}
             raw: {from: extra.payload_stop, catalog: true}
+          - handle: StopMotion   # STOP_TILT without STOP: stop_cover_tilt; with both, stop_cover only
+            when: {features: {all: [STOP_TILT], none: [STOP]}}
+            method: stop_tilt
+            raw: {const: STOP}
           - handle: GoToLiftPercentage
             when: {features: {any: [SET_POSITION]}}
             method: set_position

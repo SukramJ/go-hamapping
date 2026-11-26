@@ -79,6 +79,7 @@ const (
 	MethodRunMode         = "run_mode"
 	MethodSelectOption    = "select_option"
 	MethodSetPosition     = "set_position"
+	MethodStopTilt        = "stop_tilt"
 	MethodTemperature     = "temperature"
 	MethodTemperatureHigh = "temperature_high"
 	MethodTemperatureLow  = "temperature_low"
@@ -92,7 +93,7 @@ const (
 )
 
 // methods are the method constants, sorted.
-var methods = []string{MethodCloseTilt, MethodCloseValve, MethodDirection, MethodFanMode, MethodGoHome, MethodKey, MethodMediaPause, MethodMediaPlay, MethodMediaStop, MethodMode, MethodOpenTilt, MethodOpenValve, MethodOperationMode, MethodOscillation, MethodPause, MethodPercentage, MethodPresetMode, MethodPress, MethodResume, MethodRunMode, MethodSelectOption, MethodSetPosition, MethodTemperature, MethodTemperatureHigh, MethodTemperatureLow, MethodTilt, MethodToggle, MethodTrigger, MethodTurnOff, MethodTurnOn, MethodVolumeLevel, MethodVolumeMute}
+var methods = []string{MethodCloseTilt, MethodCloseValve, MethodDirection, MethodFanMode, MethodGoHome, MethodKey, MethodMediaPause, MethodMediaPlay, MethodMediaStop, MethodMode, MethodOpenTilt, MethodOpenValve, MethodOperationMode, MethodOscillation, MethodPause, MethodPercentage, MethodPresetMode, MethodPress, MethodResume, MethodRunMode, MethodSelectOption, MethodSetPosition, MethodStopTilt, MethodTemperature, MethodTemperatureHigh, MethodTemperatureLow, MethodTilt, MethodToggle, MethodTrigger, MethodTurnOff, MethodTurnOn, MethodVolumeLevel, MethodVolumeMute}
 
 // rows is the table, in the order [Map] tries it.
 var rows = []Row{
@@ -1396,7 +1397,7 @@ var rows = []Row{
 		ID: "cover/window_covering", Platform: "cover",
 		When:  When{},
 		State: eligibility.StateMappable,
-		Cites: []string{"matter.js packages/model/src/standard/elements/window-covering-device.element.ts:24 @862ad75f (WindowCovering mandatory)", "matter.js packages/model/src/standard/resources/window-covering-cluster.resource.ts:39,98,116-118,180-199 @862ad75f (Type, EndProductType, CurrentPositionLiftPercent100ths; DownOrClose ends at 100.00%)", "go-fabric cluster/spec/windowcovering/definition_gen.go:104-128,273-283 @v0.25.0 (EndProductType and Type conformance: under LF & TL only TiltBlindLift, SheerShade, InteriorBlind, VerticalBlindStripCurtain, InteriorVenetianBlind, ExteriorVenetianBlind and Unknown)", "go-fabric cluster/cover/windowcovering_server.go:375-378,391-399 @v0.25.0 (Lift or Tilt required; Type and EndProductType checked against the FeatureMap)", "home-assistant/core homeassistant/components/cover/services.py:49-62 @2026.10.3 (set_cover_position requires SET_POSITION, stop_cover requires STOP)", "home-assistant/core homeassistant/components/cover/const.py:44-54 @2026.10.3 (CoverEntityFeature OPEN 1, CLOSE 2, SET_POSITION 4, STOP 8, OPEN_TILT 16, CLOSE_TILT 32, STOP_TILT 64, SET_TILT_POSITION 128)", "home-assistant/core homeassistant/components/cover/services.py:35-45,72-82,93-100 @2026.10.3 (open_cover requires OPEN, close_cover CLOSE, open_cover_tilt OPEN_TILT, close_cover_tilt CLOSE_TILT, set_cover_tilt_position SET_TILT_POSITION)", "home-assistant/core homeassistant/components/switchbot/cover.py:176-181 @2026.10.3 (a tilt-only cover, device_class blind, features 240)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/cover/behaviors/cover-window-covering-server.ts:67-111,242-258,283-297,385-395 @664575a (Type and EndProductType corrected by tilt; lift commands of a tilt-only cover go to tilt; open/close_cover_tilt without SET_TILT_POSITION)", "home-assistant/core homeassistant/helpers/service.py:750-760 @2026.10.3 (a call on a referenced entity without the feature raises ServiceNotSupported)", "go-fabric cluster/cover/windowcovering_server.go:144-158,624-634 @v0.18.0 (GoToLiftPercentage served on Lift without PositionAwareLift; openOrClose maps the percentage to open or close)", "matter.js packages/node/src/behaviors/window-covering/WindowCoveringServer.ts:576-590 @db021da0 (without positionAwareLift: LiftPercent100thsValue 0 opens, else closes)", "go-ha-catalog data/mqtt.json:1648-1912 (cover schema; payload_open/close/stop at 1756-1775, set_position_topic at 1816, tilt_command_topic at 1861)", "go-ha-catalog data/features.json:25-35 (cover feature flags)", "go-ha-catalog data/device_classes.json:38-49 (cover device classes)"},
+		Cites: []string{"matter.js packages/model/src/standard/elements/window-covering-device.element.ts:24 @862ad75f (WindowCovering mandatory)", "matter.js packages/model/src/standard/resources/window-covering-cluster.resource.ts:39,98,116-118,180-199 @862ad75f (Type, EndProductType, CurrentPositionLiftPercent100ths; DownOrClose ends at 100.00%)", "go-fabric cluster/spec/windowcovering/definition_gen.go:104-128,273-283 @v0.25.0 (EndProductType and Type conformance: under LF & TL only TiltBlindLift, SheerShade, InteriorBlind, VerticalBlindStripCurtain, InteriorVenetianBlind, ExteriorVenetianBlind and Unknown)", "go-fabric cluster/cover/windowcovering_server.go:375-378,391-399 @v0.25.0 (Lift or Tilt required; Type and EndProductType checked against the FeatureMap)", "home-assistant/core homeassistant/components/cover/services.py:49-62 @2026.10.3 (set_cover_position requires SET_POSITION, stop_cover requires STOP)", "home-assistant/core homeassistant/components/cover/services.py:60-62,85-90 @2026.10.3 (stop_cover requires STOP, stop_cover_tilt requires STOP_TILT)", "home-assistant/core homeassistant/components/cover/const.py:44-54 @2026.10.3 (CoverEntityFeature OPEN 1, CLOSE 2, SET_POSITION 4, STOP 8, OPEN_TILT 16, CLOSE_TILT 32, STOP_TILT 64, SET_TILT_POSITION 128)", "home-assistant/core homeassistant/components/cover/services.py:35-45,72-82,93-100 @2026.10.3 (open_cover requires OPEN, close_cover CLOSE, open_cover_tilt OPEN_TILT, close_cover_tilt CLOSE_TILT, set_cover_tilt_position SET_TILT_POSITION)", "home-assistant/core homeassistant/components/switchbot/cover.py:176-181 @2026.10.3 (a tilt-only cover, device_class blind, features 240)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/cover/behaviors/cover-window-covering-server.ts:67-111,242-258,283-297,385-395 @664575a (Type and EndProductType corrected by tilt; lift commands of a tilt-only cover go to tilt; open/close_cover_tilt without SET_TILT_POSITION)", "home-assistant/core homeassistant/helpers/service.py:750-760 @2026.10.3 (a call on a referenced entity without the feature raises ServiceNotSupported)", "go-fabric cluster/cover/windowcovering_server.go:144-158,624-634 @v0.18.0 (GoToLiftPercentage served on Lift without PositionAwareLift; openOrClose maps the percentage to open or close)", "matter.js packages/node/src/behaviors/window-covering/WindowCoveringServer.ts:576-590 @db021da0 (without positionAwareLift: LiftPercent100thsValue 0 opens, else closes)", "go-ha-catalog data/mqtt.json:1648-1912 (cover schema; payload_open/close/stop at 1756-1775, set_position_topic at 1816, tilt_command_topic at 1861)", "go-ha-catalog data/features.json:25-35 (cover feature flags)", "go-ha-catalog data/device_classes.json:38-49 (cover device classes)"},
 		Type:  device.WindowCoveringType(),
 		Caveats: []Caveat{
 			{When: When{DeviceClass: []string{"garage", "gate", "door", "damper", "window"}}, Reason: "WindowCovering has no type for a {device_class}: Type and EndProductType are Unknown"},
@@ -1427,6 +1428,7 @@ var rows = []Row{
 					{Kind: "handle", On: []string{"DownOrClose"}, Method: "tilt", Raw: &Value{Const: float64(0), HasConst: true}, When: &When{Features: &Set{All: []string{"SET_TILT_POSITION"}, None: []string{"OPEN", "CLOSE", "SET_POSITION"}}}},
 					{Kind: "handle", On: []string{"DownOrClose"}, Method: "close_tilt", Raw: &Value{Const: "CLOSE", HasConst: true}, When: &When{Features: &Set{Any: []string{"OPEN_TILT", "CLOSE_TILT"}, None: []string{"OPEN", "CLOSE", "SET_POSITION", "SET_TILT_POSITION"}}}},
 					{Kind: "handle", On: []string{"StopMotion"}, Raw: &Value{From: "extra.payload_stop", Catalog: true}, When: &When{Features: &Set{Any: []string{"STOP"}}}},
+					{Kind: "handle", On: []string{"StopMotion"}, Method: "stop_tilt", Raw: &Value{Const: "STOP", HasConst: true}, When: &When{Features: &Set{All: []string{"STOP_TILT"}, None: []string{"STOP"}}}},
 					{Kind: "handle", On: []string{"GoToLiftPercentage"}, Method: "set_position", Raw: &Value{Field: "LiftPercent100thsValue", Linear: Linear{Offset: 0, Scale: -0.01, Add: 100}}, When: &When{Features: &Set{Any: []string{"SET_POSITION"}}}},
 					{Kind: "handle", On: []string{"GoToLiftPercentage"}, Raw: &Value{From: "extra.payload_open", Catalog: true}, When: &When{Features: &Set{Any: []string{"OPEN", "CLOSE"}, None: []string{"SET_POSITION"}}}},
 					{Kind: "handle", On: []string{"GoToLiftPercentage"}, Raw: &Value{From: "extra.payload_close", Catalog: true}, When: &When{Features: &Set{Any: []string{"OPEN", "CLOSE"}, None: []string{"SET_POSITION"}}}},
@@ -1591,11 +1593,14 @@ var rows = []Row{
 							return resp, err
 						}
 					}
-					if b.match(&When{Features: &Set{Any: []string{"STOP"}}}) {
+					if b.match(&When{Features: &Set{Any: []string{"STOP"}}}) || b.match(&When{Features: &Set{All: []string{"STOP_TILT"}, None: []string{"STOP"}}}) {
 						d.HandleStopMotion = func(_ context.Context, req windowcoveringdef.StopMotionRequest) (resp struct{}, err error) {
 							f := func(string) (any, bool) { return nil, false }
 							if true {
 								b.emit(ci, 8, f)
+							}
+							if true {
+								b.emit(ci, 9, f)
 							}
 							return resp, err
 						}
@@ -1610,28 +1615,28 @@ var rows = []Row{
 								return nil, false
 							}
 							if true {
-								b.emit(ci, 9, f)
-							}
-							if slices.Contains([]uint16{uint16(0)}, req.LiftPercent100thsValue) {
 								b.emit(ci, 10, f)
 							}
-							if !slices.Contains([]uint16{uint16(0)}, req.LiftPercent100thsValue) {
+							if slices.Contains([]uint16{uint16(0)}, req.LiftPercent100thsValue) {
 								b.emit(ci, 11, f)
 							}
-							if slices.Contains([]uint16{uint16(0)}, req.LiftPercent100thsValue) {
+							if !slices.Contains([]uint16{uint16(0)}, req.LiftPercent100thsValue) {
 								b.emit(ci, 12, f)
 							}
-							if !slices.Contains([]uint16{uint16(0)}, req.LiftPercent100thsValue) {
+							if slices.Contains([]uint16{uint16(0)}, req.LiftPercent100thsValue) {
 								b.emit(ci, 13, f)
 							}
-							if true {
+							if !slices.Contains([]uint16{uint16(0)}, req.LiftPercent100thsValue) {
 								b.emit(ci, 14, f)
 							}
-							if slices.Contains([]uint16{uint16(0)}, req.LiftPercent100thsValue) {
+							if true {
 								b.emit(ci, 15, f)
 							}
-							if !slices.Contains([]uint16{uint16(0)}, req.LiftPercent100thsValue) {
+							if slices.Contains([]uint16{uint16(0)}, req.LiftPercent100thsValue) {
 								b.emit(ci, 16, f)
+							}
+							if !slices.Contains([]uint16{uint16(0)}, req.LiftPercent100thsValue) {
+								b.emit(ci, 17, f)
 							}
 							return resp, err
 						}
@@ -1646,13 +1651,13 @@ var rows = []Row{
 								return nil, false
 							}
 							if true {
-								b.emit(ci, 17, f)
-							}
-							if slices.Contains([]uint16{uint16(0)}, req.TiltPercent100thsValue) {
 								b.emit(ci, 18, f)
 							}
-							if !slices.Contains([]uint16{uint16(0)}, req.TiltPercent100thsValue) {
+							if slices.Contains([]uint16{uint16(0)}, req.TiltPercent100thsValue) {
 								b.emit(ci, 19, f)
+							}
+							if !slices.Contains([]uint16{uint16(0)}, req.TiltPercent100thsValue) {
+								b.emit(ci, 20, f)
 							}
 							return resp, err
 						}

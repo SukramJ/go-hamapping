@@ -180,3 +180,22 @@ func TestCoverLiftTilt(t *testing.T) {
 	expect(t, r.command(), hamapping.MethodTilt, "75")
 	r.noMore()
 }
+
+// TestCoverStopTilt: StopMotion of a cover with STOP_TILT and no STOP is
+// stop_cover_tilt (MethodStopTilt); with STOP and STOP_TILT it stays
+// stop_cover (the command binding's payload_stop).
+func TestCoverStopTilt(t *testing.T) {
+	// 112: tilt open, close and stop; 67: lift open and close, tilt stop.
+	for _, f := range []int{112, 67} {
+		t.Run(fmt.Sprint(f), func(t *testing.T) {
+			r := serve(t, cover("blind", f))
+			r.cover(windowcoveringdef.CmdStopMotion)
+			expect(t, r.command(), hamapping.MethodStopTilt, "STOP")
+			r.noMore()
+		})
+	}
+	r := serve(t, cover("blind", 1|2|8|64)) // STOP and STOP_TILT
+	r.cover(windowcoveringdef.CmdStopMotion)
+	expect(t, r.command(), "", "STOP")
+	r.noMore()
+}
