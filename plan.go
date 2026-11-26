@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/SukramJ/go-hamqtt/model"
+	"sukramj.dev/go-hamqtt/model"
 	bdbidef "thingfabric.dev/go-fabric/cluster/spec/bridgeddevicebasicinformation"
 	"thingfabric.dev/go-fabric/contract"
 	"thingfabric.dev/go-fabric/device"

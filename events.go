@@ -7,7 +7,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/SukramJ/go-hamqtt/model"
+	"sukramj.dev/go-hamqtt/model"
 )
 
 // errNoEndpoint is the error of an event on a device the node has not

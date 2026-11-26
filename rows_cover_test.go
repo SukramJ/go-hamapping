@@ -8,13 +8,13 @@ import (
 	"fmt"
 	"testing"
 
-	hacatalog "github.com/SukramJ/go-ha-catalog"
-	"github.com/SukramJ/go-hamqtt/model"
+	hacatalog "sukramj.dev/go-ha-catalog"
+	"sukramj.dev/go-hamqtt/model"
 	windowcoveringdef "thingfabric.dev/go-fabric/cluster/spec/windowcovering"
 	"thingfabric.dev/go-fabric/device"
 	"thingfabric.dev/go-fabric/eligibility"
 
-	"github.com/SukramJ/go-hamapping"
+	"sukramj.dev/go-hamapping"
 )
 
 // coverClasses are Home Assistant's cover device classes and none.

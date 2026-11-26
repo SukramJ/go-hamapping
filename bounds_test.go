@@ -9,10 +9,10 @@ import (
 	"testing"
 	"unicode/utf8"
 
-	hacatalog "github.com/SukramJ/go-ha-catalog"
-	"github.com/SukramJ/go-hamqtt/model"
+	hacatalog "sukramj.dev/go-ha-catalog"
+	"sukramj.dev/go-hamqtt/model"
 
-	"github.com/SukramJ/go-hamapping"
+	"sukramj.dev/go-hamapping"
 )
 
 // TestSelectLabelsCutByBytes: go-fabric bounds a string by its UTF-8

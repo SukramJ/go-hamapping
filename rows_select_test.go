@@ -11,15 +11,15 @@ import (
 	"testing"
 	"unicode/utf8"
 
-	hacatalog "github.com/SukramJ/go-ha-catalog"
-	"github.com/SukramJ/go-hamqtt/model"
+	hacatalog "sukramj.dev/go-ha-catalog"
+	"sukramj.dev/go-hamqtt/model"
 	modeselectdef "thingfabric.dev/go-fabric/cluster/spec/modeselect"
 	"thingfabric.dev/go-fabric/controller/client"
 	"thingfabric.dev/go-fabric/device"
 	"thingfabric.dev/go-fabric/eligibility"
 	"thingfabric.dev/go-fabric/fabrictest"
 
-	"github.com/SukramJ/go-hamapping"
+	"sukramj.dev/go-hamapping"
 )
 
 // statusOf is the IM status of a refused invoke, 0 for none.

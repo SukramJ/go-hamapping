@@ -6,11 +6,11 @@ package hamapping_test
 import (
 	"testing"
 
-	hacatalog "github.com/SukramJ/go-ha-catalog"
-	"github.com/SukramJ/go-hamqtt/model"
+	hacatalog "sukramj.dev/go-ha-catalog"
+	"sukramj.dev/go-hamqtt/model"
 	"thingfabric.dev/go-fabric/device"
 
-	hamapping "github.com/SukramJ/go-hamapping"
+	hamapping "sukramj.dev/go-hamapping"
 )
 
 // registryEntity is an entity whose source keeps an identity across a

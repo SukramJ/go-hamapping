@@ -9,7 +9,7 @@ import (
 	"context"
 	"slices"
 
-	"github.com/SukramJ/go-hamqtt/model"
+	"sukramj.dev/go-hamqtt/model"
 	airqualitydef "thingfabric.dev/go-fabric/cluster/spec/airquality"
 	booleanstatedef "thingfabric.dev/go-fabric/cluster/spec/booleanstate"
 	cameraavstreammanagementdef "thingfabric.dev/go-fabric/cluster/spec/cameraavstreammanagement"

@@ -105,7 +105,7 @@ formatters:
         group-params: true
     goimports:
       local-prefixes:
-        - github.com/SukramJ/go-hamapping
+        - sukramj.dev/go-hamapping
   exclusions:
     generated: lax
     paths:

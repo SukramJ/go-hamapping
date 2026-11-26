@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/SukramJ/go-hamapping/internal/gen"
-	"github.com/SukramJ/go-hamapping/internal/rowfile"
+	"sukramj.dev/go-hamapping/internal/gen"
+	"sukramj.dev/go-hamapping/internal/rowfile"
 )
 
 // TestEveryRowMethodHasAConstant: the method constants are exactly the

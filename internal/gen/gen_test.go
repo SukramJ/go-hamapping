@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/SukramJ/go-hamapping/internal/rowfile"
+	"sukramj.dev/go-hamapping/internal/rowfile"
 )
 
 const base = `platform: lock

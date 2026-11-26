@@ -9,13 +9,13 @@ import (
 	"strings"
 	"testing"
 
-	hacatalog "github.com/SukramJ/go-ha-catalog"
-	"github.com/SukramJ/go-hamqtt/model"
+	hacatalog "sukramj.dev/go-ha-catalog"
+	"sukramj.dev/go-hamqtt/model"
 	"thingfabric.dev/go-fabric/cluster/spec"
 	"thingfabric.dev/go-fabric/device"
 	"thingfabric.dev/go-fabric/eligibility"
 
-	"github.com/SukramJ/go-hamapping"
+	"sukramj.dev/go-hamapping"
 )
 
 // TestRowsNameGoFabricTypes holds every row against go-fabric's device

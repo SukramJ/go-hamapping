@@ -6,8 +6,8 @@ package hamapping_test
 import (
 	"testing"
 
-	hacatalog "github.com/SukramJ/go-ha-catalog"
-	"github.com/SukramJ/go-hamqtt/model"
+	hacatalog "sukramj.dev/go-ha-catalog"
+	"sukramj.dev/go-hamqtt/model"
 	"thingfabric.dev/go-fabric/cluster/spec"
 	fancontroldef "thingfabric.dev/go-fabric/cluster/spec/fancontrol"
 	playbackdef "thingfabric.dev/go-fabric/cluster/spec/mediaplayback"
@@ -17,7 +17,7 @@ import (
 	thermostatdef "thingfabric.dev/go-fabric/cluster/spec/thermostat"
 	"thingfabric.dev/go-fabric/eligibility"
 
-	"github.com/SukramJ/go-hamapping"
+	"sukramj.dev/go-hamapping"
 )
 
 // TestWaveRowsServe serves one entity of every row of this wave the

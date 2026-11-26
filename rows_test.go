@@ -8,8 +8,8 @@ import (
 	"math"
 	"testing"
 
-	hacatalog "github.com/SukramJ/go-ha-catalog"
-	"github.com/SukramJ/go-hamqtt/model"
+	hacatalog "sukramj.dev/go-ha-catalog"
+	"sukramj.dev/go-hamqtt/model"
 	"thingfabric.dev/go-fabric/cluster/spec"
 	booleanstatedef "thingfabric.dev/go-fabric/cluster/spec/booleanstate"
 	colorcontroldef "thingfabric.dev/go-fabric/cluster/spec/colorcontrol"
@@ -33,7 +33,7 @@ import (
 	"thingfabric.dev/go-fabric/eligibility"
 	"thingfabric.dev/go-fabric/fabrictest"
 
-	"github.com/SukramJ/go-hamapping"
+	"sukramj.dev/go-hamapping"
 )
 
 func on(m map[string]any) model.State { return model.State{Value: m, Available: true} }

@@ -23,7 +23,7 @@ import (
 
 	"thingfabric.dev/go-fabric/device"
 
-	"github.com/SukramJ/go-hamapping/internal/rowfile"
+	"sukramj.dev/go-hamapping/internal/rowfile"
 )
 
 // Output is the file the generator writes, relative to the module root.
@@ -198,7 +198,7 @@ func GenerateFiles(files []rowfile.File) ([]byte, error) {
 	for p := range g.imports {
 		paths = append(paths, p)
 	}
-	paths = append(paths, "github.com/SukramJ/go-hamqtt/model")
+	paths = append(paths, "sukramj.dev/go-hamqtt/model")
 	slices.Sort(paths)
 	for _, p := range paths {
 		if a, ok := g.imports[p]; ok {

@@ -9,9 +9,9 @@ import (
 	"slices"
 	"strings"
 
-	hacatalog "github.com/SukramJ/go-ha-catalog"
+	hacatalog "sukramj.dev/go-ha-catalog"
 
-	"github.com/SukramJ/go-hamapping/internal/rowfile"
+	"sukramj.dev/go-hamapping/internal/rowfile"
 )
 
 // The page's table of the keys a source fills, between KeysBegin and

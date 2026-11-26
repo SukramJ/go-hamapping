@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	hacatalog "github.com/SukramJ/go-ha-catalog"
-	"github.com/SukramJ/go-hamqtt/model"
+	hacatalog "sukramj.dev/go-ha-catalog"
+	"sukramj.dev/go-hamqtt/model"
 	"thingfabric.dev/go-fabric/cluster/spec"
 	fancontroldef "thingfabric.dev/go-fabric/cluster/spec/fancontrol"
 	onoffdef "thingfabric.dev/go-fabric/cluster/spec/onoff"
@@ -18,7 +18,7 @@ import (
 	"thingfabric.dev/go-fabric/device"
 	"thingfabric.dev/go-fabric/eligibility"
 
-	"github.com/SukramJ/go-hamapping"
+	"sukramj.dev/go-hamapping"
 )
 
 // TestClimatePresetsArePartial: go-fabric's Thermostat server refuses a

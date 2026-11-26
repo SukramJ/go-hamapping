@@ -7,15 +7,15 @@ import (
 	"context"
 	"testing"
 
-	hacatalog "github.com/SukramJ/go-ha-catalog"
-	"github.com/SukramJ/go-hamqtt/model"
+	hacatalog "sukramj.dev/go-ha-catalog"
+	"sukramj.dev/go-hamqtt/model"
 	"thingfabric.dev/go-fabric/cluster/camera"
 	csdef "thingfabric.dev/go-fabric/cluster/spec/cameraavstreammanagement"
 	wpdef "thingfabric.dev/go-fabric/cluster/spec/webrtctransportprovider"
 	"thingfabric.dev/go-fabric/device"
 	"thingfabric.dev/go-fabric/eligibility"
 
-	"github.com/SukramJ/go-hamapping"
+	"sukramj.dev/go-hamapping"
 )
 
 // The host ports of a camera, each its own type so a host can leave one

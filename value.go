@@ -14,8 +14,8 @@ import (
 	"strings"
 	"unsafe"
 
-	hacatalog "github.com/SukramJ/go-ha-catalog"
-	"github.com/SukramJ/go-hamqtt/model"
+	hacatalog "sukramj.dev/go-ha-catalog"
+	"sukramj.dev/go-hamqtt/model"
 )
 
 // Value sources of [Value].From.

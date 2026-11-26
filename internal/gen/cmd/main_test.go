@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/SukramJ/go-hamapping/internal/gen"
+	"sukramj.dev/go-hamapping/internal/gen"
 )
 
 // TestRun writes the repository's output into a copy and finds it equal

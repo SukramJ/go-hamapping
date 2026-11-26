@@ -11,15 +11,15 @@ import (
 	"testing"
 	"time"
 
-	hacatalog "github.com/SukramJ/go-ha-catalog"
-	"github.com/SukramJ/go-hamqtt/model"
+	hacatalog "sukramj.dev/go-ha-catalog"
+	"sukramj.dev/go-hamqtt/model"
 	"thingfabric.dev/go-fabric/cluster/spec"
 	bdbidef "thingfabric.dev/go-fabric/cluster/spec/bridgeddevicebasicinformation"
 	"thingfabric.dev/go-fabric/device"
 	"thingfabric.dev/go-fabric/fabrictest"
 	"thingfabric.dev/go-fabric/node"
 
-	"github.com/SukramJ/go-hamapping"
+	"sukramj.dev/go-hamapping"
 )
 
 // entity is a go-hamqtt entity of platform p with a command binding.

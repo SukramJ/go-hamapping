@@ -4,7 +4,7 @@
 package hamapping
 
 import (
-	"github.com/SukramJ/go-hamqtt/model"
+	"sukramj.dev/go-hamqtt/model"
 	"thingfabric.dev/go-fabric/contract"
 	"thingfabric.dev/go-fabric/device"
 	"thingfabric.dev/go-fabric/eligibility"
