@@ -11,8 +11,10 @@ rows:
     type: WindowCovering
     verdict: mappable
     caveats:
-      - when: {device_class: [garage, gate, door, damper, window]}
+      - when: {device_class: [garage, gate, door, damper]}
         reason: "WindowCovering has no type for a {device_class}: Type and EndProductType are Unknown"
+      - when: {device_class: [window], features: {any: [OPEN_TILT, CLOSE_TILT, SET_TILT_POSITION]}}
+        reason: "a tilting window has no WindowCovering product: EndProductType is Unknown"
     cites:
       - matter.js packages/model/src/standard/elements/window-covering-device.element.ts:24 @862ad75f (WindowCovering mandatory)
       - matter.js packages/model/src/standard/resources/window-covering-cluster.resource.ts:39,98,116-118,180-199 @862ad75f (Type, EndProductType, CurrentPositionLiftPercent100ths; DownOrClose ends at 100.00%)
@@ -25,35 +27,45 @@ rows:
       - home-assistant/core homeassistant/components/switchbot/cover.py:176-181 @2026.10.3 (a tilt-only cover, device_class blind, features 240)
       - "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/cover/behaviors/cover-window-covering-server.ts:67-111,242-258,283-297,385-395 @664575a (Type and EndProductType corrected by tilt; lift commands of a tilt-only cover go to tilt; open/close_cover_tilt without SET_TILT_POSITION)"
       - home-assistant/core homeassistant/helpers/service.py:750-760 @2026.10.3 (a call on a referenced entity without the feature raises ServiceNotSupported)
-      - go-fabric cluster/cover/windowcovering_server.go:144-158,624-634 @v0.18.0 (GoToLiftPercentage served on Lift without PositionAwareLift; openOrClose maps the percentage to open or close)
+      - "go-fabric cluster/spec/windowcovering/definition_gen.go:96,120,245,253 @v0.27.0 (Rollershade and RollerShade only under LF & !TL; TiltBlindLift under LF & TL; EndProductType Unknown under any FeatureMap)"
+      - "go-fabric cluster/spec/windowcovering/definition_gen.go:37,40,51 @v0.27.0 (with PositionAwareLift: TargetPositionLiftPercent100ths and CurrentPositionLiftPercent100ths mandatory and nullable, GoToLiftPercentage mandatory)"
+      - go-fabric device/defaults.go:449-458 @v0.27.0 (a position without an initial value reads null)
+      - "home-assistant/core homeassistant/components/cover/__init__.py:217-218,239-240 @2026.10.3 (current_position is in the state whenever the entity has a position, whatever its features; the default features add SET_POSITION exactly when it has one)"
+      - home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/cover/index.ts:34-49 @664575a (Lift and PositionAwareLift always)
+      - "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/cover/behaviors/cover-window-covering-server.ts:57-64,78-102,330-342,392-410 @664575a (a lift-only window Rollershade / RollerShade, a tilting one TiltBlindLift / Unknown; the lift position from current_position, else closed 0 and open 100 on Home Assistant's scale, else null; GoToLiftPercentage without position control by a 50 % threshold, which this row does not take)"
       - "matter.js packages/node/src/behaviors/window-covering/WindowCoveringServer.ts:576-590 @db021da0 (without positionAwareLift: LiftPercent100thsValue 0 opens, else closes)"
     clusters:
       - cluster: WindowCovering
         features:
           - Lift
-          - {name: PositionAwareLift, when: {features: {any: [SET_POSITION]}}}
+          - PositionAwareLift
           - {name: Tilt, when: {features: {any: [OPEN_TILT, CLOSE_TILT, SET_TILT_POSITION]}}}
           - {name: PositionAwareTilt, when: {features: {any: [SET_TILT_POSITION]}}}
         initial:   # Lift only: the LF & !TL members; with Tilt (the feature's predicate): TiltBlindLift and the LF & TL members
           - attribute: Type
             from: device_class
             when: {features: {none: [OPEN_TILT, CLOSE_TILT, SET_TILT_POSITION]}}
-            enum: {shutter: TypeShutter, blind: TypeRollershade, shade: TypeRollershade, curtain: TypeDrapery, awning: TypeAwning, garage: TypeUnknown, gate: TypeUnknown, door: TypeUnknown, damper: TypeUnknown, window: TypeUnknown, "": TypeRollershade}
+            enum: {shutter: TypeShutter, blind: TypeRollershade, shade: TypeRollershade, curtain: TypeDrapery, awning: TypeAwning, garage: TypeUnknown, gate: TypeUnknown, door: TypeUnknown, damper: TypeUnknown, window: TypeRollershade, "": TypeRollershade}
           - attribute: EndProductType
             from: device_class
             when: {features: {none: [OPEN_TILT, CLOSE_TILT, SET_TILT_POSITION]}}
-            enum: {shutter: EndProductTypeRollerShutter, blind: EndProductTypeRollerShade, shade: EndProductTypeRollerShade, curtain: EndProductTypeCentralCurtain, awning: EndProductTypeAwningTerracePatio, garage: EndProductTypeUnknown, gate: EndProductTypeUnknown, door: EndProductTypeUnknown, damper: EndProductTypeUnknown, window: EndProductTypeUnknown, "": EndProductTypeRollerShade}
+            enum: {shutter: EndProductTypeRollerShutter, blind: EndProductTypeRollerShade, shade: EndProductTypeRollerShade, curtain: EndProductTypeCentralCurtain, awning: EndProductTypeAwningTerracePatio, garage: EndProductTypeUnknown, gate: EndProductTypeUnknown, door: EndProductTypeUnknown, damper: EndProductTypeUnknown, window: EndProductTypeRollerShade, "": EndProductTypeRollerShade}
           - attribute: Type
             from: device_class
             when: {features: {any: [OPEN_TILT, CLOSE_TILT, SET_TILT_POSITION]}}
-            enum: {shutter: TypeTiltBlindLift, blind: TypeTiltBlindLift, shade: TypeTiltBlindLift, curtain: TypeTiltBlindLift, awning: TypeTiltBlindLift, garage: TypeUnknown, gate: TypeUnknown, door: TypeUnknown, damper: TypeUnknown, window: TypeUnknown, "": TypeTiltBlindLift}
+            enum: {shutter: TypeTiltBlindLift, blind: TypeTiltBlindLift, shade: TypeTiltBlindLift, curtain: TypeTiltBlindLift, awning: TypeTiltBlindLift, garage: TypeUnknown, gate: TypeUnknown, door: TypeUnknown, damper: TypeUnknown, window: TypeTiltBlindLift, "": TypeTiltBlindLift}
           - attribute: EndProductType
             from: device_class
             when: {features: {any: [OPEN_TILT, CLOSE_TILT, SET_TILT_POSITION]}}
             enum: {shutter: EndProductTypeExteriorVenetianBlind, blind: EndProductTypeInteriorBlind, shade: EndProductTypeSheerShade, curtain: EndProductTypeVerticalBlindStripCurtain, awning: EndProductTypeUnknown, garage: EndProductTypeUnknown, gate: EndProductTypeUnknown, door: EndProductTypeUnknown, damper: EndProductTypeUnknown, window: EndProductTypeUnknown, "": EndProductTypeInteriorBlind}
         attributes:
-          - {attribute: CurrentPositionLiftPercent100ths, from: state.current_position, offset: -100, scale: -100, min: 0, max: 10000, when: {features: {any: [SET_POSITION]}}}
-          - {attribute: TargetPositionLiftPercent100ths, from: state.current_position, offset: -100, scale: -100, min: 0, max: 10000, when: {features: {any: [SET_POSITION]}}}
+          # Without SET_POSITION the lift position is the state's (open,
+          # closed; moving is unknown) unless the state carries a position,
+          # which the later lines then set.
+          - {attribute: CurrentPositionLiftPercent100ths, from: state, enum: {open: 0, closed: 10000, opening: null, closing: null}, when: {features: {none: [SET_POSITION]}}}
+          - {attribute: TargetPositionLiftPercent100ths, from: state, enum: {open: 0, closed: 10000, opening: null, closing: null}, when: {features: {none: [SET_POSITION]}}}
+          - {attribute: CurrentPositionLiftPercent100ths, from: state.current_position, offset: -100, scale: -100, min: 0, max: 10000}
+          - {attribute: TargetPositionLiftPercent100ths, from: state.current_position, offset: -100, scale: -100, min: 0, max: 10000}
           - {attribute: CurrentPositionTiltPercent100ths, from: state.current_tilt_position, offset: -100, scale: -100, min: 0, max: 10000, when: {features: {any: [SET_TILT_POSITION]}}}
           - {attribute: TargetPositionTiltPercent100ths, from: state.current_tilt_position, offset: -100, scale: -100, min: 0, max: 10000, when: {features: {any: [SET_TILT_POSITION]}}}
         # Lift commands: to the lift where the cover has a lift axis (any of
@@ -102,22 +114,33 @@ rows:
             when: {features: {any: [SET_POSITION]}}
             method: set_position
             raw: {field: LiftPercent100thsValue, scale: -0.01, add: 100}
-          - handle: GoToLiftPercentage   # Lift without PositionAwareLift, as matter.js: 0 opens, else closes
+          # Without SET_POSITION: fully open (0) opens, fully closed
+          # (10000) closes, a position between is refused with FAILURE and
+          # handed out to no one (docs/by_design.md).
+          - handle: GoToLiftPercentage
             when: {features: {any: [OPEN, CLOSE], none: [SET_POSITION]}}
             if: {field: LiftPercent100thsValue, in: [0]}
             raw: {from: extra.payload_open, catalog: true}
           - handle: GoToLiftPercentage
             when: {features: {any: [OPEN, CLOSE], none: [SET_POSITION]}}
-            if: {field: LiftPercent100thsValue, not_in: [0]}
+            if: {field: LiftPercent100thsValue, in: [10000]}
             raw: {from: extra.payload_close, catalog: true}
+          - handle: GoToLiftPercentage
+            when: {features: {any: [OPEN, CLOSE], none: [SET_POSITION]}}
+            if: {field: LiftPercent100thsValue, not_in: [0, 10000]}
+            refuse: FAILURE
           - handle: GoToLiftPercentage
             when: {features: {none: [OPEN, CLOSE, SET_POSITION, OPEN_TILT, CLOSE_TILT, SET_TILT_POSITION]}}
             if: {field: LiftPercent100thsValue, in: [0]}
             raw: {from: extra.payload_open, catalog: true}
           - handle: GoToLiftPercentage
             when: {features: {none: [OPEN, CLOSE, SET_POSITION, OPEN_TILT, CLOSE_TILT, SET_TILT_POSITION]}}
-            if: {field: LiftPercent100thsValue, not_in: [0]}
+            if: {field: LiftPercent100thsValue, in: [10000]}
             raw: {from: extra.payload_close, catalog: true}
+          - handle: GoToLiftPercentage
+            when: {features: {none: [OPEN, CLOSE, SET_POSITION, OPEN_TILT, CLOSE_TILT, SET_TILT_POSITION]}}
+            if: {field: LiftPercent100thsValue, not_in: [0, 10000]}
+            refuse: FAILURE
           - handle: GoToLiftPercentage
             when: {features: {all: [SET_TILT_POSITION], none: [OPEN, CLOSE, SET_POSITION]}}
             method: tilt
@@ -129,9 +152,13 @@ rows:
             raw: {const: OPEN}
           - handle: GoToLiftPercentage
             when: {features: {any: [OPEN_TILT, CLOSE_TILT], none: [OPEN, CLOSE, SET_POSITION, SET_TILT_POSITION]}}
-            if: {field: LiftPercent100thsValue, not_in: [0]}
+            if: {field: LiftPercent100thsValue, in: [10000]}
             method: close_tilt
             raw: {const: CLOSE}
+          - handle: GoToLiftPercentage
+            when: {features: {any: [OPEN_TILT, CLOSE_TILT], none: [OPEN, CLOSE, SET_POSITION, SET_TILT_POSITION]}}
+            if: {field: LiftPercent100thsValue, not_in: [0, 10000]}
+            refuse: FAILURE
           - handle: GoToTiltPercentage
             when: {features: {any: [SET_TILT_POSITION]}}
             method: tilt

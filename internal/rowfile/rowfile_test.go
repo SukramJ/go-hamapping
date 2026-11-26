@@ -55,7 +55,20 @@ func TestParse(t *testing.T) {
 	if v, ok := f.Rows[0].Clusters[0].Attributes[0].Enum["off"]; !ok || v != nil {
 		t.Fatalf("enum off %v %v", v, ok)
 	}
+	// A handle may refuse a value with a status, with or without an if.
+	for _, refuse := range []string{refuseLine, "          - handle: On\n            refuse: FAILURE\n"} {
+		f, err = Parse([]byte(strings.Replace(good, "        events:\n", refuse+"        events:\n", 1)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if cmds := f.Rows[0].Clusters[0].Commands; cmds[len(cmds)-1].Refuse != "FAILURE" {
+			t.Fatalf("refuse %+v", cmds[len(cmds)-1])
+		}
+	}
 }
+
+// refuseLine is a handle that refuses a value, added to good's commands.
+const refuseLine = "          - handle: Off\n            if: {field: X, not_in: [\"1\"]}\n            refuse: FAILURE\n"
 
 func TestParseRefuses(t *testing.T) {
 	for name, edit := range map[string][2]string{
@@ -107,6 +120,27 @@ func TestParseRefuses(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			src := strings.Replace(good, edit[0], edit[1], 1)
 			if src == good {
+				t.Fatalf("edit %q does not apply", edit[0])
+			}
+			if _, err := Parse([]byte(src)); err == nil {
+				t.Fatal("parsed")
+			}
+		})
+	}
+	for name, edit := range map[string][2]string{
+		"refuse status":       {"refuse: FAILURE", "refuse: NOPE"},
+		"refuse with payload": {"refuse: FAILURE", "refuse: FAILURE\n            raw: {const: x}"},
+		"refuse with method":  {"refuse: FAILURE", "refuse: FAILURE\n            method: m"},
+		"refuse with discard": {"refuse: FAILURE", "refuse: FAILURE\n            discard: true"},
+		"refuse otherwise":    {"refuse: FAILURE", "refuse: FAILURE\n            otherwise: {Status: X}"},
+		"refuse not handle":   {"handle: Off\n            if", "change: [Off]\n            if"},
+		"refuse if":           {`not_in: ["1"]`, `not_in: ["1"], in: ["2"]`},
+		"refuse if constant":  {`not_in: ["1"]`, `not_in: ["a-b"]`},
+	} {
+		t.Run(name, func(t *testing.T) {
+			withRefuse := strings.Replace(good, "        events:\n", refuseLine+"        events:\n", 1)
+			src := strings.Replace(withRefuse, edit[0], edit[1], 1)
+			if src == withRefuse {
 				t.Fatalf("edit %q does not apply", edit[0])
 			}
 			if _, err := Parse([]byte(src)); err == nil {

@@ -242,6 +242,19 @@ type Command struct {
 	// hands it to no one but Plan.OnDiscard: the entity has no action for
 	// it (a handle alone).
 	Discard bool `yaml:"discard"`
+	// Refuse answers the handled command with this Interaction Model
+	// status (a key of Refusals) when its if holds, and hands out
+	// nothing: the entity has no action for the value (a handle's, with
+	// neither a payload nor a method).
+	Refuse string `yaml:"refuse"`
+}
+
+// Refusals are the statuses a refuse may name, each with the
+// go-fabric contract constant the generated row carries: FAILURE, the
+// answer to a command the device accepts but cannot carry out for the
+// value it was given.
+var Refusals = map[string]string{
+	"FAILURE": "StatusFailure",
 }
 
 // Derives are the derived payloads a command may add, with the fields
@@ -551,6 +564,22 @@ func valueFrom(s string) bool {
 	return false
 }
 
+// check validates a command's if; nil holds.
+func (c *Cond) check() error {
+	if c == nil {
+		return nil
+	}
+	if (c.Field == "") == (c.State == "") || !ident(c.Name()) || (len(c.In) == 0) == (len(c.NotIn) == 0) {
+		return errors.New("if: one of field and state, and one of in and not_in")
+	}
+	for _, n := range slices.Concat(c.In, c.NotIn) {
+		if !ident(n) && !number(n) {
+			return fmt.Errorf("if: constant %q", n)
+		}
+	}
+	return nil
+}
+
 func (cmd *Command) check() error {
 	kinds := 0
 	if cmd.Handle != "" {
@@ -570,10 +599,19 @@ func (cmd *Command) check() error {
 	}
 	if cmd.Discard {
 		if cmd.Handle == "" || cmd.Method != "" || cmd.Raw != nil || len(cmd.JSON) > 0 || cmd.Derive != "" ||
-			cmd.If != nil || cmd.When != nil || cmd.Otherwise != nil {
+			cmd.If != nil || cmd.When != nil || cmd.Otherwise != nil || cmd.Refuse != "" {
 			return errors.New("discard: a handle's alone")
 		}
 		return nil
+	}
+	if cmd.Refuse != "" {
+		if _, ok := Refusals[cmd.Refuse]; !ok {
+			return fmt.Errorf("refuse %q", cmd.Refuse)
+		}
+		if cmd.Handle == "" || cmd.Method != "" || cmd.Raw != nil || len(cmd.JSON) > 0 || cmd.Derive != "" || cmd.Otherwise != nil {
+			return errors.New("refuse: a handle's, without method, payload or otherwise")
+		}
+		return cmd.If.check()
 	}
 	if len(cmd.Unless) > 0 && len(cmd.Change) == 0 {
 		return errors.New("unless is a change's")
@@ -583,15 +621,8 @@ func (cmd *Command) check() error {
 			return fmt.Errorf("attribute %q", n)
 		}
 	}
-	if cmd.If != nil && ((cmd.If.Field == "") == (cmd.If.State == "") || !ident(cmd.If.Name()) || (len(cmd.If.In) == 0) == (len(cmd.If.NotIn) == 0)) {
-		return errors.New("if: one of field and state, and one of in and not_in")
-	}
-	if cmd.If != nil {
-		for _, n := range slices.Concat(cmd.If.In, cmd.If.NotIn) {
-			if !ident(n) && !number(n) {
-				return fmt.Errorf("if: constant %q", n)
-			}
-		}
+	if err := cmd.If.check(); err != nil {
+		return err
 	}
 	if cmd.Otherwise != nil {
 		if cmd.Handle == "" || cmd.If == nil {

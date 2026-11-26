@@ -152,7 +152,37 @@ Unknown for it (`packages/backend/src/matter/endpoints/legacy/cover/behaviors/co
 at `664575a`). Both build; RollerShade says more about the product than
 Unknown. Row `cover/window_covering`; fact note §3.
 
-## A garage, gate, door, damper or window cover is Unknown
+## A window is a RollerShade, a tilting one TiltBlindLift
+
+A `window` cover with Lift alone is Rollershade / RollerShade, both allowed
+only under LF & !TL (`cluster/spec/windowcovering/definition_gen.go:96, 245`
+at v0.27.0); with Tilt it is TiltBlindLift / Unknown (`definition_gen.go:120,
+253`), with the row's caveat. That is home-assistant-matter-hub's shape
+(`packages/backend/src/matter/endpoints/legacy/cover/behaviors/cover-window-covering-server.ts:57-64,
+78-102` at `664575a`): for the lift-only window it names Alexa (its issue
+#312), for the tilting one that a tilting roof window is no sheer shade —
+both are matter-hub's claims, not measured here. A Type every controller
+renders as a moving cover says more than Unknown, and the tilting window
+takes the Type every other tilting class has in the row. Row
+`cover/window_covering`; fact note 2026-11-26 Q4a.
+
+## No threshold for a lift without SET_POSITION
+
+Every cover serves PositionAwareLift (`definition_gen.go:37, 40, 51` at
+v0.27.0, as matter-hub, `packages/backend/src/matter/endpoints/legacy/cover/index.ts:34-49`
+at `664575a`), so GoToLiftPercentage is mandatory, also for a cover Home
+Assistant can only open and close (`set_cover_position` requires
+SET_POSITION, `homeassistant/components/cover/services.py:49-57` at
+`2026.10.3`). Without SET_POSITION 0 % opens and 100 % closes, and any
+position between is refused with FAILURE and reaches no host;
+home-assistant-matter-hub instead opens when the target is at least 50 %
+open and closes otherwise (`cover-window-covering-server.ts:392-410` at
+`664575a`). A threshold turns a request for a position between into a full
+open or close, a move the user did not ask for; refusing it tells the
+controller the position is not reachable. Row
+`cover/window_covering` (`refuse: FAILURE`); fact note 2026-11-26 Q4b.
+
+## A garage, gate, door or damper cover is Unknown
 
 These device classes stay Type and EndProductType Unknown, with or without
 tilt (allowed under any FeatureMap, `definition_gen.go:128, 283` at

@@ -13,6 +13,12 @@ All notable changes to this project are documented here. The format follows
   A cover with STOP_TILT and no STOP now hands StopMotion out as this
   method instead of answering it with success and handing out nothing; a
   cover with STOP keeps `stop_cover` (#43).
+- Expect a `cover` without SET_POSITION to be served with
+  PositionAwareLift: a controller's GoToLiftPercentage of 0 % reaches the
+  host as `payload_open` (or `MethodOpenTilt` on a tilt-only cover), of
+  100 % as `payload_close` (or `MethodCloseTilt`); any position between is
+  refused with FAILURE and reaches no host. Before, any non-zero
+  percentage closed (#44).
 
 ### Added
 
@@ -38,6 +44,17 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- `cover`: every cover serves PositionAwareLift, as home-assistant-matter-hub
+  does. Without SET_POSITION the lift position is the state's — `closed`
+  100 %, `open` 0 %, `opening` / `closing` unknown — unless the state carries
+  `current_position`, and GoToLiftPercentage moves only fully open or
+  closed (see What a host must do; `docs/by_design.md`). A `window` cover is
+  Rollershade / RollerShade with Lift alone and TiltBlindLift / Unknown with
+  Tilt (was Unknown / Unknown); only the tilting window keeps a caveat
+  (#44).
+- The row format has `refuse: <status>` on a `handle`: the command is
+  answered with that Interaction Model status (`FAILURE`) when its `if`
+  holds, and nothing is handed out (`docs/rows.md`) (#44).
 - go-fabric `v0.27.0` (was `v0.26.0`). No API change here and no other
   module in the graph moved; the generated rows are unchanged. One of its
   changes reaches a plan: `node` refuses an endpoint whose tree holds a part

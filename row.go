@@ -176,6 +176,10 @@ type Command struct {
 	// answered with the cluster's success and reaches [Plan.OnDiscard]
 	// instead of [Plan.OnChange].
 	Discard bool
+	// Refuse is the Interaction Model status (go-fabric's contract
+	// Status* constants) a handled command is answered with when the
+	// command's if holds; nothing is handed out. 0 is no refusal.
+	Refuse uint8
 }
 
 // Field is one key of a JSON payload.

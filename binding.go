@@ -5,6 +5,7 @@ package hamapping
 
 import (
 	"encoding/json"
+	"fmt"
 	"math"
 	"reflect"
 	"slices"
@@ -272,6 +273,22 @@ func (b *binding) emit(ci, k int, f func(name string) (any, bool)) {
 func (b *binding) discard(ci, k int) {
 	c := &b.row.Clusters[ci]
 	b.plan.deliverDiscard(Discard{Entity: b.entity, Cluster: c.Name, Command: c.Commands[k].On[0]})
+}
+
+// refuse is the refusal of command k of cluster ci, a
+// contract.StatusError with the command's status, or nil when the command
+// does not apply to the entity. Nothing is handed out: the entity has no
+// action for the value.
+func (b *binding) refuse(ci, k int) error {
+	c := &b.row.Clusters[ci]
+	cmd := &c.Commands[k]
+	if cmd.When != nil && !b.match(cmd.When) {
+		return nil
+	}
+	return contract.StatusError{
+		Status:  cmd.Refuse,
+		Message: fmt.Sprintf("%s: %s %s: %s has no action for the value", b.row.ID, c.Name, cmd.On[0], b.key),
+	}
 }
 
 // render is a command's payload: one value, or a JSON object.

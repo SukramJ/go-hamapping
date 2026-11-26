@@ -272,6 +272,30 @@ func TestGenerateDiscard(t *testing.T) {
 	}
 }
 
+func TestGenerateRefuse(t *testing.T) {
+	lock := "          - handle: LockDoor\n            raw: {const: LOCK}"
+	refuse := lock + "\n          - handle: LockDoor\n            if: {state: LockState, in: [LockStateLocked]}\n            refuse: FAILURE"
+	out, err := GenerateFiles([]rowfile.File{parse(t, strings.Replace(base, lock, refuse, 1))})
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := string(out)
+	for _, want := range []string{"b.refuse(ci, 1)", "Refuse: contract.StatusFailure", "\"thingfabric.dev/go-fabric/contract\""} {
+		if !strings.Contains(s, want) {
+			t.Errorf("no %s:\n%s", want, s)
+		}
+	}
+	// A handler of refusals alone reads no field for a payload.
+	only := strings.Replace(base, lock, "          - handle: LockDoor\n            refuse: FAILURE", 1)
+	out, err = GenerateFiles([]rowfile.File{parse(t, only)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s := string(out); !strings.Contains(s, "b.refuse(ci, 0)") || strings.Contains(s, "req doorlockdef.LockDoorRequest) (resp struct{}, err error) {\nf :=") {
+		t.Fatalf("refusal-only handler:\n%s", s)
+	}
+}
+
 func parse(t *testing.T, src string) rowfile.File {
 	t.Helper()
 	f, err := rowfile.Parse([]byte(src))
