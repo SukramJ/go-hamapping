@@ -5,6 +5,7 @@ package hamapping_test
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -15,6 +16,7 @@ import (
 	onoffdef "thingfabric.dev/go-fabric/cluster/spec/onoff"
 	humiditydef "thingfabric.dev/go-fabric/cluster/spec/relativehumiditymeasurement"
 	thermostatdef "thingfabric.dev/go-fabric/cluster/spec/thermostat"
+	"thingfabric.dev/go-fabric/controller/client"
 	"thingfabric.dev/go-fabric/device"
 	"thingfabric.dev/go-fabric/eligibility"
 
@@ -231,4 +233,104 @@ func TestSetpointBoundsRefused(t *testing.T) {
 		}
 		p.Close()
 	}
+}
+
+// heatCoolClimate is a climate in heat_cool at 20..25 °C with the default
+// limits 7..35 °C.
+func heatCoolClimate(t *testing.T) *rig {
+	t.Helper()
+	r := serve(t, entity("hc", hacatalog.PlatformClimate, model.Description{Extra: map[string]any{
+		"modes": []string{"off", "heat", "cool", "heat_cool"},
+	}}))
+	r.apply("hc", on(map[string]any{"state": "heat_cool", "current_temperature": 22, "target_temp_low": 20, "target_temp_high": 25}))
+	th, _ := thermostatdef.StateFrom(r.values("hc", thermostatdef.ClusterID))
+	if th.SystemMode != thermostatdef.SystemModeAuto || th.OccupiedHeatingSetpoint != 2000 || th.OccupiedCoolingSetpoint != 2500 {
+		t.Fatalf("thermostat %v %d %d", th.SystemMode, th.OccupiedHeatingSetpoint, th.OccupiedCoolingSetpoint)
+	}
+	return r
+}
+
+func expectRange(t *testing.T, got model.Command, low, high string) {
+	t.Helper()
+	expect(t, got, hamapping.MethodTemperatureRange, `{"target_temp_low": `+low+`, "target_temp_high": `+high+`}`)
+}
+
+// TestClimateRangeOnWrite: in heat_cool a controller's write of one
+// setpoint is one temperature_range with both setpoints the thermostat
+// holds, the deadband adjustment included (fact note 2026-11-26 verdict
+// 2).
+func TestClimateRangeOnWrite(t *testing.T) {
+	r := heatCoolClimate(t)
+	r.write("hc", thermostatdef.ClusterID, thermostatdef.AttrOccupiedCoolingSetpoint, spec.Int16(2600))
+	expectRange(t, r.command(), "20", "26")
+	r.noMore()
+	// Heat 25 with cool 26: the server moves cool to 25 + 2.0 °C.
+	r.write("hc", thermostatdef.ClusterID, thermostatdef.AttrOccupiedHeatingSetpoint, spec.Int16(2500))
+	expectRange(t, r.command(), "25", "27")
+	r.noMore()
+}
+
+// TestClimateRangeOnRaiseLower: SetpointRaiseLower Both in heat_cool is one
+// temperature_range with both moved setpoints.
+func TestClimateRangeOnRaiseLower(t *testing.T) {
+	r := heatCoolClimate(t)
+	r.invoke("hc", thermostatdef.ClusterID, thermostatdef.CmdSetpointRaiseLower,
+		thermostatdef.SetpointRaiseLowerRequest{Mode: thermostatdef.SetpointRaiseLowerModeBoth, Amount: 10})
+	expectRange(t, r.command(), "21", "26")
+	r.noMore()
+}
+
+// TestClimateRangeOnWriteOfBoth: a write request with both setpoints is a
+// temperature_range per admitted setpoint, each a consistent pair (low not
+// above high), the last carrying both written values: go-fabric has no
+// hook per write request.
+func TestClimateRangeOnWriteOfBoth(t *testing.T) {
+	r := heatCoolClimate(t)
+	n, err := r.pair.Node()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ep := r.ep("hc")
+	// One write request, run on the site's clock as fabrictest's own
+	// single-attribute Write is.
+	err = r.site.Run(r.ctx, func(ctx context.Context) error {
+		res, err := n.Write(ctx, []client.WriteRequest{
+			{Path: client.AttributeAt(ep, thermostatdef.ClusterID, thermostatdef.AttrOccupiedHeatingSetpoint), Value: spec.Int16(2400)},
+			{Path: client.AttributeAt(ep, thermostatdef.ClusterID, thermostatdef.AttrOccupiedCoolingSetpoint), Value: spec.Int16(2900)},
+		}, client.WriteOptions{})
+		if err != nil {
+			return err
+		}
+		return res.Err()
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var last model.Command
+	for range 2 {
+		last = r.command()
+		var pair struct {
+			Low  float64 `json:"target_temp_low"`
+			High float64 `json:"target_temp_high"`
+		}
+		if last.Method != hamapping.MethodTemperatureRange || json.Unmarshal(last.Payload, &pair) != nil || pair.Low > pair.High {
+			t.Fatalf("command %s %s, want a consistent temperature_range", last.Method, last.Payload)
+		}
+	}
+	expectRange(t, last, "24", "29")
+	r.noMore()
+}
+
+// TestClimateHeatCoolUnchanged: outside heat_cool a setpoint write is the
+// one temperature of the mode, and nothing else.
+func TestClimateHeatCoolUnchanged(t *testing.T) {
+	r := heatCoolClimate(t)
+	r.apply("hc", on(map[string]any{"state": "heat", "current_temperature": 22, "temperature": 21}))
+	r.write("hc", thermostatdef.ClusterID, thermostatdef.AttrOccupiedHeatingSetpoint, spec.Int16(2200))
+	expect(t, r.command(), hamapping.MethodTemperature, "22")
+	r.noMore()
+	r.apply("hc", on(map[string]any{"state": "cool", "current_temperature": 22, "temperature": 26}))
+	r.write("hc", thermostatdef.ClusterID, thermostatdef.AttrOccupiedCoolingSetpoint, spec.Int16(2500))
+	expect(t, r.command(), hamapping.MethodTemperature, "25")
+	r.noMore()
 }

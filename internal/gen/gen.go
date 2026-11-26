@@ -208,7 +208,11 @@ func GenerateFiles(files []rowfile.File) ([]byte, error) {
 		fmt.Fprintf(&out, "\t%q\n", p)
 	}
 	out.WriteString(")\n\n")
-	out.WriteString(methodsSource(files))
+	docs, err := methodDocs(files)
+	if err != nil {
+		return nil, err
+	}
+	out.WriteString(methodsSource(files, docs))
 	out.WriteString("// rows is the table, in the order [Map] tries it.\n")
 	out.Write(body.Bytes())
 	src, err := format.Source(out.Bytes())
@@ -1394,7 +1398,11 @@ func (g *gen) watch(w *bytes.Buffer, c *rowfile.Cluster, d def) error {
 			cond += " && !slices.Contains(c.Attributes, " + d.alias + ".Attr" + a + ")"
 			g.useStd("slices")
 		}
-		fmt.Fprintf(&body, "if changed(c, %s) && %s {\nb.emit(ci, %d, f)\n}\n", strings.Join(ids, ", "), cond, idx[j])
+		hook := "changed"
+		if cmd.Writes {
+			hook = "changedOrWritten"
+		}
+		fmt.Fprintf(&body, "if %s(c, %s) && %s {\nb.emit(ci, %d, f)\n}\n", hook, strings.Join(ids, ", "), cond, idx[j])
 	}
 	get := ""
 	if strings.Contains(fn, "st.") || strings.Contains(body.String(), "st.") {

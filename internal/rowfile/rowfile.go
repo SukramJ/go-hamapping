@@ -235,12 +235,18 @@ type Command struct {
 	Change []string `yaml:"change"`
 	// Unless skips a change that also touches one of these attributes.
 	Unless []string `yaml:"unless"`
+	// Writes makes a change also catch a controller's write of these
+	// attributes the server admitted, besides a command's change.
+	Writes bool `yaml:"writes"`
 	// If restricts the command to a field value.
-	If     *Cond            `yaml:"if"`
-	When   *When            `yaml:"when"`
-	Method string           `yaml:"method"`
-	Raw    *Value           `yaml:"raw"`
-	JSON   map[string]Value `yaml:"json"`
+	If     *Cond  `yaml:"if"`
+	When   *When  `yaml:"when"`
+	Method string `yaml:"method"`
+	// Doc documents the method: the comment of its generated constant (a
+	// method's commands state at most one).
+	Doc  string           `yaml:"doc"`
+	Raw  *Value           `yaml:"raw"`
+	JSON map[string]Value `yaml:"json"`
 	// Derive adds keys a conversion of several fields computes (Derives).
 	Derive string `yaml:"derive"`
 	// Otherwise is a handler's response, by field name of its response
@@ -609,7 +615,7 @@ func (cmd *Command) check() error {
 	}
 	if cmd.Discard {
 		if cmd.Handle == "" || cmd.Method != "" || cmd.Raw != nil || len(cmd.JSON) > 0 || cmd.Derive != "" ||
-			cmd.If != nil || cmd.When != nil || cmd.Otherwise != nil || cmd.Refuse != "" {
+			cmd.If != nil || cmd.When != nil || cmd.Otherwise != nil || cmd.Refuse != "" || cmd.Writes {
 			return errors.New("discard: a handle's alone")
 		}
 		return nil
@@ -625,6 +631,12 @@ func (cmd *Command) check() error {
 	}
 	if len(cmd.Unless) > 0 && len(cmd.Change) == 0 {
 		return errors.New("unless is a change's")
+	}
+	if cmd.Writes && len(cmd.Change) == 0 {
+		return errors.New("writes is a change's")
+	}
+	if cmd.Doc != "" && cmd.Method == "" {
+		return errors.New("doc documents a method")
 	}
 	for _, n := range slices.Concat(cmd.Write, cmd.Change, cmd.Unless) {
 		if !ident(n) {

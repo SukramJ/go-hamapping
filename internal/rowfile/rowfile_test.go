@@ -55,6 +55,14 @@ func TestParse(t *testing.T) {
 	if v, ok := f.Rows[0].Clusters[0].Attributes[0].Enum["off"]; !ok || v != nil {
 		t.Fatalf("enum off %v %v", v, ok)
 	}
+	// A change may also catch writes; a method may carry a doc.
+	f, err = Parse([]byte(strings.Replace(good, "          - change: [OnOff]\n", "          - change: [OnOff]\n            writes: true\n            method: m\n            doc: the m method\n", 1)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c := f.Rows[0].Clusters[0].Commands[0]; !c.Writes || c.Doc != "the m method" {
+		t.Fatalf("writes, doc %+v", c)
+	}
 	// An initial value from extra.<key> may name the source's default for
 	// an entity that states none, in one of its units.
 	f, err = Parse([]byte(strings.Replace(good, "{attribute: A, const: 1}", absentInitial, 1)))
@@ -123,6 +131,8 @@ func TestParseRefuses(t *testing.T) {
 		"otherwise without if": {"json: {state: {const: \"OFF\"}}", "json: {state: {const: \"OFF\"}}\n            otherwise: {Status: X}"},
 		"discard with payload": {"handle: Off", "handle: Off\n            discard: true"},
 		"discard not handle":   {"            raw: {from: extra.payload_on, catalog: true}", "            discard: true"},
+		"writes not change":    {"handle: Off", "handle: Off\n            writes: true"},
+		"doc without method":   {"handle: Off", "handle: Off\n            doc: x"},
 		"options list":         {"list: desc.options", "list: desc.min"},
 		"options current":      {"current: state,", "current: device_class,"},
 		"options method":       {"method: select_option", "method: \"\""},

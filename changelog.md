@@ -13,6 +13,15 @@ All notable changes to this project are documented here. The format follows
   A cover with STOP_TILT and no STOP now hands StopMotion out as this
   method instead of answering it with success and handing out nothing; a
   cover with STOP keeps `stop_cover` (#43).
+- Serve a new command method on `climate`: `MethodTemperatureRange`
+  (`temperature_range`), a JSON object `{"target_temp_low": …,
+  "target_temp_high": …}` in the entity's unit. Map it to **one**
+  `climate.set_temperature` with both values, which Home Assistant takes
+  only together. It replaces `MethodTemperatureLow` and
+  `MethodTemperatureHigh` in heat_cool (SystemMode Auto) and carries the
+  pair the thermostat holds after its deadband adjustment; a write request
+  with both setpoints yields two, the last with both written values.
+  Outside heat_cool a setpoint is `MethodTemperature` as before (#39).
 - Expect a `cover` without SET_POSITION to be served with
   PositionAwareLift: a controller's GoToLiftPercentage of 0 % reaches the
   host as `payload_open` (or `MethodOpenTilt` on a tilt-only cover), of
@@ -44,6 +53,13 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **Breaking:** `MethodTemperatureLow` and `MethodTemperatureHigh` are gone:
+  no row emits them. In heat_cool a setpoint write, a deadband-adjusted
+  write and a SetpointRaiseLower are one `MethodTemperatureRange` each
+  (before: one `temperature_low` / `temperature_high` per attribute from
+  the write veto, before the deadband adjustment, and two for a
+  SetpointRaiseLower Both). The row format has `writes: true` on a
+  `change` and a method `doc` (`docs/rows.md`) (#39).
 - `cover`: every cover serves PositionAwareLift, as home-assistant-matter-hub
   does. Without SET_POSITION the lift position is the state's — `closed`
   100 %, `open` 0 %, `opening` / `closing` unknown — unless the state carries

@@ -57,43 +57,50 @@ import (
 // The methods the rows' commands deliver as model.Command.Method: a
 // consumer's command handler compares against these, not against literals.
 const (
-	MethodCloseTilt       = "close_tilt"
-	MethodCloseValve      = "close_valve"
-	MethodDirection       = "direction"
-	MethodFanMode         = "fan_mode"
-	MethodGoHome          = "go_home"
-	MethodKey             = "key"
-	MethodMediaPause      = "media_pause"
-	MethodMediaPlay       = "media_play"
-	MethodMediaStop       = "media_stop"
-	MethodMode            = "mode"
-	MethodOpenTilt        = "open_tilt"
-	MethodOpenValve       = "open_valve"
-	MethodOperationMode   = "operation_mode"
-	MethodOscillation     = "oscillation"
-	MethodPause           = "pause"
-	MethodPercentage      = "percentage"
-	MethodPresetMode      = "preset_mode"
-	MethodPress           = "press"
-	MethodResume          = "resume"
-	MethodRunMode         = "run_mode"
-	MethodSelectOption    = "select_option"
-	MethodSetPosition     = "set_position"
-	MethodStopTilt        = "stop_tilt"
-	MethodTemperature     = "temperature"
-	MethodTemperatureHigh = "temperature_high"
-	MethodTemperatureLow  = "temperature_low"
-	MethodTilt            = "tilt"
-	MethodToggle          = "toggle"
-	MethodTrigger         = "trigger"
-	MethodTurnOff         = "turn_off"
-	MethodTurnOn          = "turn_on"
-	MethodVolumeLevel     = "volume_level"
-	MethodVolumeMute      = "volume_mute"
+	MethodCloseTilt     = "close_tilt"
+	MethodCloseValve    = "close_valve"
+	MethodDirection     = "direction"
+	MethodFanMode       = "fan_mode"
+	MethodGoHome        = "go_home"
+	MethodKey           = "key"
+	MethodMediaPause    = "media_pause"
+	MethodMediaPlay     = "media_play"
+	MethodMediaStop     = "media_stop"
+	MethodMode          = "mode"
+	MethodOpenTilt      = "open_tilt"
+	MethodOpenValve     = "open_valve"
+	MethodOperationMode = "operation_mode"
+	MethodOscillation   = "oscillation"
+	MethodPause         = "pause"
+	MethodPercentage    = "percentage"
+	MethodPresetMode    = "preset_mode"
+	MethodPress         = "press"
+	MethodResume        = "resume"
+	MethodRunMode       = "run_mode"
+	MethodSelectOption  = "select_option"
+	MethodSetPosition   = "set_position"
+	MethodStopTilt      = "stop_tilt"
+	MethodTemperature   = "temperature"
+	// MethodTemperatureRange is a climate's setpoint change in heat_cool
+	// (SystemMode Auto): a JSON object with target_temp_low and
+	// target_temp_high, the heating and cooling setpoints the thermostat holds
+	// after its deadband adjustment, for one climate.set_temperature with
+	// both. It follows every admitted setpoint write and every
+	// SetpointRaiseLower, so a write request with both setpoints yields two,
+	// the last carrying both written values: go-fabric has no hook per write
+	// request.
+	MethodTemperatureRange = "temperature_range"
+	MethodTilt             = "tilt"
+	MethodToggle           = "toggle"
+	MethodTrigger          = "trigger"
+	MethodTurnOff          = "turn_off"
+	MethodTurnOn           = "turn_on"
+	MethodVolumeLevel      = "volume_level"
+	MethodVolumeMute       = "volume_mute"
 )
 
 // methods are the method constants, sorted.
-var methods = []string{MethodCloseTilt, MethodCloseValve, MethodDirection, MethodFanMode, MethodGoHome, MethodKey, MethodMediaPause, MethodMediaPlay, MethodMediaStop, MethodMode, MethodOpenTilt, MethodOpenValve, MethodOperationMode, MethodOscillation, MethodPause, MethodPercentage, MethodPresetMode, MethodPress, MethodResume, MethodRunMode, MethodSelectOption, MethodSetPosition, MethodStopTilt, MethodTemperature, MethodTemperatureHigh, MethodTemperatureLow, MethodTilt, MethodToggle, MethodTrigger, MethodTurnOff, MethodTurnOn, MethodVolumeLevel, MethodVolumeMute}
+var methods = []string{MethodCloseTilt, MethodCloseValve, MethodDirection, MethodFanMode, MethodGoHome, MethodKey, MethodMediaPause, MethodMediaPlay, MethodMediaStop, MethodMode, MethodOpenTilt, MethodOpenValve, MethodOperationMode, MethodOscillation, MethodPause, MethodPercentage, MethodPresetMode, MethodPress, MethodResume, MethodRunMode, MethodSelectOption, MethodSetPosition, MethodStopTilt, MethodTemperature, MethodTemperatureRange, MethodTilt, MethodToggle, MethodTrigger, MethodTurnOff, MethodTurnOn, MethodVolumeLevel, MethodVolumeMute}
 
 // rows is the table, in the order [Map] tries it.
 var rows = []Row{
@@ -712,7 +719,7 @@ var rows = []Row{
 		ID: "climate/air_conditioner", Platform: "climate",
 		When:  When{Features: &Set{All: []string{"FAN_MODE", "TURN_ON", "TURN_OFF"}}, Extra: map[string]Set{"modes": Set{Any: []string{"heat", "cool", "heat_cool"}}}},
 		State: eligibility.StateMappable,
-		Cites: []string{"go-fabric cluster/thermo/presets.go:246-257 @v0.15.4 (every preset needs the setpoints of the selected Heating and Cooling features)", "go-fabric device/room_air_conditioner_gen.go:39-86 @v0.15.4 (OnOff mandatory with DF, Thermostat mandatory, FanControl and RelativeHumidityMeasurement optional)", "matter.js packages/model/src/standard/resources/fan-control.resource.ts:44,80,95 @862ad75f (FanMode, PercentSetting, PercentCurrent)", "matter.js packages/model/src/standard/resources/relative-humidity-measurement.resource.ts:20-26 @862ad75f (MeasuredValue = 100 x water content)", "connectedhomeip src/app/clusters/fan-control-server/FanControlCluster.cpp:85-110,137-166 @6170af84 (PercentSetting of a FanMode: Off 0, Low 33, Medium 66, High 100, Auto null; FanMode of a percentage: up to 33 Low, up to 66 Medium, above High)", "home-assistant-matter-hub packages/backend/src/matter/behaviors/fan-control-server.ts:354-355,385-386 @664575a (a preset's percentage is served as PercentSetting and PercentCurrent)", "go-fabric cluster/spec/server.go:105-110,518-529 @v0.25.0 (a write of the value the server holds reaches no veto, so the held value has to follow Home Assistant)", "home-assistant/core homeassistant/components/climate/const.py:71-81,194-205 @2026.10.3 (fan modes; FAN_MODE, TURN_OFF, TURN_ON)", "home-assistant/core homeassistant/components/climate/__init__.py:318-325 @2026.10.3 (current_humidity and fan_mode state attributes)", "home-assistant/core homeassistant/components/climate/services.py:170-180,214-218 @2026.10.3 (turn_on, turn_off, set_fan_mode)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/climate/index.ts:83-102,172-186 @664575a (FAN_MODE makes a RoomAirConditioner; OnOff with TURN_ON and TURN_OFF; humidity from current_humidity)", "go-ha-catalog data/features.json:14-24 (climate feature flags)", "home-assistant/core homeassistant/components/climate/services.yaml:131-151 @2026.10.3 (turn_on, turn_off, toggle; toggle needs TURN_ON and TURN_OFF)", "go-ha-catalog data/mqtt.json:1200-1647 (climate schema; modes at 1385 with its default, mode_command_topic at 1370, temperature_command_topic at 1572, temperature_low/high_command_topic at 1582/1602)", "go-ha-catalog gen_vocab.go:837-847 (HVACMode vocabulary)", "home-assistant/core homeassistant/components/climate/__init__.py:105-106,239-254,653-668 @2026.10.3 (min_temp and max_temp are always capability attributes; unset, they default to 7 and 35 °C converted into the entity's unit: the Thermostat's absent values)", "home-assistant/core homeassistant/components/mqtt/climate.py:337-338,498-501 @2026.10.3 (the MQTT min_temp and max_temp are optional; unset, the entity keeps the class default)"},
+		Cites: []string{"go-fabric cluster/thermo/presets.go:246-257 @v0.15.4 (every preset needs the setpoints of the selected Heating and Cooling features)", "go-fabric device/room_air_conditioner_gen.go:39-86 @v0.15.4 (OnOff mandatory with DF, Thermostat mandatory, FanControl and RelativeHumidityMeasurement optional)", "matter.js packages/model/src/standard/resources/fan-control.resource.ts:44,80,95 @862ad75f (FanMode, PercentSetting, PercentCurrent)", "matter.js packages/model/src/standard/resources/relative-humidity-measurement.resource.ts:20-26 @862ad75f (MeasuredValue = 100 x water content)", "connectedhomeip src/app/clusters/fan-control-server/FanControlCluster.cpp:85-110,137-166 @6170af84 (PercentSetting of a FanMode: Off 0, Low 33, Medium 66, High 100, Auto null; FanMode of a percentage: up to 33 Low, up to 66 Medium, above High)", "home-assistant-matter-hub packages/backend/src/matter/behaviors/fan-control-server.ts:354-355,385-386 @664575a (a preset's percentage is served as PercentSetting and PercentCurrent)", "go-fabric cluster/spec/server.go:105-110,518-529 @v0.25.0 (a write of the value the server holds reaches no veto, so the held value has to follow Home Assistant)", "home-assistant/core homeassistant/components/climate/const.py:71-81,194-205 @2026.10.3 (fan modes; FAN_MODE, TURN_OFF, TURN_ON)", "home-assistant/core homeassistant/components/climate/__init__.py:318-325 @2026.10.3 (current_humidity and fan_mode state attributes)", "home-assistant/core homeassistant/components/climate/services.py:170-180,214-218 @2026.10.3 (turn_on, turn_off, set_fan_mode)", "home-assistant-matter-hub packages/backend/src/matter/endpoints/legacy/climate/index.ts:83-102,172-186 @664575a (FAN_MODE makes a RoomAirConditioner; OnOff with TURN_ON and TURN_OFF; humidity from current_humidity)", "go-ha-catalog data/features.json:14-24 (climate feature flags)", "home-assistant/core homeassistant/components/climate/services.yaml:131-151 @2026.10.3 (turn_on, turn_off, toggle; toggle needs TURN_ON and TURN_OFF)", "go-ha-catalog data/mqtt.json:1200-1647 (climate schema; modes at 1385 with its default, mode_command_topic at 1370, temperature_command_topic at 1572, temperature_low/high_command_topic at 1582/1602)", "go-ha-catalog gen_vocab.go:837-847 (HVACMode vocabulary)", "home-assistant/core homeassistant/components/climate/services.py:49-58,121-130 @2026.10.3 (set_temperature takes target_temp_low and target_temp_high together or not at all; refused only when low is above high: the temperature_range payload)", "home-assistant/core homeassistant/components/climate/const.py:131-132 @2026.10.3 (ATTR_TARGET_TEMP_HIGH target_temp_high, ATTR_TARGET_TEMP_LOW target_temp_low)", "go-fabric cluster/thermo/thermostat_server.go:1165-1172,1737-1752 @v0.27.0 (a setpoint write notifies OriginControllerWrite naming the written setpoint and the companion the deadband moved; SetpointRaiseLower Both notifies once, OriginCommand, naming both)", "home-assistant/core homeassistant/components/climate/__init__.py:105-106,239-254,653-668 @2026.10.3 (min_temp and max_temp are always capability attributes; unset, they default to 7 and 35 °C converted into the entity's unit: the Thermostat's absent values)", "home-assistant/core homeassistant/components/mqtt/climate.py:337-338,498-501 @2026.10.3 (the MQTT min_temp and max_temp are optional; unset, the entity keeps the class default)"},
 		Type:  device.RoomAirConditionerType(),
 		Caveats: []Caveat{
 			{When: When{Extra: map[string]Set{"modes": Set{Any: []string{"auto"}}}}, Reason: "the hvac mode auto (the device's own schedule) has no SystemMode: it is not mapped"},
@@ -818,13 +825,10 @@ var rows = []Row{
 				Commands: []Command{
 					{Kind: "write", On: []string{"SystemMode"}, Method: "mode", Raw: &Value{Field: "SystemMode", Enum: map[int64]string{int64(thermostatdef.SystemModeAuto): "heat_cool", int64(thermostatdef.SystemModeCool): "cool", int64(thermostatdef.SystemModeDry): "dry", int64(thermostatdef.SystemModeFanOnly): "fan_only", int64(thermostatdef.SystemModeHeat): "heat", int64(thermostatdef.SystemModeOff): "off"}}},
 					{Kind: "write", On: []string{"OccupiedHeatingSetpoint"}, Method: "temperature", Raw: &Value{Field: "OccupiedHeatingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
-					{Kind: "write", On: []string{"OccupiedHeatingSetpoint"}, Method: "temperature_low", Raw: &Value{Field: "OccupiedHeatingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
 					{Kind: "write", On: []string{"OccupiedCoolingSetpoint"}, Method: "temperature", Raw: &Value{Field: "OccupiedCoolingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
-					{Kind: "write", On: []string{"OccupiedCoolingSetpoint"}, Method: "temperature_high", Raw: &Value{Field: "OccupiedCoolingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
 					{Kind: "change", On: []string{"OccupiedHeatingSetpoint"}, Method: "temperature", Raw: &Value{Field: "OccupiedHeatingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
 					{Kind: "change", On: []string{"OccupiedCoolingSetpoint"}, Method: "temperature", Raw: &Value{Field: "OccupiedCoolingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
-					{Kind: "change", On: []string{"OccupiedHeatingSetpoint"}, Method: "temperature_low", Raw: &Value{Field: "OccupiedHeatingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
-					{Kind: "change", On: []string{"OccupiedCoolingSetpoint"}, Method: "temperature_high", Raw: &Value{Field: "OccupiedCoolingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
+					{Kind: "change", On: []string{"OccupiedHeatingSetpoint", "OccupiedCoolingSetpoint"}, Method: "temperature_range", JSON: []Field{{Key: "target_temp_high", Value: Value{Field: "OccupiedCoolingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}}, {Key: "target_temp_low", Value: Value{Field: "OccupiedHeatingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}}}},
 				},
 				declare: func(b *binding, ci int) device.Declaration {
 					var d thermostatdef.Declare
@@ -907,14 +911,8 @@ var rows = []Row{
 						if slices.Contains([]uint32{thermostatdef.AttrOccupiedHeatingSetpoint}, attrID) && !slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto}, next.SystemMode) {
 							b.emit(ci, 1, f)
 						}
-						if slices.Contains([]uint32{thermostatdef.AttrOccupiedHeatingSetpoint}, attrID) && slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto}, next.SystemMode) {
-							b.emit(ci, 2, f)
-						}
 						if slices.Contains([]uint32{thermostatdef.AttrOccupiedCoolingSetpoint}, attrID) && !slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto}, next.SystemMode) {
-							b.emit(ci, 3, f)
-						}
-						if slices.Contains([]uint32{thermostatdef.AttrOccupiedCoolingSetpoint}, attrID) && slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto}, next.SystemMode) {
-							b.emit(ci, 4, f)
+							b.emit(ci, 2, f)
 						}
 						return nil
 					}
@@ -992,16 +990,13 @@ var rows = []Row{
 							return nil, false
 						}
 						if changed(c, thermostatdef.AttrOccupiedHeatingSetpoint) && !slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto, thermostatdef.SystemModeCool}, st.SystemMode) {
-							b.emit(ci, 5, f)
+							b.emit(ci, 3, f)
 						}
 						if changed(c, thermostatdef.AttrOccupiedCoolingSetpoint) && slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeCool}, st.SystemMode) {
-							b.emit(ci, 6, f)
+							b.emit(ci, 4, f)
 						}
-						if changed(c, thermostatdef.AttrOccupiedHeatingSetpoint) && slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto}, st.SystemMode) {
-							b.emit(ci, 7, f)
-						}
-						if changed(c, thermostatdef.AttrOccupiedCoolingSetpoint) && slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto}, st.SystemMode) {
-							b.emit(ci, 8, f)
+						if changedOrWritten(c, thermostatdef.AttrOccupiedHeatingSetpoint, thermostatdef.AttrOccupiedCoolingSetpoint) && slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto}, st.SystemMode) {
+							b.emit(ci, 5, f)
 						}
 					})
 				},
@@ -1159,7 +1154,7 @@ var rows = []Row{
 		ID: "climate/thermostat", Platform: "climate",
 		When:  When{Extra: map[string]Set{"modes": Set{Any: []string{"heat", "cool", "heat_cool"}}}},
 		State: eligibility.StateMappable,
-		Cites: []string{"matter.js packages/model/src/standard/elements/thermostat-device.element.ts:25 @862ad75f (Thermostat mandatory)", "matter.js packages/model/src/standard/resources/thermostat-cluster.resource.ts:50,163,322 @862ad75f (LocalTemperature, OccupiedHeatingSetpoint, SystemMode)", "matter.js packages/model/src/standard/elements/temperature.element.ts:12 @862ad75f (the temperature datatype, int16 in 0.01 degC)", "go-fabric cluster/thermo/presets.go:246-257 @v0.15.4 (every preset needs the setpoints of the selected Heating and Cooling features)", "home-assistant/core homeassistant/components/climate/services.yaml:131-151 @2026.10.3 (turn_on, turn_off, toggle; toggle needs TURN_ON and TURN_OFF)", "go-ha-catalog data/mqtt.json:1200-1647 (climate schema; modes at 1385 with its default, mode_command_topic at 1370, temperature_command_topic at 1572, temperature_low/high_command_topic at 1582/1602)", "go-ha-catalog gen_vocab.go:837-847 (HVACMode vocabulary)", "home-assistant/core homeassistant/components/climate/__init__.py:105-106,239-254,653-668 @2026.10.3 (min_temp and max_temp are always capability attributes; unset, they default to 7 and 35 °C converted into the entity's unit: the Thermostat's absent values)", "home-assistant/core homeassistant/components/mqtt/climate.py:337-338,498-501 @2026.10.3 (the MQTT min_temp and max_temp are optional; unset, the entity keeps the class default)"},
+		Cites: []string{"matter.js packages/model/src/standard/elements/thermostat-device.element.ts:25 @862ad75f (Thermostat mandatory)", "matter.js packages/model/src/standard/resources/thermostat-cluster.resource.ts:50,163,322 @862ad75f (LocalTemperature, OccupiedHeatingSetpoint, SystemMode)", "matter.js packages/model/src/standard/elements/temperature.element.ts:12 @862ad75f (the temperature datatype, int16 in 0.01 degC)", "go-fabric cluster/thermo/presets.go:246-257 @v0.15.4 (every preset needs the setpoints of the selected Heating and Cooling features)", "home-assistant/core homeassistant/components/climate/services.yaml:131-151 @2026.10.3 (turn_on, turn_off, toggle; toggle needs TURN_ON and TURN_OFF)", "go-ha-catalog data/mqtt.json:1200-1647 (climate schema; modes at 1385 with its default, mode_command_topic at 1370, temperature_command_topic at 1572, temperature_low/high_command_topic at 1582/1602)", "go-ha-catalog gen_vocab.go:837-847 (HVACMode vocabulary)", "home-assistant/core homeassistant/components/climate/services.py:49-58,121-130 @2026.10.3 (set_temperature takes target_temp_low and target_temp_high together or not at all; refused only when low is above high: the temperature_range payload)", "home-assistant/core homeassistant/components/climate/const.py:131-132 @2026.10.3 (ATTR_TARGET_TEMP_HIGH target_temp_high, ATTR_TARGET_TEMP_LOW target_temp_low)", "go-fabric cluster/thermo/thermostat_server.go:1165-1172,1737-1752 @v0.27.0 (a setpoint write notifies OriginControllerWrite naming the written setpoint and the companion the deadband moved; SetpointRaiseLower Both notifies once, OriginCommand, naming both)", "home-assistant/core homeassistant/components/climate/__init__.py:105-106,239-254,653-668 @2026.10.3 (min_temp and max_temp are always capability attributes; unset, they default to 7 and 35 °C converted into the entity's unit: the Thermostat's absent values)", "home-assistant/core homeassistant/components/mqtt/climate.py:337-338,498-501 @2026.10.3 (the MQTT min_temp and max_temp are optional; unset, the entity keeps the class default)"},
 		Type:  device.ThermostatType(),
 		Caveats: []Caveat{
 			{When: When{Extra: map[string]Set{"modes": Set{Any: []string{"auto"}}}}, Reason: "the hvac mode auto (the device's own schedule) has no SystemMode: it is not mapped"},
@@ -1196,13 +1191,10 @@ var rows = []Row{
 				Commands: []Command{
 					{Kind: "write", On: []string{"SystemMode"}, Method: "mode", Raw: &Value{Field: "SystemMode", Enum: map[int64]string{int64(thermostatdef.SystemModeAuto): "heat_cool", int64(thermostatdef.SystemModeCool): "cool", int64(thermostatdef.SystemModeDry): "dry", int64(thermostatdef.SystemModeFanOnly): "fan_only", int64(thermostatdef.SystemModeHeat): "heat", int64(thermostatdef.SystemModeOff): "off"}}},
 					{Kind: "write", On: []string{"OccupiedHeatingSetpoint"}, Method: "temperature", Raw: &Value{Field: "OccupiedHeatingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
-					{Kind: "write", On: []string{"OccupiedHeatingSetpoint"}, Method: "temperature_low", Raw: &Value{Field: "OccupiedHeatingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
 					{Kind: "write", On: []string{"OccupiedCoolingSetpoint"}, Method: "temperature", Raw: &Value{Field: "OccupiedCoolingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
-					{Kind: "write", On: []string{"OccupiedCoolingSetpoint"}, Method: "temperature_high", Raw: &Value{Field: "OccupiedCoolingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
 					{Kind: "change", On: []string{"OccupiedHeatingSetpoint"}, Method: "temperature", Raw: &Value{Field: "OccupiedHeatingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
 					{Kind: "change", On: []string{"OccupiedCoolingSetpoint"}, Method: "temperature", Raw: &Value{Field: "OccupiedCoolingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
-					{Kind: "change", On: []string{"OccupiedHeatingSetpoint"}, Method: "temperature_low", Raw: &Value{Field: "OccupiedHeatingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
-					{Kind: "change", On: []string{"OccupiedCoolingSetpoint"}, Method: "temperature_high", Raw: &Value{Field: "OccupiedCoolingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}},
+					{Kind: "change", On: []string{"OccupiedHeatingSetpoint", "OccupiedCoolingSetpoint"}, Method: "temperature_range", JSON: []Field{{Key: "target_temp_high", Value: Value{Field: "OccupiedCoolingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}}, {Key: "target_temp_low", Value: Value{Field: "OccupiedHeatingSetpoint", Units: map[string]Linear{"°C": {Offset: 0, Scale: 0.01, Add: 0}, "°F": {Offset: 0, Scale: 0.018, Add: 32}}, DefaultUnit: "°C", Digits: 1}}}},
 				},
 				declare: func(b *binding, ci int) device.Declaration {
 					var d thermostatdef.Declare
@@ -1285,14 +1277,8 @@ var rows = []Row{
 						if slices.Contains([]uint32{thermostatdef.AttrOccupiedHeatingSetpoint}, attrID) && !slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto}, next.SystemMode) {
 							b.emit(ci, 1, f)
 						}
-						if slices.Contains([]uint32{thermostatdef.AttrOccupiedHeatingSetpoint}, attrID) && slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto}, next.SystemMode) {
-							b.emit(ci, 2, f)
-						}
 						if slices.Contains([]uint32{thermostatdef.AttrOccupiedCoolingSetpoint}, attrID) && !slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto}, next.SystemMode) {
-							b.emit(ci, 3, f)
-						}
-						if slices.Contains([]uint32{thermostatdef.AttrOccupiedCoolingSetpoint}, attrID) && slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto}, next.SystemMode) {
-							b.emit(ci, 4, f)
+							b.emit(ci, 2, f)
 						}
 						return nil
 					}
@@ -1370,16 +1356,13 @@ var rows = []Row{
 							return nil, false
 						}
 						if changed(c, thermostatdef.AttrOccupiedHeatingSetpoint) && !slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto, thermostatdef.SystemModeCool}, st.SystemMode) {
-							b.emit(ci, 5, f)
+							b.emit(ci, 3, f)
 						}
 						if changed(c, thermostatdef.AttrOccupiedCoolingSetpoint) && slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeCool}, st.SystemMode) {
-							b.emit(ci, 6, f)
+							b.emit(ci, 4, f)
 						}
-						if changed(c, thermostatdef.AttrOccupiedHeatingSetpoint) && slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto}, st.SystemMode) {
-							b.emit(ci, 7, f)
-						}
-						if changed(c, thermostatdef.AttrOccupiedCoolingSetpoint) && slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto}, st.SystemMode) {
-							b.emit(ci, 8, f)
+						if changedOrWritten(c, thermostatdef.AttrOccupiedHeatingSetpoint, thermostatdef.AttrOccupiedCoolingSetpoint) && slices.Contains([]thermostatdef.SystemModeEnum{thermostatdef.SystemModeAuto}, st.SystemMode) {
+							b.emit(ci, 5, f)
 						}
 					})
 				},
@@ -1391,7 +1374,7 @@ var rows = []Row{
 		When:   When{},
 		State:  eligibility.StateUnmappable,
 		Reason: "a climate entity without the hvac modes heat, cool or heat_cool has no Thermostat feature (Heating or Cooling)",
-		Cites:  []string{"home-assistant/core homeassistant/components/climate/services.yaml:131-151 @2026.10.3 (turn_on, turn_off, toggle; toggle needs TURN_ON and TURN_OFF)", "go-ha-catalog data/mqtt.json:1200-1647 (climate schema; modes at 1385 with its default, mode_command_topic at 1370, temperature_command_topic at 1572, temperature_low/high_command_topic at 1582/1602)", "go-ha-catalog gen_vocab.go:837-847 (HVACMode vocabulary)", "home-assistant/core homeassistant/components/climate/__init__.py:105-106,239-254,653-668 @2026.10.3 (min_temp and max_temp are always capability attributes; unset, they default to 7 and 35 °C converted into the entity's unit: the Thermostat's absent values)", "home-assistant/core homeassistant/components/mqtt/climate.py:337-338,498-501 @2026.10.3 (the MQTT min_temp and max_temp are optional; unset, the entity keeps the class default)"},
+		Cites:  []string{"home-assistant/core homeassistant/components/climate/services.yaml:131-151 @2026.10.3 (turn_on, turn_off, toggle; toggle needs TURN_ON and TURN_OFF)", "go-ha-catalog data/mqtt.json:1200-1647 (climate schema; modes at 1385 with its default, mode_command_topic at 1370, temperature_command_topic at 1572, temperature_low/high_command_topic at 1582/1602)", "go-ha-catalog gen_vocab.go:837-847 (HVACMode vocabulary)", "home-assistant/core homeassistant/components/climate/services.py:49-58,121-130 @2026.10.3 (set_temperature takes target_temp_low and target_temp_high together or not at all; refused only when low is above high: the temperature_range payload)", "home-assistant/core homeassistant/components/climate/const.py:131-132 @2026.10.3 (ATTR_TARGET_TEMP_HIGH target_temp_high, ATTR_TARGET_TEMP_LOW target_temp_low)", "go-fabric cluster/thermo/thermostat_server.go:1165-1172,1737-1752 @v0.27.0 (a setpoint write notifies OriginControllerWrite naming the written setpoint and the companion the deadband moved; SetpointRaiseLower Both notifies once, OriginCommand, naming both)", "home-assistant/core homeassistant/components/climate/__init__.py:105-106,239-254,653-668 @2026.10.3 (min_temp and max_temp are always capability attributes; unset, they default to 7 and 35 °C converted into the entity's unit: the Thermostat's absent values)", "home-assistant/core homeassistant/components/mqtt/climate.py:337-338,498-501 @2026.10.3 (the MQTT min_temp and max_temp are optional; unset, the entity keeps the class default)"},
 	},
 	{
 		ID: "cover/window_covering", Platform: "cover",

@@ -296,6 +296,25 @@ func TestGenerateRefuse(t *testing.T) {
 	}
 }
 
+func TestGenerateWritesAndDoc(t *testing.T) {
+	change := "          - change: [LockState]\n"
+	src := strings.Replace(base, change, change+"            writes: true\n            doc: \"locks or unlocks the door, from a command or a write\"\n", 1)
+	out, err := GenerateFiles([]rowfile.File{parse(t, src)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := string(out)
+	for _, want := range []string{"if changedOrWritten(c, doorlockdef.AttrLockState)", "// MethodM locks or unlocks the door, from a command or a write\n"} {
+		if !strings.Contains(s, want) {
+			t.Errorf("no %q:\n%s", want, s)
+		}
+	}
+	twice := strings.Replace(src, "          - handle: LockDoor\n            raw: {const: LOCK}", "          - handle: LockDoor\n            method: m\n            doc: other\n            raw: {const: LOCK}", 1)
+	if err := generate(t, twice); err == nil || !strings.Contains(err.Error(), "two docs") {
+		t.Errorf("two docs for one method: %v", err)
+	}
+}
+
 func parse(t *testing.T, src string) rowfile.File {
 	t.Helper()
 	f, err := rowfile.Parse([]byte(src))
@@ -343,7 +362,7 @@ func TestMethodConst(t *testing.T) {
 			t.Errorf("MethodConst(%q) = %q; want %q", in, got, want)
 		}
 	}
-	if methodsSource(nil) != "" {
+	if methodsSource(nil, nil) != "" {
 		t.Error("no rows: want no constant block")
 	}
 	if _, err := SpliceBetween([]byte("no markers"), KeysBegin, KeysEnd, ""); err == nil {

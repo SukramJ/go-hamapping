@@ -66,7 +66,7 @@ func TestWaveRowsServe(t *testing.T) {
 		t.Fatalf("FanModeSequence %v without auto", fan.FanModeSequence)
 	}
 	r.write("ac", thermostatdef.ClusterID, thermostatdef.AttrOccupiedCoolingSetpoint, spec.Int16(2600))
-	expect(t, r.command(), hamapping.MethodTemperatureHigh, "26")
+	expect(t, r.command(), hamapping.MethodTemperatureRange, `{"target_temp_low": 20, "target_temp_high": 26}`)
 	for pct, mode := range map[uint8]string{50: "medium", 90: "high"} {
 		r.write("ac", fancontroldef.ClusterID, fancontroldef.AttrPercentSetting, spec.Uint8(pct))
 		expect(t, r.command(), hamapping.MethodFanMode, mode)

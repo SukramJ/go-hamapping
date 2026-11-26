@@ -262,6 +262,23 @@ func changed(c contract.Change, ids ...uint32) bool {
 	if c.Origin != contract.OriginCommand {
 		return false
 	}
+	return touched(c, ids)
+}
+
+// changedOrWritten reports whether a change from a command, or a
+// controller's write the server admitted, touched one of ids: the server's
+// change notification after the write is stored, so its state is the one
+// the server holds after its own adjustments (go-fabric
+// cluster/thermo/thermostat_server.go:1165-1172 at v0.27.0, a setpoint
+// write naming the companion it moved).
+func changedOrWritten(c contract.Change, ids ...uint32) bool {
+	if c.Origin != contract.OriginCommand && c.Origin != contract.OriginControllerWrite {
+		return false
+	}
+	return touched(c, ids)
+}
+
+func touched(c contract.Change, ids []uint32) bool {
 	return slices.ContainsFunc(ids, func(id uint32) bool { return slices.Contains(c.Attributes, id) })
 }
 

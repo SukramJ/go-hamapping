@@ -73,6 +73,7 @@ rows:
             if: {field: SystemMode, in: [SystemModeAuto]}   # or not_in; or state: <Attribute>, the cluster's current value
             when: {...}          # entities the command applies to
             method: set_position # the entity's named method; empty: its command binding
+            doc: "..."           # the method's documentation: the comment of its constant
             raw: {...}           # the payload as one value, or
             json: {state: {...}, color.h: {...}}   # a JSON object by dotted key
             derive: rgb_from_xy  # keys computed from several fields
@@ -129,13 +130,19 @@ write veto (`Declare.OnWrite`), which accepts the write and hands it out.
 light's On, MoveToLevel, MoveToColor), from the server's state at the
 change; `unless: [Attr]` skips a change that also touches one of these
 attributes (the light's colour-mode switch, which converts the current
-colour before the controller's target is set). Every command reaches
+colour before the controller's target is set). `writes: true` makes a
+`change` also catch a controller's write of its attributes that the
+server admitted, from the server's state after the write — after the
+server's own adjustments, which the write veto does not see (the
+thermostat's deadband moving the other setpoint) — once per admitted
+attribute: go-fabric has no hook per write request. Every command reaches
 `Plan.OnChange`'s function inline, in the controller's request. A command with an empty `method` goes to the entity's command
 binding (`model.Command.Role` `command`, its `Slot`); one with a method to
 the named method (the MQTT `<method>_command_topic` of the platform).
 Every method a row names is an exported constant of the package
 (`hamapping.MethodPresetMode` for `preset_mode`), generated with the rows,
-so a consumer's command handler compares against the constant.
+so a consumer's command handler compares against the constant; a
+command's `doc` is the constant's comment (one doc per method).
 `otherwise` (a `handle` with an `if` only) is the handler's response, by
 field name of its response structure, when the `if` of none of the
 handler's commands holds: the command is answered with the cluster's own
