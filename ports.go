@@ -76,7 +76,8 @@ type WebRTCSessionBounds interface {
 // eviction at the session bounds of its WebRtcTransportProvider (go-fabric
 // cluster/spec/webrtctransportprovider/server_gen.go:342-366 at v0.28.0).
 // idle is Declare.EvictIdle, acrossFabrics Declare.EvictAcrossFabrics;
-// 0 and false evict nothing. Both are copied unchanged into the
+// a zero idle evicts nothing, and acrossFabrics only extends a positive
+// idle. Both are copied unchanged into the
 // declaration, and only together with the host's ProviderPort, as the
 // bounds are. No relation to the bounds is checked, as go-fabric checks
 // none: idle without a bound, and acrossFabrics without idle and a total

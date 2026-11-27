@@ -14,7 +14,7 @@ All notable changes to this project are documented here. The format follows
   camera's `Options.Ports` returns, beside `WebRTCSessionBounds`. Its
   `WebRTCSessionEviction() (idle time.Duration, acrossFabrics bool)` is
   copied unchanged into the WebRtcTransportProvider declaration as
-  `EvictIdle` and `EvictAcrossFabrics` (0 and false evict nothing), only
+  `EvictIdle` and `EvictAcrossFabrics` (a zero idle evicts nothing; `EvictAcrossFabrics` only extends a positive one), only
   together with the host's `ProviderPort`; no relation to the bounds is
   checked, and go-hamapping sets no default. A negative `idle` fails
   `Plan.Build` with a `*BuildError` wrapping go-fabric's
