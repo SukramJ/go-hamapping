@@ -62,5 +62,5 @@ sukramj.dev/go-ha-catalog v0.4.0 h1:kJpF3IphEcVisc6qgG2y7cyfJeBGIgogCxUM14WwMaE=
 sukramj.dev/go-ha-catalog v0.4.0/go.mod h1:naodLZ/1cbhJSuUdS4juHkzR3tP2bkQZfNYSZ0v4d0g=
 sukramj.dev/go-hamqtt v0.41.0 h1:yfur25ohv3APyYg556tAaSKtGdFZaitotZ7xuNQHzkY=
 sukramj.dev/go-hamqtt v0.41.0/go.mod h1:FPV/cd1baeR+hQ4vBDalLWO/mYdwyYwaSE80A5HvwQ0=
-thingfabric.dev/go-fabric v0.27.0 h1:emQX5Y81xEvi6dKCC/j16+bU7VBm8AYO3MBsxAs1N9o=
-thingfabric.dev/go-fabric v0.27.0/go.mod h1:d4JFdBHtTzEx2dpam9nY9m/W6MaD6c8F3A0vHkfHPS4=
+thingfabric.dev/go-fabric v0.28.0 h1:I1M4Nu8FTQ4pDN5Hxtv//lHjt2+5I+hlDC9u2HfJI9M=
+thingfabric.dev/go-fabric v0.28.0/go.mod h1:d4JFdBHtTzEx2dpam9nY9m/W6MaD6c8F3A0vHkfHPS4=

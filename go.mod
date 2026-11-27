@@ -6,7 +6,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	sukramj.dev/go-ha-catalog v0.4.0
 	sukramj.dev/go-hamqtt v0.41.0
-	thingfabric.dev/go-fabric v0.27.0
+	thingfabric.dev/go-fabric v0.28.0
 )
 
 require (

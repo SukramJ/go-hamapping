@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	hacatalog "sukramj.dev/go-ha-catalog"
 	"sukramj.dev/go-hamqtt/model"
@@ -176,6 +177,39 @@ func (boundsOnlyHost) WebRTCSessionBounds() (total, perFabric int) { return 5, 2
 
 var _ hamapping.WebRTCSessionBounds = boundedHost{}
 
+// evictingHost serves every camera port, the session bounds and the
+// eviction; evictionOnlyHost serves every camera port and the eviction
+// without bounds; evictionNoPortHost states the eviction but serves no
+// ProviderPort.
+type (
+	evictingHost struct {
+		boundedHost
+		idle   time.Duration
+		across bool
+	}
+	evictionOnlyHost struct {
+		cameraHost
+		idle   time.Duration
+		across bool
+	}
+	evictionNoPortHost struct {
+		videoPort
+		audioPort
+		snapshotPort
+	}
+)
+
+func (h evictingHost) WebRTCSessionEviction() (time.Duration, bool) { return h.idle, h.across }
+
+func (h evictionOnlyHost) WebRTCSessionEviction() (time.Duration, bool) { return h.idle, h.across }
+
+func (evictionNoPortHost) WebRTCSessionEviction() (time.Duration, bool) { return time.Minute, true }
+
+var (
+	_ hamapping.WebRTCSessionEviction = evictingHost{}
+	_ hamapping.WebRTCSessionBounds   = evictingHost{}
+)
+
 // providerDeclare is the camera endpoint's WebRtcTransportProvider
 // declaration.
 func providerDeclare(t *testing.T, p *hamapping.Plan) wpdef.Declare {
@@ -227,6 +261,62 @@ func TestCameraSessionBounds(t *testing.T) {
 	if len(p.Endpoints) != 0 || len(v) != 1 || v[0].State != eligibility.StateUnmappable ||
 		v[0].Reason != "camera/camera: the consumer serves no host ports for WebRtcTransportProvider" {
 		t.Fatalf("bounds without a ProviderPort: endpoints %+v, verdicts %+v", p.Endpoints, v)
+	}
+	if _, err := p.Build(context.Background()); err != nil {
+		t.Fatalf("Build of the unserved camera: %v", err)
+	}
+}
+
+// TestCameraSessionEviction: a host implementing WebRTCSessionEviction has
+// its idle time and its across-fabrics choice copied unchanged into the
+// WebRtcTransportProvider declaration, beside the bounds of
+// WebRTCSessionBounds or without them, and the kit's server builds on
+// them; a negative idle time fails the build with go-fabric's
+// ErrNegativeEvictIdle; the eviction without a ProviderPort leaves the
+// camera unserved, with no build error.
+func TestCameraSessionEviction(t *testing.T) {
+	opts := func(h any) hamapping.Options {
+		return hamapping.Options{Ports: func(model.Entity) any { return h }}
+	}
+	host := evictingHost{boundedHost: boundedHost{total: 5, perFabric: 2}, idle: 30 * time.Second, across: true}
+	p, _ := hamapping.Map(testDevice, []model.Entity{cameraEntity(2)}, opts(host))
+	if d := providerDeclare(t, p); d.MaxSessions != 5 || d.MaxSessionsPerFabric != 2 ||
+		d.EvictIdle != 30*time.Second || !d.EvictAcrossFabrics || d.ProviderPort == nil {
+		t.Fatalf("with bounds and eviction: MaxSessions %d, MaxSessionsPerFabric %d, EvictIdle %v, EvictAcrossFabrics %v, port %v",
+			d.MaxSessions, d.MaxSessionsPerFabric, d.EvictIdle, d.EvictAcrossFabrics, d.ProviderPort)
+	}
+	if _, err := p.Build(context.Background()); err != nil {
+		t.Fatalf("Build with bounds and eviction: %v", err)
+	}
+	p.Close()
+
+	p, _ = hamapping.Map(testDevice, []model.Entity{cameraEntity(2)}, opts(evictionOnlyHost{idle: time.Minute, across: true}))
+	if d := providerDeclare(t, p); d.MaxSessions != 0 || d.MaxSessionsPerFabric != 0 ||
+		d.EvictIdle != time.Minute || !d.EvictAcrossFabrics || d.ProviderPort == nil {
+		t.Fatalf("eviction without bounds: MaxSessions %d, MaxSessionsPerFabric %d, EvictIdle %v, EvictAcrossFabrics %v, port %v",
+			d.MaxSessions, d.MaxSessionsPerFabric, d.EvictIdle, d.EvictAcrossFabrics, d.ProviderPort)
+	}
+	if _, err := p.Build(context.Background()); err != nil {
+		t.Fatalf("Build with eviction without bounds: %v", err)
+	}
+	p.Close()
+
+	p, _ = hamapping.Map(testDevice, []model.Entity{cameraEntity(2)}, opts(boundedHost{total: 5, perFabric: 2}))
+	if d := providerDeclare(t, p); d.EvictIdle != 0 || d.EvictAcrossFabrics {
+		t.Fatalf("without eviction: EvictIdle %v, EvictAcrossFabrics %v", d.EvictIdle, d.EvictAcrossFabrics)
+	}
+
+	p, _ = hamapping.Map(testDevice, []model.Entity{cameraEntity(2)}, opts(evictingHost{boundedHost: boundedHost{total: 5}, idle: -time.Second}))
+	_, err := p.Build(context.Background())
+	var be *hamapping.BuildError
+	if !errors.As(err, &be) || !errors.Is(err, camera.ErrNegativeEvictIdle) {
+		t.Fatalf("Build with a negative idle time: %v, want a *BuildError wrapping camera.ErrNegativeEvictIdle", err)
+	}
+
+	p, v := hamapping.Map(testDevice, []model.Entity{cameraEntity(2)}, opts(evictionNoPortHost{}))
+	if len(p.Endpoints) != 0 || len(v) != 1 || v[0].State != eligibility.StateUnmappable ||
+		v[0].Reason != "camera/camera: the consumer serves no host ports for WebRtcTransportProvider" {
+		t.Fatalf("eviction without a ProviderPort: endpoints %+v, verdicts %+v", p.Endpoints, v)
 	}
 	if _, err := p.Build(context.Background()); err != nil {
 		t.Fatalf("Build of the unserved camera: %v", err)

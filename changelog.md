@@ -6,6 +6,27 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-11-27
+
+### Added
+
+- `WebRTCSessionEviction`: an optional interface of the host object a
+  camera's `Options.Ports` returns, beside `WebRTCSessionBounds`. Its
+  `WebRTCSessionEviction() (idle time.Duration, acrossFabrics bool)` is
+  copied unchanged into the WebRtcTransportProvider declaration as
+  `EvictIdle` and `EvictAcrossFabrics` (a zero idle evicts nothing; `EvictAcrossFabrics` only extends a positive one), only
+  together with the host's `ProviderPort`; no relation to the bounds is
+  checked, and go-hamapping sets no default. A negative `idle` fails
+  `Plan.Build` with a `*BuildError` wrapping go-fabric's
+  `camera.ErrNegativeEvictIdle`. A host implementing neither interface
+  builds the same declaration as at v0.9.0 (thingfabric/go-ha2fabric#83).
+
+### Changed
+
+- go-fabric `v0.28.0` (was `v0.27.0`), for the kit's eviction at the
+  WebRTC session bounds. go-fabric reports no incompatible change against
+  `v0.27.0`; none was needed here.
+
 ## [0.9.0] - 2026-11-26
 
 ### What a host must do
